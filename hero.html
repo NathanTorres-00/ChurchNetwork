@@ -540,19 +540,22 @@
   }
   .loader-net { width: min(320px, 74vw); overflow: visible; transition: transform 1.3s cubic-bezier(.65, 0, .35, 1), opacity .7s ease; }
   .loader.is-leaving .loader-net { transform: scale(1.18); opacity: 0; }
-  /* Each generation draws its threads, then its dots grow (--d staggers them). Folding back runs in
-     reverse, outermost generation first (--c), until only the first dot is left. */
+  /* Each generation draws its threads while its dots bud out of their parents (--d staggers them).
+     Folding back is the exact reverse, outermost generation first (--c): each dot rides its thread
+     back into its parent as the thread retracts, until only the first dot is left. */
   .loader-net .thread { fill: none; stroke: #C9C9CD; stroke-width: 1; stroke-dasharray: 1; stroke-dashoffset: 1;
     animation: ld-draw .55s cubic-bezier(.65, 0, .35, 1) var(--d) forwards; }
-  .loader-net .node { transform-box: fill-box; transform-origin: center; transform: scale(0);
+  .loader-net .node { transform-box: fill-box; transform-origin: center;
+    transform: translate(var(--tx, 0px), var(--ty, 0px)) scale(0);      /* starts inside its parent */
     animation: ld-grow .55s cubic-bezier(.65, 0, .35, 1) var(--d) forwards; }
   .loader-net .node .ring { fill: none; }
-  .loader.is-collapsing .loader-net .thread { animation: ld-undraw .45s cubic-bezier(.65, 0, .35, 1) var(--c) forwards; }
-  .loader.is-collapsing .loader-net .node:not(.root) { animation: ld-shrink .45s cubic-bezier(.65, 0, .35, 1) var(--c) forwards; }
+  /* 'both': while a generation waits its turn to fold, it holds its full, visible state */
+  .loader.is-collapsing .loader-net .thread { animation: ld-undraw .45s cubic-bezier(.65, 0, .35, 1) var(--c) both; }
+  .loader.is-collapsing .loader-net .node:not(.root) { animation: ld-shrink .45s cubic-bezier(.65, 0, .35, 1) var(--c) both; }
   .loader-net .breathe { transform-box: fill-box; transform-origin: center; animation: ld-breathe 2.6s ease-in-out 3.4s infinite; }
   .loader.is-collapsing .loader-net .breathe { animation-play-state: paused; }
-  @keyframes ld-grow { to { transform: scale(1); } }
-  @keyframes ld-shrink { from { transform: scale(1); } to { transform: scale(0); } }
+  @keyframes ld-grow { to { transform: none; } }
+  @keyframes ld-shrink { from { transform: none; } to { transform: translate(var(--tx, 0px), var(--ty, 0px)) scale(0); } }
   @keyframes ld-draw { to { stroke-dashoffset: 0; } }
   @keyframes ld-undraw { from { stroke-dashoffset: 0; } to { stroke-dashoffset: 1; } }
   @keyframes ld-breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.025); } }
@@ -612,18 +615,20 @@
     const fold = (GENS - n.gen) * 0.2;                                    // outermost generation folds first
     if (n.gen) {
       const p = nodes[n.parent], dx = n.x - p.x, dy = n.y - p.y, k = 0.16 * n.side;
-      threads.push(el('path', { class: 'thread', pathLength: 1, style: `--d:${grow}s; --c:${fold + 0.15}s`,
+      threads.push(el('path', { class: 'thread', pathLength: 1, style: `--d:${grow}s; --c:${fold}s`,
         d: `M${p.x.toFixed(1)} ${p.y.toFixed(1)} Q${((p.x + n.x) / 2 - dy * k).toFixed(1)} ${((p.y + n.y) / 2 + dx * k).toFixed(1)} ${n.x.toFixed(1)} ${n.y.toFixed(1)}` }));
     }
-    const rr = 5.2 * Math.pow(0.8, n.gen), g = el('g', { class: 'node' + (n.gen ? '' : ' root'), style: `--d:${n.gen ? grow + 0.3 : 0.1}s; --c:${fold}s` });
+    const p = n.gen ? nodes[n.parent] : n;
+    const rr = 5.2 * Math.pow(0.8, n.gen), g = el('g', { class: 'node' + (n.gen ? '' : ' root'),
+      style: `--d:${n.gen ? grow + 0.08 : 0.1}s; --c:${fold}s; --tx:${(p.x - n.x).toFixed(1)}px; --ty:${(p.y - n.y).toFixed(1)}px` });
     g.append(el('circle', { class: 'ring', cx: n.x.toFixed(1), cy: n.y.toFixed(1), r: (rr * 1.56).toFixed(2), style: `stroke:${color}; stroke-width:${(rr * 0.42).toFixed(2)}` }),
              el('circle', { cx: n.x.toFixed(1), cy: n.y.toFixed(1), r: rr.toFixed(2), style: `fill:${color}` }));
     dots.push(g);
   }
   svg.append(...threads, ...dots.reverse());                              // threads under dots, parents on top
 
-  const GROWN = (0.3 + (GENS - 1) * STEP + 0.3 + 0.55) * 1000;           // last generation finishes growing
-  const FOLD = ((GENS - 1) * 0.2 + 0.15 + 0.45) * 1000;                  // folding back to the first dot
+  const GROWN = (0.3 + (GENS - 1) * STEP + 0.08 + 0.55) * 1000;          // last generation finishes growing
+  const FOLD = ((GENS - 1) * 0.2 + 0.45) * 1000 + 60;                    // folding back to the first dot
   const MIN = reduce ? 600 : GROWN, MAX = 8000, started = performance.now();
   let globe = false, fonts = false, done = false;
 
