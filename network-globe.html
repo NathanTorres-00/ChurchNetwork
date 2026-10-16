@@ -1,0 +1,944 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Network Globe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3-geo-projection@4.0.0/dist/d3-geo-projection.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
+<style>
+  :root {
+    --bg: #FFFFFF;
+    --panel-bg: #FFFFFF;
+    --ink: #3F3F46;
+    --ink-soft: #8A8A93;
+    --hair: #E7E7EA;
+    --track: #E6E6E9;
+    --thumb: #C9C9C9;
+    --panel-w: 304px;
+    --font: 'Geist', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); }
+  body { font-family: var(--font); color: var(--ink); -webkit-font-smoothing: antialiased; }
+
+  .stage { position: fixed; inset: 0; }
+  canvas { display: block; width: 100%; height: 100%; opacity: 0; transition: opacity 1.6s ease; }
+  canvas.is-ready { opacity: 1; }
+
+  /* ---------- Page switch ---------- */
+  .switch {
+    position: fixed; top: 16px; left: 16px; z-index: 3;
+    display: flex; gap: 2px; padding: 3px;
+    background: var(--panel-bg); border: 1px solid var(--hair); border-radius: 999px;
+  }
+  .switch a {
+    font: 400 13px/1 var(--font); color: var(--ink-soft); text-decoration: none;
+    padding: 7px 12px; border-radius: 999px;
+  }
+  .switch a:hover { color: var(--ink); }
+  .switch a[aria-current="page"] { background: #F1F1F3; color: var(--ink); }
+
+  /* ---------- Adjust button ---------- */
+  .adjust {
+    position: fixed; top: 16px; right: 16px; z-index: 3;
+    display: inline-flex; align-items: center; gap: 8px;
+    font: 500 13px/1 var(--font); color: var(--ink);
+    padding: 9px 14px 9px 11px; border-radius: 999px;
+    background: var(--panel-bg); border: 1px solid var(--hair); cursor: pointer;
+    transition: opacity .4s ease, transform .6s cubic-bezier(.65, 0, .35, 1);
+  }
+  .adjust:hover { background: #F7F7F8; }
+  .adjust .glyph {
+    width: 8px; height: 8px; border-radius: 50%; background: var(--thumb);
+    box-shadow: 0 0 0 2px var(--panel-bg), 0 0 0 3.5px var(--thumb);
+    margin: 0 3px;
+  }
+  .adjust[aria-expanded="true"] { opacity: 0; pointer-events: none; transform: translateY(-6px); }
+
+  /* ---------- Panel ---------- */
+  .panel {
+    position: fixed; top: 0; right: 0; bottom: 0; z-index: 2;
+    width: var(--panel-w); max-width: 100%;
+    background: var(--panel-bg); border-left: 1px solid var(--hair);
+    overflow-y: auto; overscroll-behavior: contain;
+    padding: 18px 20px 28px;
+    transform: translateX(100%); visibility: hidden;
+    transition: transform .7s cubic-bezier(.65, 0, .35, 1), visibility 0s linear .7s;
+  }
+  .panel.is-open { transform: none; visibility: visible; transition: transform .7s cubic-bezier(.65, 0, .35, 1); }
+
+  .panel-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+  .panel-head h1 { font-size: 15px; font-weight: 500; margin: 0; letter-spacing: -0.005em; }
+  .status { font-size: 12px; color: var(--ink-soft); margin: 4px 0 14px; font-variant-numeric: tabular-nums; }
+
+  .close {
+    font: 400 13px/1 var(--font); color: var(--ink-soft); background: none; border: 0;
+    padding: 6px 4px; cursor: pointer;
+  }
+  .close:hover { color: var(--ink); }
+
+  .actions { display: flex; flex-wrap: wrap; gap: 6px; }
+  .btn {
+    font: 400 13px/1 var(--font); color: var(--ink);
+    padding: 8px 12px; border-radius: 999px;
+    background: var(--panel-bg); border: 1px solid var(--hair); cursor: pointer;
+  }
+  .btn:hover { background: #F6F6F7; }
+
+  .group { border-top: 1px solid var(--hair); margin-top: 18px; padding-top: 14px; }
+  .group h2 { font-size: 13px; font-weight: 500; margin: 0 0 2px; }
+
+  .row { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 4px 12px; margin: 10px 0; }
+  .row label { font-size: 13px; color: var(--ink); }
+  .row output { font-size: 12px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+  .row input[type="range"] { grid-column: 1 / -1; }
+  .row.check { grid-template-columns: auto 1fr; gap: 10px; }
+  .row.check input { margin: 0; accent-color: var(--ink); width: 15px; height: 15px; }
+
+  select {
+    font: 400 13px/1 var(--font); color: var(--ink);
+    padding: 6px 26px 6px 10px; border: 1px solid var(--hair); border-radius: 8px;
+    background: var(--panel-bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%238A8A93' stroke-width='1.2'/%3E%3C/svg%3E") no-repeat right 10px center;
+    -webkit-appearance: none; appearance: none; cursor: pointer;
+  }
+
+  input[type="color"] {
+    -webkit-appearance: none; appearance: none;
+    width: 30px; height: 22px; padding: 0; border: 1px solid var(--hair); border-radius: 6px;
+    background: none; cursor: pointer;
+  }
+  input[type="color"]::-webkit-color-swatch-wrapper { padding: 2px; }
+  input[type="color"]::-webkit-color-swatch { border: 0; border-radius: 4px; }
+  input[type="color"]::-moz-color-swatch { border: 0; border-radius: 4px; }
+
+  input[type="range"] {
+    -webkit-appearance: none; appearance: none; width: 100%; height: 20px;
+    background: transparent; margin: 0; cursor: pointer; --p: 50%;
+  }
+  input[type="range"]::-webkit-slider-runnable-track {
+    height: 2px; border-radius: 2px;
+    background: linear-gradient(to right, var(--thumb) var(--p), var(--track) var(--p));
+  }
+  input[type="range"]::-moz-range-track {
+    height: 2px; border-radius: 2px;
+    background: linear-gradient(to right, var(--thumb) var(--p), var(--track) var(--p));
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 10px; height: 10px; margin-top: -4px; border-radius: 50%;
+    background: var(--thumb); box-shadow: 0 0 0 2.5px var(--panel-bg), 0 0 0 4px var(--thumb);
+    transition: box-shadow .3s ease;
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 10px; height: 10px; border: 0; border-radius: 50%;
+    background: var(--thumb); box-shadow: 0 0 0 2.5px var(--panel-bg), 0 0 0 4px var(--thumb);
+  }
+  input[type="range"]:focus-visible { outline: none; }
+  input[type="range"]:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 2.5px var(--panel-bg), 0 0 0 4px var(--ink); }
+  input[type="range"]:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 2.5px var(--panel-bg), 0 0 0 4px var(--ink); }
+
+  :focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+  .foot { border-top: 1px solid var(--hair); margin-top: 18px; padding-top: 16px; }
+  .hint { font-size: 12px; color: var(--ink-soft); line-height: 1.5; margin: 10px 0 0; max-width: 34ch; }
+
+  @media (max-width: 640px) {
+    .panel {
+      top: auto; left: 0; width: 100%; max-height: 62vh;
+      border-left: 0; border-top: 1px solid var(--hair); border-radius: 16px 16px 0 0;
+      padding: 16px 16px 24px;
+      transform: translateY(100%);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    canvas, .panel, .adjust { transition: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="stage" id="stage">
+  <canvas id="canvas" role="img" aria-label="A camera flies low over a pale globe. As new ground comes over the horizon, dots appear and each one divides again and again into a network of connected dots."></canvas>
+</div>
+
+<nav class="switch" id="switch" aria-label="Views">
+  <a href="network-multiply.html">Flat</a>
+  <a href="network-globe.html" aria-current="page">Globe</a>
+  <a href="network-globe-pins.html">Pins</a>
+  <a href="hero.html">Hero</a>
+</nav>
+
+<button class="adjust" id="adjust" type="button" aria-expanded="false" aria-controls="panel">
+  <span class="glyph" aria-hidden="true"></span>Adjust
+</button>
+
+<aside class="panel" id="panel" aria-label="Animation settings">
+  <div class="panel-head">
+    <h1>Network globe</h1>
+    <button class="close" id="close" type="button">Close</button>
+  </div>
+  <p class="status" id="status">Loading the globe</p>
+  <div class="actions">
+    <button class="btn" id="play" type="button">Pause</button>
+    <button class="btn" id="restart" type="button">Restart</button>
+  </div>
+  <div id="groups"></div>
+  <div class="foot">
+    <div class="actions">
+      <button class="btn" id="copy" type="button">Copy settings</button>
+      <button class="btn" id="reset" type="button">Reset to defaults</button>
+    </div>
+    <p class="hint">Copied settings paste into the CONFIG block of this file. Add ?controls=0 to the address to hide this panel.</p>
+  </div>
+</aside>
+
+<script>
+/* =========================================================================
+   CONFIG: every parameter the panel controls. Paste "Copy settings" output here.
+   Any key can also be set in the address, e.g. ?speed=3&zoom=4
+   ========================================================================= */
+const CONFIG = {
+  // Flight
+  speed: 1.2,               // degrees of longitude per second
+  tilt: 34,                 // how far the camera looks toward the horizon (degrees)
+  zoom: 3.5,                // brings the camera closer to the ground; the horizon stays in view
+  latitude: 30,             // the latitude the flight path centers on
+  meander: 16,              // how far the path wanders north and south (degrees)
+  bank: 0.7,                // how much the view turns to follow the path
+
+  // Globe
+  landOnly: false,          // place networks on land only (pairs well with showLand)
+  siteSpacing: 5,           // minimum distance between networks (degrees)
+  networkSize: 3.4,         // radius of a fully grown network (degrees)
+  showLand: false,          // continent shapes
+  showGraticule: true,
+  haze: 0.8,                // white haze toward the horizon
+  horizonFade: true,        // dissolve the globe's edge into the background
+  fadeDepth: 0.16,          // how far the edge fade reaches, as a share of the view height
+  oceanColor: '#F5F5F6',
+  landColor: '#EAEAED',
+  gridColor: '#E1E1E4',
+  seed: 11,
+
+  // Growth
+  generations: 5,           // rounds of division: 5 gives 1 → 2 → 4 → 8 → 16 → 32
+  divisionDuration: 1.6,
+  restDuration: 0.7,
+  revealLine: 0.1,          // how far below the horizon a site must travel before it appears (0–1)
+  resetWhenPassed: true,    // networks that pass out of view regrow on the next turn
+
+  // Shape
+  spread: 0.82,
+  lengthDecay: 0.94,
+  jitter: 0.45,
+  curvature: 0.16,
+
+  // Motion
+  easing: 'sine',
+  drift: 0.6,
+  swell: 0.09,
+
+  // Look
+  dotSize: 14,              // relative to branch length (92)
+  sizeDecay: 0.86,
+  uprightDots: 1,           // 0 = dots lie flat on the ground, 1 = dots stand upright and stay round
+  ring: true,
+  ringGap: 0.28,
+  ringWidth: 0.26,
+  lineWidth: 0.9,
+  dotColor: '#B6B6BB',
+  newbornColor: '#9C9CA2',
+  lineColor: '#BDBDC2',
+};
+
+// Set to false for embeds to hide the Adjust panel (or add ?controls=0 to the address)
+const SHOW_CONTROLS = true;
+
+const pct = v => Math.round(v * 100) + '%';
+const CONTROLS = [
+  { group: 'Flight', items: [
+    { key: 'speed', label: 'Speed', type: 'range', min: 0, max: 8, step: 0.1, fmt: v => v.toFixed(1) + '°/s' },
+    { key: 'tilt', label: 'Look toward horizon', type: 'range', min: 0, max: 45, step: 1, fmt: v => v + '°' },
+    { key: 'zoom', label: 'Zoom', type: 'range', min: 1, max: 8, step: 0.05, fmt: v => v.toFixed(2) + '×' },
+    { key: 'latitude', label: 'Flight latitude', type: 'range', min: -60, max: 60, step: 1, fmt: v => v + '°' },
+    { key: 'meander', label: 'Meander', type: 'range', min: 0, max: 40, step: 1, fmt: v => v + '°' },
+    { key: 'bank', label: 'Follow the turns', type: 'range', min: 0, max: 1, step: 0.05, fmt: pct },
+  ]},
+  { group: 'Globe', items: [
+    { key: 'landOnly', label: 'Networks on land only', type: 'check', sites: true },
+    { key: 'siteSpacing', label: 'Space between networks', type: 'range', min: 4, max: 25, step: 0.5, fmt: v => v + '°', sites: true },
+    { key: 'networkSize', label: 'Network size', type: 'range', min: 1, max: 10, step: 0.1, fmt: v => v.toFixed(1) + '°', trees: true },
+    { key: 'showLand', label: 'Show continents', type: 'check' },
+    { key: 'showGraticule', label: 'Show grid', type: 'check' },
+    { key: 'haze', label: 'Horizon haze', type: 'range', min: 0, max: 1, step: 0.01, fmt: pct },
+    { key: 'horizonFade', label: 'Fade the horizon', type: 'check' },
+    { key: 'fadeDepth', label: 'Fade depth', type: 'range', min: 0.02, max: 0.5, step: 0.01, fmt: pct },
+    { key: 'oceanColor', label: 'Globe color', type: 'color' },
+    { key: 'landColor', label: 'Land color', type: 'color' },
+    { key: 'gridColor', label: 'Grid color', type: 'color' },
+  ]},
+  { group: 'Growth', items: [
+    { key: 'generations', label: 'Generations', type: 'range', min: 1, max: 6, step: 1, fmt: v => v, trees: true },
+    { key: 'divisionDuration', label: 'Division time', type: 'range', min: 0.4, max: 4, step: 0.1, fmt: v => v.toFixed(1) + 's' },
+    { key: 'restDuration', label: 'Pause between generations', type: 'range', min: 0, max: 3, step: 0.1, fmt: v => v.toFixed(1) + 's' },
+    { key: 'revealLine', label: 'Reveal distance', type: 'range', min: 0, max: 0.8, step: 0.01, fmt: pct },
+    { key: 'resetWhenPassed', label: 'Regrow on the next turn', type: 'check' },
+  ]},
+  { group: 'Shape', items: [
+    { key: 'spread', label: 'Pair spread', type: 'range', min: 0.3, max: 1, step: 0.01, fmt: pct, trees: true },
+    { key: 'lengthDecay', label: 'Length per generation', type: 'range', min: 0.6, max: 1.25, step: 0.01, fmt: v => '×' + v.toFixed(2), trees: true },
+    { key: 'jitter', label: 'Organic variation', type: 'range', min: 0, max: 1, step: 0.01, fmt: pct, trees: true },
+    { key: 'curvature', label: 'Thread bow', type: 'range', min: 0, max: 0.5, step: 0.01, fmt: pct },
+  ]},
+  { group: 'Motion', items: [
+    { key: 'easing', label: 'Easing', type: 'select', options: [['sine', 'Sine'], ['cubic', 'Cubic'], ['quint', 'Quint']] },
+    { key: 'drift', label: 'Drift', type: 'range', min: 0, max: 2, step: 0.05, fmt: v => v.toFixed(2) },
+    { key: 'swell', label: 'Swell on divide', type: 'range', min: 0, max: 0.3, step: 0.01, fmt: pct },
+  ]},
+  { group: 'Look', items: [
+    { key: 'dotSize', label: 'Dot size', type: 'range', min: 4, max: 30, step: 0.5, fmt: v => v, trees: true },
+    { key: 'sizeDecay', label: 'Size per generation', type: 'range', min: 0.6, max: 1, step: 0.01, fmt: v => '×' + v.toFixed(2), trees: true },
+    { key: 'uprightDots', label: 'Dots stand upright', type: 'range', min: 0, max: 1, step: 0.01, fmt: pct },
+    { key: 'ring', label: 'Ring', type: 'check' },
+    { key: 'ringGap', label: 'Ring gap', type: 'range', min: 0, max: 0.8, step: 0.01, fmt: pct },
+    { key: 'ringWidth', label: 'Ring width', type: 'range', min: 0.05, max: 0.6, step: 0.01, fmt: pct },
+    { key: 'lineWidth', label: 'Line width', type: 'range', min: 0.25, max: 3, step: 0.05, fmt: v => v.toFixed(2) + 'px' },
+    { key: 'dotColor', label: 'Dot color', type: 'color' },
+    { key: 'newbornColor', label: 'New dot color', type: 'color' },
+    { key: 'lineColor', label: 'Line color', type: 'color' },
+  ]},
+];
+
+(() => {
+  'use strict';
+
+  const TAU = Math.PI * 2, DEG = Math.PI / 180;
+  const BRANCH = 92;                 // layout units per first branch; dotSize is relative to this
+  const DEFAULTS = { ...CONFIG };
+  const params = new URLSearchParams(location.search);
+  const cfg = { ...CONFIG };
+
+  for (const key of Object.keys(DEFAULTS)) {
+    if (!params.has(key)) continue;
+    const raw = params.get(key), def = DEFAULTS[key];
+    if (typeof def === 'number') { const n = parseFloat(raw); if (Number.isFinite(n)) cfg[key] = n; }
+    else if (typeof def === 'boolean') cfg[key] = raw === '1' || raw === 'true';
+    else cfg[key] = /^[0-9a-f]{6}$/i.test(raw) ? '#' + raw : raw;
+  }
+  const showControls = SHOW_CONTROLS && params.get('controls') !== '0';
+
+  /* ---------- Math helpers (shared with network-multiply.html) ---------- */
+  const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const bez = (a, c, b, t) => { const u = 1 - t; return u * u * a + 2 * u * t * c + t * t * b; };
+  const bell = x => (1 - Math.cos(TAU * clamp(x))) / 2;
+  const EASE = {
+    sine:  x => -(Math.cos(Math.PI * x) - 1) / 2,
+    cubic: x => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2,
+    quint: x => x < 0.5 ? 16 * x ** 5 : 1 - Math.pow(-2 * x + 2, 5) / 2,
+  };
+
+  function mulberry32(a) {
+    return () => {
+      a |= 0; a = (a + 0x6D2B79F5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  const rgbCache = new Map();
+  function rgb(hex) {
+    if (!rgbCache.has(hex)) {
+      const h = hex.replace('#', '');
+      const n = parseInt(h.length === 3 ? h.split('').map(c => c + c).join('') : h, 16);
+      rgbCache.set(hex, [(n >> 16) & 255, (n >> 8) & 255, n & 255]);
+    }
+    return rgbCache.get(hex);
+  }
+  function mix(a, b, t) {
+    const A = rgb(a), B = rgb(b);
+    return `rgb(${Math.round(lerp(A[0], B[0], t))},${Math.round(lerp(A[1], B[1], t))},${Math.round(lerp(A[2], B[2], t))})`;
+  }
+
+  /* ---------- One network (radial tree, same model as the flat view) ---------- */
+  function buildTree(seed) {
+    const rng = mulberry32(seed);
+    const G = cfg.generations, jit = cfg.jitter;
+    const phases = () => [rng() * TAU, rng() * TAU, rng() * TAU, rng() * TAU];
+    const root = { gen: 0, parent: -1, x: 0, y: 0, r: cfg.dotSize, delay: 0, bow: 0, ph: phases(), na: rng() * TAU, nw: TAU, nr: 0 };
+    const nodes = [root];
+    let frontier = [0];
+    for (let g = 1; g <= G; g++) {
+      const next = [];
+      const len = BRANCH * Math.pow(cfg.lengthDecay, g - 1);
+      const sp = g === 1 ? 1 : cfg.spread;
+      for (const pi of frontier) {
+        const p = nodes[pi];
+        for (const side of [-1, 1]) {
+          const r1 = rng(), r2 = rng(), r3 = rng(), r4 = rng();
+          const n = {
+            gen: g, parent: pi, r: cfg.dotSize * Math.pow(cfg.sizeDecay, g),
+            delay: r3 * 0.25 * jit, bow: side * (1 + (r4 - 0.5) * 1.2 * jit), ph: phases(),
+            na: p.na + side * (p.nw / 4) * sp, nw: p.nw / 2, nr: p.nr + len,
+          };
+          const a = n.na + (r1 - 0.5) * jit * (p.nw / 4) * 0.7;
+          const rr = n.nr + (r2 - 0.5) * jit * 0.4 * len;
+          n.x = Math.cos(a) * rr; n.y = Math.sin(a) * rr;
+          next.push(nodes.length);
+          nodes.push(n);
+        }
+      }
+      frontier = next;
+    }
+    for (const n of nodes) { n.fq = n.ph.map(v => 0.22 + 0.28 * (v / TAU)); n.st = {}; }
+    return nodes;
+  }
+
+  // Degrees of arc per layout unit, so a grown network spans `networkSize` degrees
+  function degPerUnit() {
+    let ext = 0;
+    for (let g = 1; g <= cfg.generations; g++) ext += BRANCH * Math.pow(cfg.lengthDecay, g - 1);
+    return cfg.networkSize / Math.max(1, ext);
+  }
+
+  function siteTiming() {
+    const div = cfg.divisionDuration, rest = cfg.restDuration, G = cfg.generations;
+    const rootIn = 1.4;
+    const lead = rootIn + rest * 0.6;
+    const start = g => lead + (g - 1) * (div + rest);
+    return { div, rest, G, rootIn, start, growEnd: start(G) + div };
+  }
+
+  /* ---------- Globe data + sites ---------- */
+  let landFeature = null;
+  let sites = [];
+  const graticule = d3.geoGraticule10();
+  const SPHERE = { type: 'Sphere' };
+
+  function setLocalProjection(site) {
+    const k = degPerUnit();
+    site.local = d3.geoAzimuthalEquidistant()
+      .rotate([-site.ll[0], -site.ll[1], site.angle])
+      .scale(180 / (Math.PI * k)).translate([0, 0]);
+  }
+  function makeTree(site) {
+    site.nodes = buildTree(site.seed);
+    setLocalProjection(site);
+  }
+
+  function buildSites() {
+    const rng = mulberry32(cfg.seed);
+    const sp = cfg.siteSpacing * DEG;
+    const N = Math.round(clamp(4 * Math.PI / (sp * sp) * 6, 600, 4000));
+    const golden = Math.PI * (3 - Math.sqrt(5));
+    const useLand = cfg.landOnly && landFeature;
+    const cands = [];
+    for (let i = 0; i < N; i++) {
+      const y = 1 - (i + 0.5) * 2 / N;
+      const lat = Math.asin(y) / DEG + (rng() - 0.5) * 2;
+      const lon = (((i * golden) / DEG + (rng() - 0.5) * 2) % 360 + 540) % 360 - 180;
+      if (Math.abs(lat) > 72) continue;
+      if (useLand && !d3.geoContains(landFeature, [lon, lat])) continue;
+      cands.push([lon, lat]);
+    }
+    for (let i = cands.length - 1; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1));
+      [cands[i], cands[j]] = [cands[j], cands[i]];
+    }
+    const picked = [];
+    for (const c of cands) if (picked.every(p => d3.geoDistance(p, c) >= sp)) picked.push(c);
+
+    sites = picked.map(ll => ({
+      ll, seed: (rng() * 1e9) | 0, angle: rng() * 360,
+      state: 'dormant', start: 0, out: 0, nodes: null,
+    }));
+    sites.forEach(makeTree);
+  }
+
+  function resetSite(site) {
+    site.state = 'dormant';
+    site.out = 0;
+    site.seed = (Math.random() * 1e9) | 0;   // a fresh shape each time it comes around
+    makeTree(site);
+  }
+
+  /* ---------- Canvas + projection ---------- */
+  const stage = document.getElementById('stage');
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+  const layer = document.createElement('canvas');      // networks are drawn here, then laid over the globe
+  const lctx = layer.getContext('2d');
+  const view = { w: 0, h: 0, dpr: 1, insetR: 0, insetB: 0, horizonY: 0, ty: 0 };
+
+  const proj = d3.geoSatellite().precision(1);
+  const path = d3.geoPath(proj, ctx);
+  const lpath = d3.geoPath(proj, lctx);
+  const outline = d3.geoPath(proj);                    // SVG path strings, for reusable Path2D shapes
+
+  /* Screen-space frame for a dot: columns are the screen offsets per degree east and north.
+     Lying on the ground, a dot flattens into an ellipse toward the horizon. Standing upright, it
+     stays round and only shrinks with distance: its radius uses the frame's larger axis (the one
+     across the line of sight, which perspective doesn't squash). `uprightDots` blends the two. */
+  function surfaceFrame(ll) {
+    const c = proj(ll);
+    if (!c || c[1] > view.h * 1.5 || c[1] < -view.h) return null;
+    const e = 0.05, cl = Math.max(0.05, Math.cos(ll[1] * DEG));
+    const pe = proj([ll[0] + e / cl, ll[1]]), pn = proj([ll[0], ll[1] + e]);
+    const a = (pe[0] - c[0]) / e, b = (pe[1] - c[1]) / e, cc = (pn[0] - c[0]) / e, d = (pn[1] - c[1]) / e;
+    const u = cfg.uprightDots;
+    if (u <= 0) return [a, b, cc, d, c[0], c[1]];
+    const half = (a * a + b * b + cc * cc + d * d) / 2, det = a * d - b * cc;
+    const s = Math.sqrt(half + Math.sqrt(Math.max(0, half * half - det * det)));
+    return [lerp(a, s, u), lerp(b, 0, u), lerp(cc, 0, u), lerp(d, s, u), c[0], c[1]];
+  }
+
+  // Zoom brings the camera closer to the ground (the framing stays put, so the horizon stays in view)
+  const altitude = () => 1 + 0.22 / Math.max(0.5, cfg.zoom);
+
+  /* The tilted camera sees the horizon ahead but not the ground behind it. d3 clips only at the
+     horizon (a cap around the point beneath the camera), so ground behind the camera would wrap
+     around the screen. Instead, clip to a cap shifted forward: its far edge is the horizon ahead,
+     its near edge sits just behind the camera, before the wrap begins. */
+  function forwardCapClip(shift, radius) {
+    const clip = d3.geoClipCircle(radius * DEG);       // takes radians
+    const toCap = d3.geoRotation([0, -shift]), fromCap = toCap.invert;
+    const R = 180 / Math.PI;
+    const relay = (s, map) => ({
+      point(x, y) { const p = map([x * R, y * R]); s.point(p[0] / R, p[1] / R); },
+      lineStart() { s.lineStart(); }, lineEnd() { s.lineEnd(); },
+      polygonStart() { s.polygonStart(); }, polygonEnd() { s.polygonEnd(); },
+      sphere() { s.sphere(); },
+    });
+    return stream => relay(clip(relay(stream, fromCap)), toCap);
+  }
+
+  // Frame the view so the horizon sits ~20% down and the point beneath the camera sits at the bottom edge
+  function refit() {
+    const alt = altitude();
+    const CA = Math.acos(1 / alt) / DEG;
+    const H = view.h;
+    const unit = d3.geoSatellite().distance(alt).tilt(cfg.tilt).clipAngle(CA - 1e-6)
+      .scale(1).translate([0, 0]).rotate([0, 0, 90]);
+    const hz = -unit([CA - 0.05, 0])[1];                // horizon height above the nadir at scale 1
+    // Landscape: nadir at the bottom edge. Portrait: pull back so networks still fit the width.
+    const scale = Math.min(H * 0.8, Math.max(view.w * 0.75, H * 0.45)) / hz;
+    view.horizonY = H * 0.2;
+    view.ty = view.horizonY + hz * scale;
+
+    // How far behind the camera the ground stays in front of the image plane
+    let back = CA;
+    for (let a = 0.25; a < CA; a += 0.25) {
+      const beta = Math.atan2(Math.sin(a * DEG), alt - Math.cos(a * DEG)) / DEG;
+      if (beta >= 90 - cfg.tilt - 4) { back = Math.max(0.5, a - 1); break; }
+    }
+    const radius = (CA + back) / 2, shift = (CA - back) / 2;
+    proj.distance(alt).tilt(cfg.tilt).preclip(forwardCapClip(shift, radius)).scale(scale);
+    view.cap = { shift, radius, CA };
+  }
+
+  function resize() {
+    const r = stage.getBoundingClientRect();
+    view.dpr = Math.min(window.devicePixelRatio || 1, 2);
+    view.w = r.width; view.h = r.height;
+    for (const c of [canvas, layer]) {
+      c.width = Math.round(r.width * view.dpr);
+      c.height = Math.round(r.height * view.dpr);
+    }
+    refit();
+  }
+  new ResizeObserver(resize).observe(stage);
+
+  /* ---------- Flight ---------- */
+  const START_LON = -112;                 // begin over North America, flying east
+  let t = 0, clock = 0, flightLon = START_LON, playing = true;
+  const flight = { lat: 0, center: [0, 0] };
+
+  function updateFlight(dt) {
+    if (playing) flightLon += cfg.speed * dt;
+    const w = 0.045;                                  // meander period ≈ 140s
+    const lat = cfg.latitude + cfg.meander * Math.sin(t * w + 0.6);
+    const dLat = cfg.meander * w * Math.cos(t * w + 0.6);
+    const dLon = Math.max(0.05, cfg.speed) * Math.cos(lat * DEG);
+    const heading = Math.atan2(dLat, dLon) / DEG;     // degrees north of east
+    flight.lat = lat;
+    flight.center = [flightLon, lat];
+    proj.rotate([-flightLon, -lat, 90 - heading * cfg.bank]);
+    proj.translate([(view.w - view.insetR) / 2, view.ty - view.insetB * 0.35]);
+  }
+
+  /* ---------- Site lifecycle: dormant → revealed → growing → grown → reset ---------- */
+  function updateSites(dt) {
+    const W = view.w, H = view.h;
+    const CA = Math.acos(1 / altitude()) / DEG;
+    const netR = cfg.networkSize * 1.15;
+    const band = view.horizonY + (H - view.horizonY) * cfg.revealLine;
+    for (const s of sites) {
+      const d = d3.geoDistance(s.ll, flight.center) / DEG;
+      const p = proj(s.ll);
+      const onScreen = d < CA - 0.4 && p && p[1] > 0 && p[1] < H + 20 && p[0] > -20 && p[0] < W + 20;
+      // Judge by the whole network, not its center: up close, a network's branches stay on
+      // screen long after its center has passed beneath the camera. Dots are culled one by one.
+      s.drawable = d < CA + netR && p && p[1] > -H;
+
+      if (s.state === 'dormant') {
+        if (onScreen && p[1] > band) {
+          s.state = 'active';
+          s.start = !playing && reduceMotion ? -1e3
+            : t + (t < 0.5 ? Math.random() * 3 : Math.random() * 0.8);
+          s.out = 0;
+        }
+        continue;
+      }
+      // `out` is time with no dot of this network on screen; draw() zeroes it while any dot is visible
+      if (playing && t > s.start) s.out += dt;
+      if (cfg.resetWhenPassed && s.out > 2.5) resetSite(s);
+    }
+  }
+
+  /* ---------- Drawing ---------- */
+  let shownStatus = '';
+  const statusEl = showControls ? document.getElementById('status') : null;
+
+  function draw() {
+    const W = view.w, H = view.h, dpr = view.dpr;
+    const E = EASE[cfg.easing] || EASE.sine;
+    const T = siteTiming();
+    const { div, G } = T;
+    const k = degPerUnit();
+    const D = cfg.drift * 5;
+    const stagger = 0.25 * cfg.jitter;
+    const horizonRad = view.cap.CA * DEG;
+
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+
+    // Globe
+    ctx.beginPath(); path(SPHERE);
+    ctx.fillStyle = cfg.oceanColor; ctx.fill();
+    if (cfg.showLand && landFeature) {
+      ctx.beginPath(); path(landFeature);
+      ctx.fillStyle = cfg.landColor; ctx.fill();
+    }
+    if (cfg.showGraticule) {
+      ctx.beginPath(); path(graticule);
+      ctx.lineWidth = 0.6; ctx.strokeStyle = cfg.gridColor; ctx.stroke();
+    }
+
+    // Networks
+    lctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    lctx.clearRect(0, 0, W, H);
+    const live = [];
+    let growing = 0, dots = 0;
+
+    for (const site of sites) {
+      if (site.state !== 'active' || !site.drawable) continue;
+      const ts = t - site.start;
+      if (ts <= 0) continue;
+      if (ts < T.growEnd) growing++;
+      const inv = site.local.invert;
+
+      for (const n of site.nodes) {
+        const s = n.st;
+        const tx = n.x + D * (Math.sin(clock * n.fq[0] + n.ph[0]) + 0.5 * Math.sin(clock * n.fq[1] + n.ph[1]));
+        const ty = n.y + D * (Math.sin(clock * n.fq[2] + n.ph[2]) + 0.5 * Math.sin(clock * n.fq[3] + n.ph[3]));
+        s.scale = n.gen < G ? 1 + cfg.swell * bell((ts - T.start(n.gen + 1)) / (div * 0.6)) : 1;
+
+        if (n.gen === 0) {
+          s.vis = true; s.x = tx; s.y = ty;
+          s.size = E(clamp(ts / 1.1));
+          s.ring = E(clamp((ts - 0.5) / 0.9));
+          s.newborn = 1 - E(clamp((ts - 1.1) / 1.6));
+        } else {
+          const p = (ts - T.start(n.gen)) / div;
+          s.vis = p > n.delay && site.nodes[n.parent].st.vis;
+          if (!s.vis) continue;
+          const pc = clamp((p - n.delay) / (1 - stagger));
+          const grow = E(clamp(pc / 0.55));
+          s.size = 0.3 + 0.7 * grow;
+          s.ring = E(clamp((pc - 0.55) / 0.45));
+          s.newborn = 1 - E(clamp((ts - T.start(n.gen) - div) / Math.max(0.8, T.rest + div * 0.6)));
+          const par = site.nodes[n.parent].st;
+          const dx = tx - par.x, dy = ty - par.y, kb = cfg.curvature * n.bow;
+          s.x0 = par.x; s.y0 = par.y;
+          s.cx = (par.x + tx) / 2 - dy * kb; s.cy = (par.y + ty) / 2 + dx * kb;
+          s.tx = tx; s.ty = ty;
+          s.move = E(clamp(pc / 0.9));
+          s.x = bez(s.x0, s.cx, tx, s.move);
+          s.y = bez(s.y0, s.cy, ty, s.move);
+        }
+        s.ll = inv([s.x, s.y]);
+        s.rd = n.r * s.size * s.scale * k;               // dot radius in degrees
+        s.frame = d3.geoDistance(s.ll, flight.center) < horizonRad ? surfaceFrame(s.ll) : null;
+        if (s.frame) {
+          dots++;
+          const f = s.frame, m = 60;
+          if (f[4] > -m && f[4] < W + m && f[5] > -m && f[5] < H + m) site.out = 0;
+        }
+      }
+      live.push(site);
+    }
+
+    // 1. Threads, sampled along the bow and laid on the sphere (clipped at the horizon)
+    lctx.beginPath();
+    for (const site of live) {
+      const inv = site.local.invert;
+      for (const n of site.nodes) {
+        const s = n.st;
+        if (!n.gen || !s.vis) continue;
+        const m = Math.max(3, Math.ceil(14 * s.move));
+        const coords = [];
+        for (let i = 0; i <= m; i++) {
+          const u = s.move * i / m;
+          coords.push(inv([bez(s.x0, s.cx, s.tx, u), bez(s.y0, s.cy, s.ty, u)]));
+        }
+        lpath({ type: 'LineString', coordinates: coords });
+      }
+    }
+    lctx.lineCap = 'round'; lctx.lineJoin = 'round';
+    lctx.lineWidth = cfg.lineWidth; lctx.strokeStyle = cfg.lineColor;
+    lctx.stroke();
+
+    // Dots are drawn in each one's local surface frame (degrees east/north → screen),
+    // so they flatten into ellipses toward the horizon like circles painted on the ground
+    const onSurface = f => lctx.setTransform(dpr * f[0], dpr * f[1], dpr * f[2], dpr * f[3], dpr * f[4], dpr * f[5]);
+
+    // 2. Clear a halo around every dot so threads stop short of the ring
+    lctx.globalCompositeOperation = 'destination-out';
+    lctx.beginPath();
+    for (const site of live) for (const n of site.nodes) {
+      const s = n.st;
+      if (!s.vis || !s.frame) continue;
+      const halo = s.rd * (1 + cfg.ringGap + (cfg.ring ? cfg.ringWidth * s.ring : 0)) * 1.04;
+      onSurface(s.frame);
+      lctx.moveTo(halo, 0);
+      lctx.arc(0, 0, halo, 0, TAU);
+    }
+    lctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    lctx.fill();
+    lctx.globalCompositeOperation = 'source-over';
+
+    // 3. Dots and rings
+    for (const site of live) {
+      for (let i = site.nodes.length - 1; i >= 0; i--) {
+        const s = site.nodes[i].st;
+        if (!s.vis || !s.frame || s.rd <= 0) continue;
+        lctx.fillStyle = s.newborn > 0 ? mix(cfg.dotColor, cfg.newbornColor, s.newborn) : cfg.dotColor;
+        lctx.globalAlpha = 1;
+        onSurface(s.frame);
+        lctx.beginPath();
+        lctx.arc(0, 0, s.rd, 0, TAU);
+        lctx.fill();
+        if (cfg.ring && s.ring > 0) {
+          const wR = s.rd * cfg.ringWidth * s.ring;
+          const mid = lerp(s.rd, s.rd * (1 + cfg.ringGap) + (s.rd * cfg.ringWidth) / 2, s.ring);
+          const ro = mid + wR / 2, ri = Math.max(0, mid - wR / 2);
+          lctx.globalAlpha = s.ring;
+          lctx.beginPath();
+          lctx.arc(0, 0, ro, 0, TAU);
+          lctx.moveTo(ri, 0);
+          lctx.arc(0, 0, ri, 0, TAU);
+          lctx.fill('evenodd');
+        }
+      }
+    }
+    lctx.globalAlpha = 1;
+    lctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.drawImage(layer, 0, 0);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    // Aerial haze: distance fades softly into white
+    if (cfg.haze > 0) {
+      const y0 = view.horizonY - 2, y1 = view.horizonY + (H - view.horizonY) * 0.55;
+      const [r, g, b] = rgb('#FFFFFF');
+      const grad = ctx.createLinearGradient(0, y0, 0, y1);
+      grad.addColorStop(0, `rgba(${r},${g},${b},${cfg.haze})`);
+      grad.addColorStop(0.45, `rgba(${r},${g},${b},${cfg.haze * 0.35})`);
+      grad.addColorStop(1, `rgba(${r},${g},${b},0)`);
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, y0, W, y1 - y0);
+    }
+
+    const edge = new Path2D(outline(SPHERE));
+    if (cfg.horizonFade) {
+      // Endless horizon: stacked soft white strokes along the globe's edge build a falloff
+      // that follows the curve, so the globe dissolves into the background with no hard line
+      const depth = Math.max(4, cfg.fadeDepth * H), K = 22;
+      const a = 1 - Math.pow(0.015, 1 / K);
+      ctx.strokeStyle = '#FFFFFF'; ctx.lineJoin = 'round'; ctx.globalAlpha = a;
+      for (let i = 1; i <= K; i++) { ctx.lineWidth = 2 * depth * i / K; ctx.stroke(edge); }
+      ctx.globalAlpha = 1;
+    } else {
+      ctx.lineWidth = 1; ctx.strokeStyle = '#DADADD'; ctx.stroke(edge);
+    }
+
+    const text = !sites.length ? 'Loading the globe'
+      : `${growing} ${growing === 1 ? 'network' : 'networks'} growing, ${dots} ${dots === 1 ? 'dot' : 'dots'} in view`;
+    if (statusEl && text !== shownStatus) statusEl.textContent = shownStatus = text;
+  }
+
+  /* ---------- Loop ---------- */
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const mobileMq = window.matchMedia('(max-width: 640px)');
+  const panel = showControls ? document.getElementById('panel') : null;
+  let last = performance.now();
+
+  function frame(now) {
+    const dt = Math.min(0.1, (now - last) / 1000);
+    last = now;
+    if (playing) { t += dt; clock += dt; }
+
+    const open = panel && panel.classList.contains('is-open');
+    const tR = open && !mobileMq.matches ? panel.offsetWidth : 0;
+    const tB = open && mobileMq.matches ? panel.offsetHeight : 0;
+    const ease = reduceMotion ? 1 : 1 - Math.exp(-dt * 3);
+    view.insetR += (tR - view.insetR) * ease;
+    view.insetB += (tB - view.insetB) * ease;
+
+    updateFlight(dt);
+    updateSites(dt);
+    draw();
+    requestAnimationFrame(frame);
+  }
+
+  /* ---------- Controls ---------- */
+  const inputs = {};
+
+  function setPlaying(on) {
+    playing = on;
+    if (showControls) document.getElementById('play').textContent = on ? 'Pause' : 'Play';
+  }
+  function restart() {
+    t = 0; clock = 0; flightLon = START_LON;
+    buildSites();
+    setPlaying(true);
+  }
+
+  function syncInput(key) {
+    const el = inputs[key];
+    if (!el) return;
+    const v = cfg[key];
+    if (el.type === 'checkbox') el.checked = !!v;
+    else if (el.type === 'color') el.value = /^#[0-9a-f]{6}$/i.test(v) ? v : '#ffffff';
+    else el.value = v;
+    if (el.type === 'range') {
+      el.style.setProperty('--p', ((v - el.min) / (el.max - el.min)) * 100 + '%');
+      el.closest('.row').querySelector('output').textContent = el._fmt(+v);
+    }
+  }
+
+  function buildPanel() {
+    const host = document.getElementById('groups');
+    for (const group of CONTROLS) {
+      const sec = document.createElement('section');
+      sec.className = 'group';
+      sec.innerHTML = `<h2>${group.group}</h2>`;
+      for (const c of group.items) {
+        const row = document.createElement('div');
+        row.className = 'row' + (c.type === 'check' ? ' check' : '');
+        const id = 'c-' + c.key;
+        let el;
+        if (c.type === 'range') {
+          el = document.createElement('input');
+          Object.assign(el, { type: 'range', min: c.min, max: c.max, step: c.step });
+          el._fmt = c.fmt;
+          row.innerHTML = `<label for="${id}">${c.label}</label><output for="${id}"></output>`;
+          row.appendChild(el);
+        } else if (c.type === 'check') {
+          el = document.createElement('input');
+          el.type = 'checkbox';
+          row.appendChild(el);
+          row.insertAdjacentHTML('beforeend', `<label for="${id}">${c.label}</label>`);
+        } else if (c.type === 'select') {
+          el = document.createElement('select');
+          el.innerHTML = c.options.map(([v, l]) => `<option value="${v}">${l}</option>`).join('');
+          row.innerHTML = `<label for="${id}">${c.label}</label>`;
+          row.appendChild(el);
+        } else {
+          el = document.createElement('input');
+          el.type = 'color';
+          row.innerHTML = `<label for="${id}">${c.label}</label>`;
+          row.appendChild(el);
+        }
+        el.id = id;
+        inputs[c.key] = el;
+        el.addEventListener('input', () => {
+          cfg[c.key] = el.type === 'checkbox' ? el.checked : el.type === 'range' ? +el.value : el.value;
+          syncInput(c.key);
+          if (c.sites) buildSites();
+          else if (c.trees) sites.forEach(makeTree);
+          refit();
+        });
+        sec.appendChild(row);
+        syncInput(c.key);
+      }
+      host.appendChild(sec);
+    }
+
+    const adjust = document.getElementById('adjust');
+    const setOpen = open => {
+      panel.classList.toggle('is-open', open);
+      adjust.setAttribute('aria-expanded', String(open));
+      if (open) panel.querySelector('button, input, select').focus({ preventScroll: true });
+      else adjust.focus({ preventScroll: true });
+    };
+    adjust.addEventListener('click', () => setOpen(true));
+    document.getElementById('close').addEventListener('click', () => setOpen(false));
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && panel.classList.contains('is-open')) setOpen(false);
+    });
+
+    document.getElementById('play').addEventListener('click', () => setPlaying(!playing));
+    document.getElementById('restart').addEventListener('click', restart);
+
+    const copyBtn = document.getElementById('copy');
+    copyBtn.addEventListener('click', async () => {
+      const text = 'const CONFIG = ' + JSON.stringify(cfg, null, 2) + ';';
+      try { await navigator.clipboard.writeText(text); }
+      catch {
+        const ta = Object.assign(document.createElement('textarea'), { value: text });
+        document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
+      }
+      copyBtn.textContent = 'Copied';
+      setTimeout(() => (copyBtn.textContent = 'Copy settings'), 1800);
+    });
+
+    document.getElementById('reset').addEventListener('click', () => {
+      Object.assign(cfg, DEFAULTS);
+      Object.keys(inputs).forEach(syncInput);
+      refit(); restart();
+    });
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.target.closest && e.target.closest('input, select, button, textarea')) return;
+    if (e.key === ' ') { e.preventDefault(); setPlaying(!playing); }
+  });
+
+  /* ---------- Start ---------- */
+  if (showControls) buildPanel();
+  else ['adjust', 'panel', 'switch'].forEach(id => document.getElementById(id).remove());
+
+  resize();
+  if (reduceMotion) setPlaying(false);  // a still view; whatever is in sight shows fully grown
+
+  // Sites are placed once the land outline arrives (or everywhere, if it can't load)
+  fetch('https://cdn.jsdelivr.net/npm/world-atlas@2.0.2/land-110m.json')
+    .then(r => r.json())
+    .then(topo => { landFeature = topojson.feature(topo, topo.objects.land); })
+    .catch(() => {})
+    .finally(() => { t = 0; buildSites(); });
+
+  requestAnimationFrame(now => { last = now; canvas.classList.add('is-ready'); frame(now); });
+})();
+</script>
+</body>
+</html>

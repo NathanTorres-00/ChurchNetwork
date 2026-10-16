@@ -1,0 +1,751 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Network Multiply</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #FFFFFF;            /* page background; set to transparent for embeds */
+    --panel-bg: #FFFFFF;      /* controls drawer */
+    --ink: #3F3F46;           /* panel text */
+    --ink-soft: #8A8A93;      /* panel values + hints */
+    --hair: #E7E7EA;          /* hairlines in the panel */
+    --track: #E6E6E9;         /* slider track */
+    --thumb: #C9C9C9;         /* slider thumb, drawn like a tiny dot + ring */
+    --panel-w: 304px;
+    --font: 'Geist', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); }
+  body { font-family: var(--font); color: var(--ink); -webkit-font-smoothing: antialiased; }
+
+  .stage { position: fixed; inset: 0; }
+  canvas { display: block; width: 100%; height: 100%; opacity: 0; transition: opacity 1.4s ease; }
+  canvas.is-ready { opacity: 1; }
+
+  /* ---------- Page switch ---------- */
+  .switch {
+    position: fixed; top: 16px; left: 16px; z-index: 3;
+    display: flex; gap: 2px; padding: 3px;
+    background: var(--panel-bg); border: 1px solid var(--hair); border-radius: 999px;
+  }
+  .switch a {
+    font: 400 13px/1 var(--font); color: var(--ink-soft); text-decoration: none;
+    padding: 7px 12px; border-radius: 999px;
+  }
+  .switch a:hover { color: var(--ink); }
+  .switch a[aria-current="page"] { background: #F1F1F3; color: var(--ink); }
+
+  /* ---------- Adjust button ---------- */
+  .adjust {
+    position: fixed; top: 16px; right: 16px; z-index: 3;
+    display: inline-flex; align-items: center; gap: 8px;
+    font: 500 13px/1 var(--font); color: var(--ink);
+    padding: 9px 14px 9px 11px; border-radius: 999px;
+    background: var(--panel-bg); border: 1px solid var(--hair); cursor: pointer;
+    transition: opacity .4s ease, transform .6s cubic-bezier(.65, 0, .35, 1);
+  }
+  .adjust:hover { background: #F7F7F8; }
+  .adjust .glyph {
+    width: 8px; height: 8px; border-radius: 50%; background: var(--thumb);
+    box-shadow: 0 0 0 2px var(--panel-bg), 0 0 0 3.5px var(--thumb);
+    margin: 0 3px;
+  }
+  .adjust[aria-expanded="true"] { opacity: 0; pointer-events: none; transform: translateY(-6px); }
+
+  /* ---------- Panel ---------- */
+  .panel {
+    position: fixed; top: 0; right: 0; bottom: 0; z-index: 2;
+    width: var(--panel-w); max-width: 100%;
+    background: var(--panel-bg); border-left: 1px solid var(--hair);
+    overflow-y: auto; overscroll-behavior: contain;
+    padding: 18px 20px 28px;
+    transform: translateX(100%); visibility: hidden;
+    transition: transform .7s cubic-bezier(.65, 0, .35, 1), visibility 0s linear .7s;
+  }
+  .panel.is-open { transform: none; visibility: visible; transition: transform .7s cubic-bezier(.65, 0, .35, 1); }
+
+  .panel-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+  .panel-head h1 { font-size: 15px; font-weight: 500; margin: 0; letter-spacing: -0.005em; }
+  .status { font-size: 12px; color: var(--ink-soft); margin: 4px 0 14px; font-variant-numeric: tabular-nums; }
+
+  .close {
+    font: 400 13px/1 var(--font); color: var(--ink-soft); background: none; border: 0;
+    padding: 6px 4px; cursor: pointer;
+  }
+  .close:hover { color: var(--ink); }
+
+  .actions { display: flex; flex-wrap: wrap; gap: 6px; }
+  .btn {
+    font: 400 13px/1 var(--font); color: var(--ink);
+    padding: 8px 12px; border-radius: 999px;
+    background: var(--panel-bg); border: 1px solid var(--hair); cursor: pointer;
+  }
+  .btn:hover { background: #F6F6F7; }
+
+  .group { border-top: 1px solid var(--hair); margin-top: 18px; padding-top: 14px; }
+  .group h2 { font-size: 13px; font-weight: 500; margin: 0 0 2px; }
+
+  .row { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 4px 12px; margin: 10px 0; }
+  .row label { font-size: 13px; color: var(--ink); }
+  .row output { font-size: 12px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+  .row input[type="range"] { grid-column: 1 / -1; }
+  .row.check { grid-template-columns: auto 1fr; gap: 10px; }
+  .row.check input { margin: 0; accent-color: var(--ink); width: 15px; height: 15px; }
+
+  select {
+    font: 400 13px/1 var(--font); color: var(--ink);
+    padding: 6px 26px 6px 10px; border: 1px solid var(--hair); border-radius: 8px;
+    background: var(--panel-bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%238A8A93' stroke-width='1.2'/%3E%3C/svg%3E") no-repeat right 10px center;
+    -webkit-appearance: none; appearance: none; cursor: pointer;
+  }
+
+  input[type="color"] {
+    -webkit-appearance: none; appearance: none;
+    width: 30px; height: 22px; padding: 0; border: 1px solid var(--hair); border-radius: 6px;
+    background: none; cursor: pointer;
+  }
+  input[type="color"]::-webkit-color-swatch-wrapper { padding: 2px; }
+  input[type="color"]::-webkit-color-swatch { border: 0; border-radius: 4px; }
+  input[type="color"]::-moz-color-swatch { border: 0; border-radius: 4px; }
+
+  /* Range: hairline track with a filled portion; thumb echoes the dot-and-ring motif */
+  input[type="range"] {
+    -webkit-appearance: none; appearance: none; width: 100%; height: 20px;
+    background: transparent; margin: 0; cursor: pointer; --p: 50%;
+  }
+  input[type="range"]::-webkit-slider-runnable-track {
+    height: 2px; border-radius: 2px;
+    background: linear-gradient(to right, var(--thumb) var(--p), var(--track) var(--p));
+  }
+  input[type="range"]::-moz-range-track {
+    height: 2px; border-radius: 2px;
+    background: linear-gradient(to right, var(--thumb) var(--p), var(--track) var(--p));
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 10px; height: 10px; margin-top: -4px; border-radius: 50%;
+    background: var(--thumb); box-shadow: 0 0 0 2.5px var(--panel-bg), 0 0 0 4px var(--thumb);
+    transition: box-shadow .3s ease;
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 10px; height: 10px; border: 0; border-radius: 50%;
+    background: var(--thumb); box-shadow: 0 0 0 2.5px var(--panel-bg), 0 0 0 4px var(--thumb);
+  }
+  input[type="range"]:focus-visible { outline: none; }
+  input[type="range"]:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 2.5px var(--panel-bg), 0 0 0 4px var(--ink); }
+  input[type="range"]:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 2.5px var(--panel-bg), 0 0 0 4px var(--ink); }
+
+  :focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+  .foot { border-top: 1px solid var(--hair); margin-top: 18px; padding-top: 16px; }
+  .hint { font-size: 12px; color: var(--ink-soft); line-height: 1.5; margin: 10px 0 0; max-width: 34ch; }
+
+  /* Phones: the drawer becomes a bottom sheet */
+  @media (max-width: 640px) {
+    .panel {
+      top: auto; left: 0; width: 100%; max-height: 62vh;
+      border-left: 0; border-top: 1px solid var(--hair); border-radius: 16px 16px 0 0;
+      padding: 16px 16px 24px;
+      transform: translateY(100%);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    canvas, .panel, .adjust { transition: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="stage" id="stage">
+  <canvas id="canvas" role="img" aria-label="One dot divides into two, and each new dot divides again, growing a network of connected dots."></canvas>
+</div>
+
+<nav class="switch" id="switch" aria-label="Views">
+  <a href="network-multiply.html" aria-current="page">Flat</a>
+  <a href="network-globe.html">Globe</a>
+  <a href="network-globe-pins.html">Pins</a>
+  <a href="hero.html">Hero</a>
+</nav>
+
+<button class="adjust" id="adjust" type="button" aria-expanded="false" aria-controls="panel">
+  <span class="glyph" aria-hidden="true"></span>Adjust
+</button>
+
+<aside class="panel" id="panel" aria-label="Animation settings">
+  <div class="panel-head">
+    <h1>Network multiply</h1>
+    <button class="close" id="close" type="button">Close</button>
+  </div>
+  <p class="status" id="status">Generation 0 of 5</p>
+  <div class="actions">
+    <button class="btn" id="play" type="button">Pause</button>
+    <button class="btn" id="replay" type="button">Replay</button>
+    <button class="btn" id="reseed" type="button">New shape</button>
+  </div>
+  <div id="groups"></div>
+  <div class="foot">
+    <div class="actions">
+      <button class="btn" id="copy" type="button">Copy settings</button>
+      <button class="btn" id="reset" type="button">Reset to defaults</button>
+    </div>
+    <p class="hint">Copied settings paste into the CONFIG block of this file. Add ?controls=0 to the address to hide this panel.</p>
+  </div>
+</aside>
+
+<script>
+/* =========================================================================
+   CONFIG: every parameter the panel controls. Paste "Copy settings" output here.
+   Any key can also be set in the address, e.g. ?generations=4&layout=tree
+   ========================================================================= */
+const CONFIG = {
+  // Growth
+  generations: 5,           // rounds of division: 5 gives 1 → 2 → 4 → 8 → 16 → 32
+  divisionDuration: 1.8,    // seconds for one division
+  restDuration: 0.9,        // seconds of stillness between generations
+  holdDuration: 4,          // seconds to rest once fully grown
+  loop: true,
+  reseedEachLoop: true,     // grow a slightly different shape every loop
+  seed: 7,
+
+  // Shape
+  layout: 'radial',         // 'radial' or 'tree'
+  spread: 0.82,             // how far apart each new pair sits (1 = evenly spaced)
+  branchLength: 92,
+  lengthDecay: 0.94,        // branch length multiplier per generation
+  jitter: 0.45,             // organic variation in angle, length and timing
+  curvature: 0.16,          // how much each thread bows
+
+  // Motion
+  easing: 'sine',           // 'sine', 'cubic' or 'quint' (all ease-in-out)
+  follow: 0.45,             // how much the view starts close and widens as it grows
+  drift: 0.6,               // slow idle breathing of settled dots
+  swell: 0.09,              // how much a dot swells as it divides
+
+  // Look
+  dotSize: 14,
+  sizeDecay: 0.86,          // dot size multiplier per generation
+  ring: true,
+  ringGap: 0.28,            // gap between dot and ring, relative to dot size
+  ringWidth: 0.26,          // ring thickness, relative to dot size
+  lineWidth: 1,             // thread width in screen pixels
+  dotColor: '#D9D9D9',
+  newbornColor: '#C2C2C2',  // a new dot arrives a touch deeper, then settles
+  lineColor: '#D2D2D2',
+  bgColor: '#FFFFFF',       // or 'transparent'
+};
+
+// Set to false for embeds to hide the Adjust panel (or add ?controls=0 to the address)
+const SHOW_CONTROLS = true;
+
+const CONTROLS = [
+  { group: 'Growth', items: [
+    { key: 'generations', label: 'Generations', type: 'range', min: 1, max: 7, step: 1, fmt: v => v, replay: true },
+    { key: 'divisionDuration', label: 'Division time', type: 'range', min: 0.4, max: 4, step: 0.1, fmt: v => v.toFixed(1) + 's' },
+    { key: 'restDuration', label: 'Pause between generations', type: 'range', min: 0, max: 3, step: 0.1, fmt: v => v.toFixed(1) + 's' },
+    { key: 'holdDuration', label: 'Hold when grown', type: 'range', min: 0.5, max: 10, step: 0.5, fmt: v => v.toFixed(1) + 's' },
+    { key: 'loop', label: 'Loop', type: 'check' },
+    { key: 'reseedEachLoop', label: 'New shape each loop', type: 'check' },
+  ]},
+  { group: 'Shape', items: [
+    { key: 'layout', label: 'Layout', type: 'select', options: [['radial', 'Radial'], ['tree', 'Tree']], replay: true },
+    { key: 'spread', label: 'Pair spread', type: 'range', min: 0.3, max: 1, step: 0.01, fmt: v => Math.round(v * 100) + '%' },
+    { key: 'branchLength', label: 'Branch length', type: 'range', min: 40, max: 200, step: 1, fmt: v => v },
+    { key: 'lengthDecay', label: 'Length per generation', type: 'range', min: 0.6, max: 1.25, step: 0.01, fmt: v => '×' + v.toFixed(2) },
+    { key: 'jitter', label: 'Organic variation', type: 'range', min: 0, max: 1, step: 0.01, fmt: v => Math.round(v * 100) + '%' },
+    { key: 'curvature', label: 'Thread bow', type: 'range', min: 0, max: 0.5, step: 0.01, fmt: v => Math.round(v * 100) + '%' },
+  ]},
+  { group: 'Motion', items: [
+    { key: 'easing', label: 'Easing', type: 'select', options: [['sine', 'Sine'], ['cubic', 'Cubic'], ['quint', 'Quint']] },
+    { key: 'follow', label: 'Camera follow', type: 'range', min: 0, max: 1, step: 0.01, fmt: v => Math.round(v * 100) + '%' },
+    { key: 'drift', label: 'Drift', type: 'range', min: 0, max: 2, step: 0.05, fmt: v => v.toFixed(2) },
+    { key: 'swell', label: 'Swell on divide', type: 'range', min: 0, max: 0.3, step: 0.01, fmt: v => Math.round(v * 100) + '%' },
+  ]},
+  { group: 'Look', items: [
+    { key: 'dotSize', label: 'Dot size', type: 'range', min: 4, max: 30, step: 0.5, fmt: v => v },
+    { key: 'sizeDecay', label: 'Size per generation', type: 'range', min: 0.6, max: 1, step: 0.01, fmt: v => '×' + v.toFixed(2) },
+    { key: 'ring', label: 'Ring', type: 'check' },
+    { key: 'ringGap', label: 'Ring gap', type: 'range', min: 0, max: 0.8, step: 0.01, fmt: v => Math.round(v * 100) + '%' },
+    { key: 'ringWidth', label: 'Ring width', type: 'range', min: 0.05, max: 0.6, step: 0.01, fmt: v => Math.round(v * 100) + '%' },
+    { key: 'lineWidth', label: 'Line width', type: 'range', min: 0.25, max: 4, step: 0.25, fmt: v => v.toFixed(2) + 'px' },
+    { key: 'dotColor', label: 'Dot color', type: 'color' },
+    { key: 'newbornColor', label: 'New dot color', type: 'color' },
+    { key: 'lineColor', label: 'Line color', type: 'color' },
+    { key: 'bgColor', label: 'Background', type: 'color' },
+  ]},
+];
+
+(() => {
+  'use strict';
+
+  const TAU = Math.PI * 2;
+  const DEFAULTS = { ...CONFIG };
+  const params = new URLSearchParams(location.search);
+  const cfg = { ...CONFIG };
+
+  // URL overrides, coerced to each default's type
+  for (const key of Object.keys(DEFAULTS)) {
+    if (!params.has(key)) continue;
+    const raw = params.get(key), def = DEFAULTS[key];
+    if (typeof def === 'number') { const n = parseFloat(raw); if (Number.isFinite(n)) cfg[key] = n; }
+    else if (typeof def === 'boolean') cfg[key] = raw === '1' || raw === 'true';
+    else cfg[key] = raw.startsWith('#') || /^[0-9a-f]{6}$/i.test(raw) ? (raw.startsWith('#') ? raw : '#' + raw) : raw;
+  }
+  if (params.get('bg') === 'transparent') cfg.bgColor = 'transparent';
+  const showControls = SHOW_CONTROLS && params.get('controls') !== '0';
+
+  /* ---------- Math helpers ---------- */
+  const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const bez = (a, c, b, t) => { const u = 1 - t; return u * u * a + 2 * u * t * c + t * t * b; };
+  const bell = x => (1 - Math.cos(TAU * clamp(x))) / 2;   // 0 → 1 → 0 with soft ends
+  const EASE = {
+    sine:  x => -(Math.cos(Math.PI * x) - 1) / 2,
+    cubic: x => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2,
+    quint: x => x < 0.5 ? 16 * x ** 5 : 1 - Math.pow(-2 * x + 2, 5) / 2,
+  };
+
+  function mulberry32(a) {
+    return () => {
+      a |= 0; a = (a + 0x6D2B79F5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  const rgbCache = new Map();
+  function rgb(hex) {
+    if (!rgbCache.has(hex)) {
+      const h = hex.replace('#', '');
+      const n = parseInt(h.length === 3 ? h.split('').map(c => c + c).join('') : h, 16);
+      rgbCache.set(hex, [(n >> 16) & 255, (n >> 8) & 255, n & 255]);
+    }
+    return rgbCache.get(hex);
+  }
+  function mix(a, b, t) {
+    const A = rgb(a), B = rgb(b);
+    return `rgb(${Math.round(lerp(A[0], B[0], t))},${Math.round(lerp(A[1], B[1], t))},${Math.round(lerp(A[2], B[2], t))})`;
+  }
+
+  /* ---------- Tree model ----------
+     Every node owns a wedge (radial) or a span (tree). Its two children split that
+     wedge in half, so branches never cross; jitter moves each dot within its own share. */
+  function buildTree(seed, jit) {
+    const rng = mulberry32(seed);
+    const G = cfg.generations;
+    const radial = cfg.layout !== 'tree';
+    const outerK = 1 + cfg.ringGap + (cfg.ring ? cfg.ringWidth : 0);
+    const leafR = cfg.dotSize * Math.pow(cfg.sizeDecay, G) * outerK;
+    const phases = () => [rng() * TAU, rng() * TAU, rng() * TAU, rng() * TAU];
+
+    const tilt = (rng() - 0.5) * 0.7;
+    const root = {
+      gen: 0, parent: -1, side: 0, x: 0, y: 0, r: cfg.dotSize, delay: 0, bow: 0, ph: phases(),
+      na: Math.PI / 2 + tilt * jit, nw: radial ? TAU : Math.max(leafR * 2 * 2.1, 26) * 2 ** G,
+      nr: 0, nx: 0, ny: 0,
+    };
+    const nodes = [root];
+    let frontier = [0];
+
+    for (let g = 1; g <= G; g++) {
+      const next = [];
+      const len = cfg.branchLength * Math.pow(cfg.lengthDecay, g - 1);
+      const sp = g === 1 ? 1 : cfg.spread;
+      for (const pi of frontier) {
+        const p = nodes[pi];
+        for (const side of [-1, 1]) {
+          const r1 = rng(), r2 = rng(), r3 = rng(), r4 = rng();
+          const n = {
+            gen: g, parent: pi, side, r: cfg.dotSize * Math.pow(cfg.sizeDecay, g),
+            delay: r3 * 0.25 * jit, bow: side * (1 + (r4 - 0.5) * 1.2 * jit), ph: phases(),
+          };
+          if (radial) {
+            n.na = p.na + side * (p.nw / 4) * sp; n.nw = p.nw / 2; n.nr = p.nr + len;
+            const a = n.na + (r1 - 0.5) * jit * (p.nw / 4) * 0.7;
+            const rr = n.nr + (r2 - 0.5) * jit * 0.4 * len;
+            n.x = Math.cos(a) * rr; n.y = Math.sin(a) * rr;
+          } else {
+            n.nx = p.nx + side * (p.nw / 4) * sp; n.nw = p.nw / 2; n.ny = p.ny + len;
+            n.x = n.nx + (r1 - 0.5) * jit * (p.nw / 4) * 0.5;
+            n.y = n.ny + (r2 - 0.5) * jit * 0.4 * len;
+          }
+          next.push(nodes.length);
+          nodes.push(n);
+        }
+      }
+      frontier = next;
+    }
+
+    for (const n of nodes) {
+      n.fq = n.ph.map(v => 0.22 + 0.28 * (v / TAU));   // slow, slightly different per dot
+      n.outer = n.r * outerK;
+      n.st = {};
+    }
+    return nodes;
+  }
+
+  // Camera framing per generation, from the jitter-free layout so it's identical across seeds
+  function buildCamBoxes(ideal) {
+    const boxes = [];
+    const margin = cfg.branchLength * 0.2 * cfg.jitter + cfg.drift * 8;
+    for (let k = 0; k <= cfg.generations; k++) {
+      let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+      for (const n of ideal) {
+        if (n.gen > k) continue;
+        const m = n.outer + (n.gen ? margin : 0);
+        x0 = Math.min(x0, n.x - m); x1 = Math.max(x1, n.x + m);
+        y0 = Math.min(y0, n.y - m); y1 = Math.max(y1, n.y + m);
+      }
+      boxes.push({ x0, y0, x1, y1 });
+    }
+    return boxes;
+  }
+
+  let nodes = [], camBoxes = [];
+  function rebuild() {
+    nodes = buildTree(cfg.seed, cfg.jitter);
+    camBoxes = buildCamBoxes(buildTree(cfg.seed, 0));
+  }
+
+  /* ---------- Timeline ---------- */
+  function timing() {
+    const div = cfg.divisionDuration, rest = cfg.restDuration, G = cfg.generations;
+    const lead = Math.max(0.8, rest);
+    const start = g => lead + (g - 1) * (div + rest);
+    const growEnd = start(G) + div;
+    const holdEnd = growEnd + cfg.holdDuration;
+    const fade = 2.4;
+    return { div, rest, G, start, growEnd, holdEnd, fade, cycleEnd: holdEnd + fade + 0.5 };
+  }
+
+  /* ---------- Canvas ---------- */
+  const stage = document.getElementById('stage');
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+  const view = { w: 0, h: 0, dpr: 1, insetR: 0, insetB: 0 };
+
+  function resize() {
+    const r = stage.getBoundingClientRect();
+    view.dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+    view.w = r.width; view.h = r.height;
+    canvas.width = Math.round(r.width * view.dpr);
+    canvas.height = Math.round(r.height * view.dpr);
+  }
+  new ResizeObserver(resize).observe(stage);
+  resize();
+
+  function applyBg() {
+    document.documentElement.style.setProperty('--bg', cfg.bgColor);
+  }
+
+  function camFor(k) {
+    const aw = Math.max(1, view.w - view.insetR), ah = Math.max(1, view.h - view.insetB);
+    const pad = Math.max(24, Math.min(aw, ah) * 0.08);
+    const fit = b => Math.min((aw - 2 * pad) / (b.x1 - b.x0), (ah - 2 * pad) / (b.y1 - b.y0));
+    const G = cfg.generations;
+    const bG = camBoxes[G], bk = camBoxes[k];
+    const fitG = Math.max(0.01, fit(bG));
+    const s = Math.min(fitG * Math.pow(Math.max(1, fit(bk) / fitG), cfg.follow), fitG * 6);
+    // The closer the zoom, the more the view centers on what exists so far
+    const w = 1 - fitG / s;
+    const cG = [(bG.x0 + bG.x1) / 2, (bG.y0 + bG.y1) / 2];
+    const ck = [(bk.x0 + bk.x1) / 2, (bk.y0 + bk.y1) / 2];
+    return { s, cx: lerp(cG[0], ck[0], w), cy: lerp(cG[1], ck[1], w), ox: aw / 2, oy: ah / 2 };
+  }
+  function camLerp(a, b, q) {
+    return {
+      s: Math.exp(lerp(Math.log(a.s), Math.log(b.s), q)),
+      cx: lerp(a.cx, b.cx, q), cy: lerp(a.cy, b.cy, q), ox: b.ox, oy: b.oy,
+    };
+  }
+
+  let t = 0, clock = 0, playing = true;
+  let shownStatus = '';
+
+  function draw() {
+    const T = timing(), E = EASE[cfg.easing] || EASE.sine;
+    const { div, G } = T;
+    const W = view.w, H = view.h;
+
+    ctx.setTransform(view.dpr, 0, 0, view.dpr, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+
+    // Loop fade: everything but the first dot dissolves as the view returns to it
+    const f = cfg.loop && t > T.holdEnd ? E(clamp((t - T.holdEnd) / T.fade)) : 0;
+
+    // Camera eases outward with each generation
+    let gNow = 0;
+    for (let g = 1; g <= G; g++) if (t >= T.start(g)) gNow = g;
+    let cam;
+    if (gNow === 0) cam = camFor(0);
+    else cam = camLerp(camFor(gNow - 1), camFor(gNow), E(clamp((t - T.start(gNow)) / (div + T.rest * 0.8))));
+    if (f > 0) cam = camLerp(camFor(G), camFor(0), f);
+    const X = x => (x - cam.cx) * cam.s + cam.ox;
+    const Y = y => (y - cam.cy) * cam.s + cam.oy;
+
+    // Node states (nodes are ordered parent-before-child)
+    const D = cfg.drift * 5;
+    const stagger = 0.25 * cfg.jitter;
+    let visible = 0;
+    for (const n of nodes) {
+      const s = n.st;
+      const tx = n.x + D * (Math.sin(clock * n.fq[0] + n.ph[0]) + 0.5 * Math.sin(clock * n.fq[1] + n.ph[1]));
+      const ty = n.y + D * (Math.sin(clock * n.fq[2] + n.ph[2]) + 0.5 * Math.sin(clock * n.fq[3] + n.ph[3]));
+
+      // Swell as this dot divides
+      s.scale = n.gen < G ? 1 + cfg.swell * bell((t - T.start(n.gen + 1)) / (div * 0.6)) : 1;
+
+      if (n.gen === 0) {
+        Object.assign(s, { vis: true, x: tx, y: ty, grow: 1, ring: 1, newborn: 0, alpha: 1 });
+        visible++;
+        continue;
+      }
+      const start = T.start(n.gen);
+      const p = (t - start) / div;
+      s.vis = p > n.delay && nodes[n.parent].st.vis;
+      if (!s.vis) continue;
+      visible++;
+
+      const pc = clamp((p - n.delay) / (1 - stagger));
+      const move = E(clamp(pc / 0.9));
+      s.grow = E(clamp(pc / 0.55));
+      s.ring = E(clamp((pc - 0.55) / 0.45));
+      s.newborn = 1 - E(clamp((t - start - div) / Math.max(0.8, T.rest + div * 0.6)));
+      s.alpha = 1 - f;
+
+      // Thread: a quadratic curve bowed to one side; the dot travels along it
+      const par = nodes[n.parent].st;
+      const dx = tx - par.x, dy = ty - par.y;
+      const k = cfg.curvature * n.bow;
+      s.x0 = par.x; s.y0 = par.y;
+      s.cx = (par.x + tx) / 2 - dy * k; s.cy = (par.y + ty) / 2 + dx * k;
+      s.move = move;
+      s.x = bez(s.x0, s.cx, tx, move);
+      s.y = bez(s.y0, s.cy, ty, move);
+    }
+
+    // 1. Threads (drawn only up to where the travelling dot has reached)
+    ctx.lineCap = 'round';
+    ctx.lineWidth = cfg.lineWidth;
+    ctx.strokeStyle = cfg.lineColor;
+    ctx.globalAlpha = 1 - f;
+    ctx.beginPath();
+    for (const n of nodes) {
+      const s = n.st;
+      if (!n.gen || !s.vis) continue;
+      const q = s.move;
+      ctx.moveTo(X(s.x0), Y(s.y0));
+      ctx.quadraticCurveTo(X(lerp(s.x0, s.cx, q)), Y(lerp(s.y0, s.cy, q)), X(s.x), Y(s.y));
+    }
+    ctx.stroke();
+
+    // 2. Clear a halo around each dot so threads stop short of the ring, as in the reference
+    ctx.globalCompositeOperation = 'destination-out';
+    for (const n of nodes) {
+      const s = n.st;
+      if (!s.vis) continue;
+      const rd = n.r * (0.3 + 0.7 * s.grow) * s.scale * cam.s;
+      const halo = rd * (1 + cfg.ringGap + (cfg.ring ? cfg.ringWidth * s.ring : 0)) + 0.5;
+      ctx.globalAlpha = s.alpha;
+      ctx.beginPath();
+      ctx.arc(X(s.x), Y(s.y), halo, 0, TAU);
+      ctx.fill();
+    }
+    ctx.globalCompositeOperation = 'source-over';
+
+    // 3. Dots, newest first so a parent sits over the buds emerging from it
+    for (let i = nodes.length - 1; i >= 0; i--) {
+      const n = nodes[i], s = n.st;
+      if (!s.vis || s.alpha <= 0.001) continue;
+      const px = X(s.x), py = Y(s.y);
+      const rd = n.r * (0.3 + 0.7 * s.grow) * s.scale * cam.s;
+      const color = s.newborn > 0 ? mix(cfg.dotColor, cfg.newbornColor, s.newborn) : cfg.dotColor;
+      ctx.globalAlpha = s.alpha;
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(px, py, rd, 0, TAU);
+      ctx.fill();
+
+      if (cfg.ring && s.ring > 0) {
+        // The ring ripples out from the dot's edge to its resting place
+        const wR = rd * cfg.ringWidth;
+        const mid = lerp(rd, rd * (1 + cfg.ringGap) + wR / 2, s.ring);
+        ctx.globalAlpha = s.alpha * s.ring;
+        ctx.strokeStyle = color;
+        ctx.lineWidth = Math.max(0.5, wR * s.ring);
+        ctx.beginPath();
+        ctx.arc(px, py, mid, 0, TAU);
+        ctx.stroke();
+      }
+    }
+    ctx.globalAlpha = 1;
+
+    const statusText = f > 0
+      ? 'Starting again'
+      : `Generation ${gNow} of ${G}, ${visible} ${visible === 1 ? 'dot' : 'dots'}`;
+    if (statusEl && statusText !== shownStatus) statusEl.textContent = shownStatus = statusText;
+  }
+
+  /* ---------- Loop ---------- */
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const mobileMq = window.matchMedia('(max-width: 640px)');
+  let last = performance.now();
+
+  function frame(now) {
+    const dt = Math.min(0.1, (now - last) / 1000);
+    last = now;
+    if (playing) { t += dt; clock += dt; }
+
+    // Keep the network framed in the space the open panel leaves
+    const open = panel && panel.classList.contains('is-open');
+    const tR = open && !mobileMq.matches ? panel.offsetWidth : 0;
+    const tB = open && mobileMq.matches ? panel.offsetHeight : 0;
+    const k = reduceMotion ? 1 : 1 - Math.exp(-dt * 4);
+    view.insetR += (tR - view.insetR) * k;
+    view.insetB += (tB - view.insetB) * k;
+
+    const T = timing();
+    if (cfg.loop && t >= T.cycleEnd) {
+      t = 0;
+      if (cfg.reseedEachLoop) { cfg.seed = newSeed(); rebuild(); }
+    }
+    draw();
+    requestAnimationFrame(frame);
+  }
+
+  const newSeed = () => (Math.random() * 1e9) | 0;
+
+  /* ---------- Controls ---------- */
+  const panel = showControls ? document.getElementById('panel') : null;
+  const statusEl = showControls ? document.getElementById('status') : null;
+  const inputs = {};
+
+  function setPlaying(on) {
+    playing = on;
+    if (showControls) document.getElementById('play').textContent = on ? 'Pause' : 'Play';
+  }
+  function replay() { t = 0; setPlaying(true); }
+
+  function syncInput(key) {
+    const el = inputs[key];
+    if (!el) return;
+    const v = cfg[key];
+    if (el.type === 'checkbox') el.checked = !!v;
+    else if (el.type === 'color') el.value = /^#[0-9a-f]{6}$/i.test(v) ? v : '#ffffff';
+    else el.value = v;
+    if (el.type === 'range') {
+      el.style.setProperty('--p', ((v - el.min) / (el.max - el.min)) * 100 + '%');
+      el.closest('.row').querySelector('output').textContent = el._fmt(+v);
+    }
+  }
+
+  function buildPanel() {
+    const host = document.getElementById('groups');
+    for (const group of CONTROLS) {
+      const sec = document.createElement('section');
+      sec.className = 'group';
+      sec.innerHTML = `<h2>${group.group}</h2>`;
+      for (const c of group.items) {
+        const row = document.createElement('div');
+        row.className = 'row' + (c.type === 'check' ? ' check' : '');
+        const id = 'c-' + c.key;
+        let el;
+        if (c.type === 'range') {
+          el = document.createElement('input');
+          Object.assign(el, { type: 'range', min: c.min, max: c.max, step: c.step });
+          el._fmt = c.fmt;
+          row.innerHTML = `<label for="${id}">${c.label}</label><output for="${id}"></output>`;
+          row.appendChild(el);
+        } else if (c.type === 'check') {
+          el = document.createElement('input');
+          el.type = 'checkbox';
+          row.appendChild(el);
+          row.insertAdjacentHTML('beforeend', `<label for="${id}">${c.label}</label>`);
+        } else if (c.type === 'select') {
+          el = document.createElement('select');
+          el.innerHTML = c.options.map(([v, l]) => `<option value="${v}">${l}</option>`).join('');
+          row.innerHTML = `<label for="${id}">${c.label}</label>`;
+          row.appendChild(el);
+        } else {
+          el = document.createElement('input');
+          el.type = 'color';
+          row.innerHTML = `<label for="${id}">${c.label}</label>`;
+          row.appendChild(el);
+        }
+        el.id = id;
+        inputs[c.key] = el;
+        el.addEventListener('input', () => {
+          const v = el.type === 'checkbox' ? el.checked : el.type === 'range' ? +el.value : el.value;
+          cfg[c.key] = v;
+          syncInput(c.key);
+          if (c.key === 'bgColor') applyBg();
+          rebuild();
+          if (c.replay) replay();
+        });
+        sec.appendChild(row);
+        syncInput(c.key);
+      }
+      host.appendChild(sec);
+    }
+
+    const adjust = document.getElementById('adjust');
+    const setOpen = open => {
+      panel.classList.toggle('is-open', open);
+      adjust.setAttribute('aria-expanded', String(open));
+      if (open) panel.querySelector('button, input, select').focus({ preventScroll: true });
+      else adjust.focus({ preventScroll: true });
+    };
+    adjust.addEventListener('click', () => setOpen(true));
+    document.getElementById('close').addEventListener('click', () => setOpen(false));
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && panel.classList.contains('is-open')) setOpen(false);
+    });
+
+    document.getElementById('play').addEventListener('click', () => setPlaying(!playing));
+    document.getElementById('replay').addEventListener('click', replay);
+    document.getElementById('reseed').addEventListener('click', () => { cfg.seed = newSeed(); rebuild(); replay(); });
+
+    const copyBtn = document.getElementById('copy');
+    copyBtn.addEventListener('click', async () => {
+      const text = 'const CONFIG = ' + JSON.stringify(cfg, null, 2) + ';';
+      try { await navigator.clipboard.writeText(text); }
+      catch {
+        const ta = Object.assign(document.createElement('textarea'), { value: text });
+        document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
+      }
+      copyBtn.textContent = 'Copied';
+      setTimeout(() => (copyBtn.textContent = 'Copy settings'), 1800);
+    });
+
+    document.getElementById('reset').addEventListener('click', () => {
+      Object.assign(cfg, DEFAULTS);
+      Object.keys(inputs).forEach(syncInput);
+      applyBg(); rebuild(); replay();
+    });
+  }
+
+  // Space pauses, R replays (when not typing in a control)
+  document.addEventListener('keydown', e => {
+    if (e.target.closest && e.target.closest('input, select, button, textarea')) return;
+    if (e.key === ' ') { e.preventDefault(); setPlaying(!playing); }
+    else if (e.key === 'r' || e.key === 'R') replay();
+  });
+
+  /* ---------- Start ---------- */
+  if (showControls) buildPanel();
+  else ['adjust', 'panel', 'switch'].forEach(id => document.getElementById(id).remove());
+
+  applyBg();
+  rebuild();
+  if (reduceMotion) { t = timing().growEnd; setPlaying(false); }
+  requestAnimationFrame(now => { last = now; canvas.classList.add('is-ready'); frame(now); });
+})();
+</script>
+</body>
+</html>
