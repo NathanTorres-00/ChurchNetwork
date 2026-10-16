@@ -156,6 +156,14 @@ All the globe parameters apply as well.
 All copy, names, stats and photos are placeholders to replace. Links marked `data-placeholder` (Visit, store
 buttons, directions) go nowhere until you add real URLs.
 
+**Loading screen:** while the globe gets ready, one dot on a white screen divides five times (1, 2, 4, 8, 16, 32),
+the same structure as the flat view; each of the four second-generation branches takes a headline color. Once the
+network has fully grown (about 3.4 seconds), the map data is in and the globe has its first networks, the network
+folds back up, outermost generation first, to its first dot, and the white opens outward from that dot in a
+soft-edged ring to reveal the page as the headline starts typing. It never waits longer than 8 seconds. Networks in
+view at load get a head start, so the globe already looks grown in when it opens. Visitors who prefer reduced
+motion get a still network and a quick fade.
+
 **Hero layouts:** the top of the Adjust panel switches the hero between layouts on the same page:
 - **Headline: Stacked** (the four "Multiplying ..." lines), **Rotating** ("Multiplying" stays while the colored
   word changes letter by letter, each new word rising into focus as the old one lifts away), or **Typed** (the
