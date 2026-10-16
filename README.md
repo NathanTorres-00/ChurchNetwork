@@ -50,6 +50,12 @@ All of these are in the `CONFIG` block and the Adjust panel. Any of them can als
 ## Keyboard
 - **Space** pauses or plays, **R** replays, **Esc** closes the panel.
 
+## Deploying (Vercel)
+
+The repo deploys to Vercel as a static site, no build step. `vercel.json` serves `hero.html` at the site's root and
+turns on clean URLs (`/hero`, `/network-globe`, `/network-globe-pins`, `/network-multiply`; the `.html` addresses
+redirect to them).
+
 ---
 
 # Network Globe
