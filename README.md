@@ -247,7 +247,9 @@ and closes the workspace, `workspace.js` is the toolbar, tools and sidebar, `mar
 `placing.js` turns clicks and drags into marks, `anchor.js` ties them to elements, `voice.js` and `recorder.js`
 record and play memos, and `store.js` talks to [Convex](https://convex.dev) through its browser bundle
 (`convex@1.47.0` from unpkg). `convex/` is the backend: one `marks` table, file storage for the audio, and the
-rules (length limits, 10 marks per device per minute, owner-only resolve). Convex was set up through the Vercel
+rules (length limits, 10 marks per device and 60 overall per minute, voice memos must be audio files of at most
+10 MB, owner-only resolve). Device IDs never leave the backend, so only the device that made a mark (or the owner)
+can delete it. `convex/crons.js` deletes uploaded recordings that were never posted, once an hour. Convex was set up through the Vercel
 Marketplace, so its deploy keys live in the Vercel project.
 
 **Working on it locally:**
