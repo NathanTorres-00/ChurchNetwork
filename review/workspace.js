@@ -124,6 +124,7 @@ export function createWorkspace({
     for (const [id, b] of toolButtons) b.setAttribute('aria-pressed', String(id === tool));
     el.dataset.tool = tool;
     document.documentElement.classList.toggle('rv-placing', tool !== 'browse');
+    document.documentElement.dataset.rvTool = tool;     // drag tools stop one-finger scrolling so a drag can draw
     hint.textContent = TOOLS.find(t => t.id === tool)?.hint ?? 'Browsing. Pick a tool to mark up the page.';
     onToolChange?.(tool);
   }
@@ -333,6 +334,7 @@ export function createWorkspace({
       clearInterval(clock);
       dialog?.close(false);
       document.documentElement.classList.remove('rv-placing');
+      delete document.documentElement.dataset.rvTool;
       el.remove();
     },
   };

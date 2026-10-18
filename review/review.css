@@ -15,10 +15,10 @@
 
 /* ---------- The page inside the workspace ---------- */
 html.review-open { background: #F1F3F5; }
-html.review-open body { margin-top: var(--rv-top); }
+/* body becomes the page's positioning box, so the page's absolutely placed header moves down with it */
+html.review-open body { position: relative; margin-top: var(--rv-top); }
 @media (min-width: 1280px) {
   html.review-open body {
-    position: relative;
     margin: var(--rv-top) calc(var(--rv-side) + var(--rv-gap) * 2) 0 calc(var(--rv-rail) + var(--rv-gap) * 2);
     border-radius: 20px 20px 0 0; overflow: clip; box-shadow: 0 0 0 1px rgba(0, 0, 0, .04);
   }
@@ -230,6 +230,41 @@ html.rv-placing body [data-review-ui] button { cursor: pointer !important; }
   .rv-sidebar-open .rv-sidebar-tab { right: calc(var(--rv-side) + var(--rv-gap) * 2); }
   .rv-tab-count { min-width: 24px; padding: 2px 8px; border-radius: 999px; background: var(--rv-accent); color: #fff; font-size: 13px; text-align: center; }
   .rv-reviewing { display: none; }
+}
+
+/* ---------- Touch ---------- */
+/* With Arrow or Highlight, one finger draws instead of scrolling; with the tap tools and Browse it still scrolls */
+html[data-rv-tool="arrow"] body, html[data-rv-tool="highlight"] body { touch-action: none; }
+html[data-rv-tool="comment"] body, html[data-rv-tool="voice"] body { touch-action: manipulation; }
+
+/* ---------- Phones: compact toolbar, tools along the bottom, the sidebar as a sheet ---------- */
+@media (max-width: 759px) {
+  :root { --rv-gap: 8px; --rv-top: 72px; }
+  .rv-toolbar { top: 8px; height: 56px; padding: 8px 8px 8px 10px; border-radius: 14px; }
+  .rv-mode { padding: 8px 10px; font-size: 14px; gap: 6px; }
+  .rv-share { padding: 10px 14px; font-size: 14px; }
+  .rv-status { display: none; }
+
+  .rv-rail {
+    top: auto; bottom: 12px; left: 50%; transform: translateX(-50%);
+    flex-direction: row; gap: 8px; padding: 6px; border-radius: 22px;
+    background: rgba(255, 255, 255, .92); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); box-shadow: var(--rv-shadow);
+  }
+  .rv-tool { width: 52px; height: 52px; border-radius: 16px; box-shadow: none; }
+
+  .rv-sidebar {
+    top: auto; left: 0; right: 0; bottom: 0; width: auto; max-height: 62vh; z-index: 62;
+    border-radius: 20px 20px 0 0; padding: 18px 16px calc(20px + env(safe-area-inset-bottom));
+    transform: translateY(100%);
+  }
+  .rv-sidebar-open .rv-sidebar { transform: none; }
+  .rv-sidebar-tab { right: 12px; bottom: 88px; padding: 10px 14px; font-size: 14px; }
+  .rv-sidebar-open .rv-sidebar-tab { right: 12px; bottom: calc(62vh + 8px); z-index: 63; }
+  .rv-stats { grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .rv-stat { padding: 10px; border-radius: 14px; }
+  .rv-stat dt { font-size: 11px; }
+  /* leave room above the tool bar so the page's last section can scroll clear of it */
+  html.review-open body { padding-bottom: 88px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
