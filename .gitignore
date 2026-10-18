@@ -5,3 +5,5 @@ dist/
 review/config.js
 test-results/
 playwright-report/
+.vercel
+.env*

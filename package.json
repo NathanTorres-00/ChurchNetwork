@@ -3,7 +3,8 @@
   "description": "Church Network site: hero page, globe demos, and comment mode",
   "scripts": {
     "test": "vitest run",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "dev:config": "node scripts/write-config.js"
   },
   "type": "module",
   "dependencies": {
