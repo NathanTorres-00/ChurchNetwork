@@ -1,2 +1,7 @@
 .DS_Store
 node_modules/
+dist/
+.env.local
+review/config.js
+test-results/
+playwright-report/
