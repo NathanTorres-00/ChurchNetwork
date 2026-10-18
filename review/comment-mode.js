@@ -3,6 +3,7 @@
 import { captureOwnerKey, getDeviceId, getName, getOwnerKey, setName } from './identity.js';
 import { createMarksLayer } from './marks-layer.js';
 import { createPlacing } from './placing.js';
+import { glideIn, glideOut } from './transition.js';
 import { createPlayer, createRecorderWidget } from './voice.js';
 import { createWorkspace, h } from './workspace.js';
 
@@ -40,7 +41,16 @@ function scrollToY(y) {
   else window.scrollTo({ top, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
 }
 
-export async function enter({ page = 'home' } = {}) {
+// Entering and leaving run one at a time: a second click mid-glide lets the first finish, then reverses it.
+// `wanted` records what the last click asked for the moment it happens, so quick clicks toggle correctly.
+let queue = Promise.resolve();
+let wanted = false;
+const inTurn = fn => (queue = queue.then(fn, fn));
+export const enter = opts => { wanted = true; return inTurn(() => open(opts)); };
+export const exit = () => { wanted = false; return inTurn(async () => { const left = await close(); if (!left) wanted = true; return left; }); };
+export const toggle = () => (wanted ? exit() : enter());
+
+async function open({ page = 'home' } = {}) {
   if (state) return;
   captureOwnerKey();
   const s = state = {
@@ -60,6 +70,7 @@ export async function enter({ page = 'home' } = {}) {
 
   // Marks shown on the page: open ones, plus resolved ones when the reviewer asks to see them
   const update = () => {
+    if (!s.layer) return;                // marks that arrive mid-glide are drawn once the page lands
     for (const [id, p] of s.players) if (!s.marks.some(m => m._id === id)) { p.destroy(); s.players.delete(id); }
     const visible = s.marks.filter(m => s.showResolved || !m.resolved);
     const missing = s.layer.render(visible, { selectedId: s.selectedId, draft: s.draft });
@@ -93,16 +104,8 @@ export async function enter({ page = 'home' } = {}) {
     onShowResolved: on => { s.showResolved = on; update(); },
   });
   s.workspace.setCardExtras(playerFor);
-  document.body.appendChild(s.workspace.el);
-  s.layer = createMarksLayer();
-  s.layer.onSelect(id => select(id));
-  s.placing = createPlacing({ getTool: () => s.workspace.getTool(), onDraft: d => startDraft(s, d) });
 
-  document.documentElement.classList.add('review-open');
-  document.dispatchEvent(new CustomEvent('review:enter'));
-  relayout();
-  update();
-
+  // Esc works from the first moment; leaving mid-glide waits its turn like a click does
   s.onKey = async e => {
     if (e.key !== 'Escape' || e.defaultPrevented || s.workspace.hasDialog()) return;
     if (s.workspace.getComposer()) { await closeDraft(s); return; }
@@ -111,8 +114,20 @@ export async function enter({ page = 'home' } = {}) {
   };
   document.addEventListener('keydown', s.onKey);
 
-  await connect(s);
-  s.markReady();
+  // Connect while the page glides into place
+  const connecting = connect(s).then(() => s.markReady());
+
+  await glideIn(s.workspace.el, () => {
+    document.body.appendChild(s.workspace.el);
+    s.layer = createMarksLayer();
+    s.layer.onSelect(id => select(id));
+    s.placing = createPlacing({ getTool: () => s.workspace.getTool(), onDraft: d => startDraft(s, d) });
+    document.documentElement.classList.add('review-open');
+    document.dispatchEvent(new CustomEvent('review:enter'));
+    relayout();
+    update();
+  });
+  await connecting;
 }
 
 const UNREACHABLE = "Can't reach the comments right now. Check your connection.";
@@ -211,7 +226,7 @@ async function closeDraft(s) {
 }
 
 // Leaves comment mode. Resolves false when the reviewer chooses to keep an unsent draft.
-export async function exit() {
+async function close() {
   const s = state;
   if (!s) return true;
   if (!(await s.workspace.confirmDiscard())) return false;
@@ -221,12 +236,15 @@ export async function exit() {
   if (s.store && s.store !== window.__reviewFake) s.store.close();
   s.voice?.destroy();
   for (const p of s.players.values()) p.destroy();
-  s.placing.destroy();
-  s.layer.destroy();
-  s.workspace.destroy();
-  document.documentElement.classList.remove('review-open');
-  document.dispatchEvent(new CustomEvent('review:exit'));
-  relayout();
+  s.placing.destroy();                                     // nothing gets placed while the panels leave
+  document.documentElement.classList.remove('rv-placing');
+  await glideOut(s.workspace.el, () => {
+    s.layer.destroy();
+    s.workspace.destroy();
+    document.documentElement.classList.remove('review-open');
+    document.dispatchEvent(new CustomEvent('review:exit'));
+    relayout();
+  });
   return true;
 }
 

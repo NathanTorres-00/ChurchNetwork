@@ -711,7 +711,7 @@
     }
     return loading;
   };
-  document.getElementById('comment-toggle').addEventListener('click', () => load().then(m => (m.isOpen() ? m.exit() : m.enter())));
+  document.getElementById('comment-toggle').addEventListener('click', () => load().then(m => m.toggle()));
   if (params.has('owner')) import('./review/identity.js').then(m => m.captureOwnerKey());
   if (params.has('comment')) {
     const open = () => load().then(m => m.enter());

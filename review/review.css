@@ -232,6 +232,50 @@ html.rv-placing body [data-review-ui] button { cursor: pointer !important; }
   .rv-reviewing { display: none; }
 }
 
+/* ---------- Entering and leaving ----------
+   transition.js shrinks a snapshot of the page into its column (a view transition), then sets the workspace's
+   data-phase to "in" so the panels slide in from offscreen, a beat apart. Leaving, "out" slides them away
+   (sidebar first) before the page grows back. */
+:root { --rv-out-ease: cubic-bezier(.22, 1, .36, 1); }
+.rv-toolbar, .rv-rail, .rv-sidebar, .rv-sidebar-tab {
+  transition: transform .52s var(--rv-out-ease), opacity .52s var(--rv-out-ease);
+}
+.rv-root[data-phase="in"] .rv-toolbar { transition-delay: 0s; }
+.rv-root[data-phase="in"] .rv-rail { transition-delay: .09s; }
+.rv-root[data-phase="in"] .rv-sidebar, .rv-root[data-phase="in"] .rv-sidebar-tab { transition-delay: .18s; }
+.rv-root[data-phase="out"] .rv-toolbar, .rv-root[data-phase="out"] .rv-rail,
+.rv-root[data-phase="out"] .rv-sidebar, .rv-root[data-phase="out"] .rv-sidebar-tab { transition-duration: .38s; transition-timing-function: var(--rv-ease); }
+.rv-root[data-phase="out"] .rv-sidebar, .rv-root[data-phase="out"] .rv-sidebar-tab { transition-delay: 0s; }
+.rv-root[data-phase="out"] .rv-rail { transition-delay: .07s; }
+.rv-root[data-phase="out"] .rv-toolbar { transition-delay: .14s; }
+.rv-root:is([data-phase="hidden"], [data-phase="out"]) .rv-toolbar { transform: translateY(calc(-100% - 24px)); opacity: 0; }
+.rv-root:is([data-phase="hidden"], [data-phase="out"]) .rv-rail { transform: translateX(calc(-100% - 32px)); opacity: 0; }
+.rv-root:is([data-phase="hidden"], [data-phase="out"]) .rv-sidebar { transform: translateX(calc(100% + 32px)); opacity: 0; }
+.rv-root:is([data-phase="hidden"], [data-phase="out"]) .rv-sidebar-tab { transform: translateY(12px); opacity: 0; }
+
+/* The page snapshot shrinks into its column above the new layout, then fades into the reflowed page */
+html.rv-gliding-in::view-transition-old(root) {
+  z-index: 1; transform-origin: 0 0; mix-blend-mode: normal;
+  animation: rv-recede .65s var(--rv-ease) both;
+}
+html.rv-gliding-in::view-transition-new(root) { mix-blend-mode: normal; animation: none; opacity: 1; }
+@keyframes rv-recede {
+  0% { transform: none; border-radius: 0; opacity: 1; box-shadow: 0 0 0 rgba(0, 0, 0, 0); }
+  80% { opacity: 1; }
+  100% { transform: translate(var(--rv-glide-x), var(--rv-glide-y)) scale(var(--rv-glide-s)); border-radius: 20px; opacity: 0; box-shadow: 0 10px 30px rgba(0, 0, 0, .08); }
+}
+/* Leaving: the full page grows out of the column over the workspace */
+html.rv-gliding-out::view-transition-new(root) {
+  z-index: 1; transform-origin: 0 0; mix-blend-mode: normal;
+  animation: rv-advance .6s var(--rv-ease) both;
+}
+html.rv-gliding-out::view-transition-old(root) { mix-blend-mode: normal; animation: none; opacity: 1; }
+@keyframes rv-advance {
+  0% { transform: translate(var(--rv-glide-x), var(--rv-glide-y)) scale(var(--rv-glide-s)); border-radius: 20px; opacity: 0; }
+  25% { opacity: 1; }
+  100% { transform: none; border-radius: 0; opacity: 1; }
+}
+
 /* ---------- Touch ---------- */
 /* With Arrow or Highlight, one finger draws instead of scrolling; with the tap tools and Browse it still scrolls */
 html[data-rv-tool="arrow"] body, html[data-rv-tool="highlight"] body { touch-action: none; }
@@ -265,8 +309,18 @@ html[data-rv-tool="comment"] body, html[data-rv-tool="voice"] body { touch-actio
   .rv-stat dt { font-size: 11px; }
   /* leave room above the tool bar so the page's last section can scroll clear of it */
   html.review-open body { padding-bottom: 88px; }
+  /* arriving and leaving: the tool bar rises from the bottom, the sheet stays tucked below */
+  .rv-root:is([data-phase="hidden"], [data-phase="out"]) .rv-rail { transform: translate(-50%, calc(100% + 24px)); }
+  .rv-root:is([data-phase="hidden"], [data-phase="out"]) .rv-sidebar { transform: translateY(100%); }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .rv-root *, .rv-sidebar { transition: none !important; animation: none !important; }
+  /* panels don't move; they fade in and out where they sit */
+  .rv-root > :is(.rv-toolbar, .rv-rail, .rv-sidebar, .rv-sidebar-tab) { transition: opacity .2s ease !important; }
+  .rv-root:is([data-phase="hidden"], [data-phase="out"]) :is(.rv-toolbar, .rv-rail, .rv-sidebar, .rv-sidebar-tab) { transform: none; }
+  .rv-root:is([data-phase="hidden"], [data-phase="out"]) .rv-rail { transform: translateX(-50%); }
+}
+@media (prefers-reduced-motion: reduce) and (min-width: 760px) {
+  .rv-root:is([data-phase="hidden"], [data-phase="out"]) .rv-rail { transform: none; }
 }
