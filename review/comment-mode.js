@@ -16,11 +16,14 @@ const MESSAGES = {
   INVALID: "Couldn't post this. Check it and try again.",
   NOT_OWNER: "You can't change that one.",
   NOT_FOUND: 'That was already removed.',
+  TIMEOUT: "Not posted yet: you seem to be offline. Check your connection, then try again.",
 };
 const message = e => MESSAGES[e?.code] ?? MESSAGES.NETWORK;
+const newId = () => globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2) + Date.now().toString(36);
 
 async function makeStore() {
   if (window.__reviewStoreFactory === 'fake') {
+    if (window.__reviewFakeFailConnect > 0) { window.__reviewFakeFailConnect--; throw new Error('NETWORK'); }   // tests: a failed first connection
     window.__reviewFake ??= (await import('./fake-store.js')).createFakeStore();
     return window.__reviewFake;
   }
@@ -108,25 +111,40 @@ export async function enter({ page = 'home' } = {}) {
   };
   document.addEventListener('keydown', s.onKey);
 
+  await connect(s);
+  s.markReady();
+}
+
+const UNREACHABLE = "Can't reach the comments right now. Check your connection.";
+
+// Connects to the store and follows the page's marks. Safe to call again after a failure.
+async function connect(s) {
+  if (s.store) return true;
+  let store;
   try {
-    s.store = await makeStore();
-    if (state !== s) { if (s.store !== window.__reviewFake) s.store.close(); return; }
-    s.unsubscribe = s.store.subscribe(page, marks => { s.marks = marks; update(); },
-      () => s.workspace.setStatus("Can't reach the comments right now. Check your connection."));
-    s.isOwner = await s.store.isOwner(getOwnerKey());
-    s.workspace.setOwner(s.isOwner);
+    store = await makeStore();
   } catch {
-    if (state === s) s.workspace.setStatus("Can't reach the comments right now. Check your connection.");
-  } finally {
-    s.markReady();
+    if (state === s) s.workspace.setStatus(UNREACHABLE);
+    return false;
   }
+  if (state !== s) { if (store !== window.__reviewFake) store.close(); return false; }
+  s.store = store;
+  s.workspace.setStatus('');
+  s.unsubscribe = store.subscribe({ page: s.page, deviceId: s.deviceId }, marks => { s.marks = marks; s.update(); },
+    () => s.workspace.setStatus(UNREACHABLE));
+  try {
+    s.isOwner = await store.isOwner(getOwnerKey());
+    s.workspace.setOwner(s.isOwner);
+  } catch { /* owner tools stay off */ }
+  return true;
 }
 
 // A click or drag on the page with a tool: show the draft mark and open the composer for it.
 // Clicking somewhere else while the composer is open moves the draft and keeps what was typed.
 function startDraft(s, draft) {
   const moving = s.draft && s.workspace.getComposer()?.kind === draft.kind;
-  s.draft = { ...draft, _id: null };
+  // the draft keeps one clientId for its whole life, so retrying its post can't make a second mark
+  s.draft = { ...draft, _id: null, clientId: moving ? s.draft.clientId : newId() };
   s.update();
   if (moving) return;
 
@@ -155,29 +173,34 @@ function typeInstead(s) {
 }
 
 async function post(s, { text, name }) {
-  const d = s.draft;
-  const memo = d.kind === 'voice' ? s.voice?.getResult() : null;
+  // What this post belongs to; if the reviewer moves on before it finishes, it must leave their new work alone
+  const d = s.draft, voice = s.voice, composer = s.workspace.getComposer();
+  const memo = d.kind === 'voice' ? voice?.getResult() : null;
+  if (d.kind === 'voice' && voice?.isRecording()) throw new Error('Stop recording first, then post it.');
   if (d.kind === 'voice' && !memo) throw new Error('Record a memo first, then post it.');
   await s.ready;
-  if (!s.store) throw new Error(MESSAGES.NETWORK);
+  if (!s.store && !(await connect(s))) throw new Error(MESSAGES.NETWORK);
   setName(name);
-  const input = { page: s.page, kind: d.kind, author: name, deviceId: s.deviceId };
+  const input = { page: s.page, kind: d.kind, author: name, deviceId: s.deviceId, clientId: d.clientId };
   if (d.at) input.at = d.at; else { input.from = d.from; input.to = d.to; }
   if (text) input.text = text;
   try {
     if (memo) {
-      if (!s.voice.getStorageId()) s.voice.setStorageId(await s.store.uploadAudio(memo.blob, memo.mime, s.deviceId));
-      input.audio = { storageId: s.voice.getStorageId(), mime: memo.mime, durationMs: Math.max(1, memo.durationMs) };
+      if (!voice.getStorageId()) voice.setStorageId(await s.store.uploadAudio(memo.blob, memo.mime, s.deviceId));
+      input.audio = { storageId: voice.getStorageId(), mime: memo.mime, durationMs: Math.max(1, memo.durationMs) };
     }
     await s.store.create(input);
   } catch (e) {
     throw new Error(message(e));
   }
-  s.voice?.destroy(); s.voice = null;
+  if (state !== s) return;
+  s.workspace.setStatus('Posted', 2000);
+  if (s.workspace.getComposer() !== composer) return;      // the reviewer has already moved on to something else
+  voice?.destroy();
+  if (s.voice === voice) s.voice = null;
   s.draft = null;
   s.workspace.closeComposer();
   s.update();
-  s.workspace.setStatus('Posted', 2000);
 }
 
 // Closes the open draft, asking first if something was typed. Resolves false if the reviewer keeps it.

@@ -13,11 +13,14 @@ export const markFields = {
   text: v.optional(v.string()),       // comment text, voice title, arrow/highlight note
   audio: v.optional(v.object({ storageId: v.id('_storage'), mime: v.string(), durationMs: v.number() })),
   author: v.string(),
-  deviceId: v.string(),
+  deviceId: v.string(),               // secret to the device that made the mark; never returned by a query
+  clientId: v.optional(v.string()),   // the draft's id, so a retried post doesn't create a second mark
 };
 
 export default defineSchema({
   marks: defineTable({ ...markFields, resolved: v.boolean() })
     .index('by_page', ['page'])
-    .index('by_device', ['deviceId']),
+    .index('by_device', ['deviceId'])
+    .index('by_client', ['clientId'])
+    .index('by_storage', ['audio.storageId']),
 });

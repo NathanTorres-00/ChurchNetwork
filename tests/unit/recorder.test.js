@@ -21,4 +21,18 @@ describe('recorder', () => {
     expect(globalThis.MediaRecorder).toBeUndefined();
     await expect(startRecording({})).rejects.toMatchObject({ code: 'UNSUPPORTED' });
   });
+
+  test('the mic is released when recording fails to start after it opened', async () => {
+    const track = { readyState: 'live', stop() { this.readyState = 'ended'; } };
+    const stream = { getTracks: () => [track] };
+    globalThis.MediaRecorder = class { constructor() { throw new Error('NotSupportedError'); } static isTypeSupported() { return true; } };
+    Object.defineProperty(navigator, 'mediaDevices', { configurable: true, value: { getUserMedia: async () => stream } });
+    try {
+      await expect(startRecording({})).rejects.toMatchObject({ code: 'UNSUPPORTED' });
+      expect(track.readyState).toBe('ended');
+    } finally {
+      delete globalThis.MediaRecorder;
+      delete navigator.mediaDevices;
+    }
+  });
 });

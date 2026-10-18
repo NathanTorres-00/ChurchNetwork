@@ -20,7 +20,13 @@ export async function startRecording({ maxMs = 180000, onTick, onLimit } = {}) {
   }
 
   const mime = pickMimeType();
-  const recorder = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
+  let recorder;
+  try {
+    recorder = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
+  } catch (e) {
+    stream.getTracks().forEach(t => t.stop());           // never leave the mic open
+    throw fail('UNSUPPORTED', e);
+  }
   const chunks = [];
   let started = performance.now(), elapsed = 0, discarded = false;
   const release = () => { clearInterval(ticker); stream.getTracks().forEach(t => t.stop()); };
@@ -40,7 +46,12 @@ export async function startRecording({ maxMs = 180000, onTick, onLimit } = {}) {
     if (elapsed >= maxMs && recorder.state === 'recording') { recorder.stop(); onLimit?.(); }
   }, 250);
 
-  recorder.start(250);
+  try {
+    recorder.start(250);
+  } catch (e) {
+    release();
+    throw fail('UNSUPPORTED', e);
+  }
   started = performance.now();
 
   return {

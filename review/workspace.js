@@ -59,7 +59,7 @@ export function createWorkspace({
   let composer = null;           // the open composer, if any
   let dialog = null;             // the open confirm dialog, if any
   let pendingDelete = null;      // id whose Delete was pressed once
-  let view = { marks: [], showResolved: false, selectedId: null, missing: new Set(), deviceId: null };
+  let view = { marks: [], showResolved: false, selectedId: null, missing: new Set() };
 
   // Toolbar
   const status = h('span', { class: 'rv-status', role: 'status', 'aria-live': 'polite' });
@@ -135,7 +135,7 @@ export function createWorkspace({
 
   // ---------- Cards ----------
   function card(m) {
-    const canDelete = isOwner || (view.deviceId && m.deviceId === view.deviceId);
+    const canDelete = isOwner || m.mine;
     const actions = [];
     if (isOwner) actions.push(h('button', { type: 'button', class: 'rv-link', text: m.resolved ? 'Reopen' : 'Resolve', onclick: () => onResolve?.(m._id, !m.resolved) }));
     if (canDelete) {
@@ -216,8 +216,15 @@ export function createWorkspace({
       error,
       h('div', { class: 'rv-composer-actions' }, [
         postButton,
-        // pressing Cancel/Discard is a deliberate choice, so it doesn't ask again
-        h('button', { type: 'button', class: 'rv-cancel', text: cfg.cancel ?? 'Cancel', onclick: () => { closeComposer(); api.onClose?.(); } }),
+        // Cancel on typed text is a deliberate choice, so it doesn't ask; a recording is costly to redo, so it does
+        h('button', {
+          type: 'button', class: 'rv-cancel', text: cfg.cancel ?? 'Cancel',
+          onclick: async () => {
+            if (api.hasExtra?.() && !(await confirm({ title: 'Discard this voice memo?', body: "It hasn't been posted yet." }))) return;
+            closeComposer();
+            api.onClose?.();
+          },
+        }),
       ]),
     ]);
     const showError = msg => { error.textContent = msg; error.hidden = !msg; };

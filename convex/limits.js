@@ -7,12 +7,17 @@ export const MAX_NAME = 60;            // characters in a reviewer's name
 export const MAX_VOICE_MS = 180000;    // longest voice memo (3 minutes)
 export const RATE_WINDOW_MS = 60000;   // a device may post RATE_MAX marks per window
 export const RATE_MAX = 10;
+export const GLOBAL_RATE_MAX = 60;     // and everyone together GLOBAL_RATE_MAX, since device IDs are the caller's to choose
+export const LIST_MAX = 500;           // newest marks a page shows
+export const MAX_AUDIO_BYTES = 10 * 1024 * 1024;
 
 export const KINDS = ['comment', 'voice', 'arrow', 'highlight'];
+export const PAGES = ['home'];
 
 const MAX_PATH = 500;
 const MAX_DEVICE = 100;
 const MAX_MIME = 100;
+const MAX_CLIENT_ID = 64;
 
 const isText = (s, max) => typeof s === 'string' && s.length <= max;
 const isFraction = n => typeof n === 'number' && Number.isFinite(n) && n >= 0 && n <= 1;
@@ -24,7 +29,8 @@ function isAnchor(a) {
 
 // null when the mark is acceptable, 'INVALID' otherwise
 export function validateMark(m) {
-  if (!m || !KINDS.includes(m.kind)) return 'INVALID';
+  if (!m || !KINDS.includes(m.kind) || !PAGES.includes(m.page)) return 'INVALID';
+  if (m.clientId !== undefined && (!isText(m.clientId, MAX_CLIENT_ID) || !m.clientId)) return 'INVALID';
   const author = typeof m.author === 'string' ? m.author.trim() : '';
   if (!author || author.length > MAX_NAME) return 'INVALID';
   if (!isText(m.deviceId, MAX_DEVICE) || !m.deviceId) return 'INVALID';
@@ -39,7 +45,7 @@ export function validateMark(m) {
   if (m.kind === 'comment' && !(m.text ?? '').trim()) return 'INVALID';
   if (m.kind === 'voice') {
     const a = m.audio;
-    if (!a || !a.storageId || !isText(a.mime, MAX_MIME)) return 'INVALID';
+    if (!a || !a.storageId || !isText(a.mime, MAX_MIME) || !a.mime.startsWith('audio/')) return 'INVALID';
     if (typeof a.durationMs !== 'number' || !(a.durationMs > 0) || a.durationMs > MAX_VOICE_MS) return 'INVALID';
     if (m.text !== undefined && m.text.length > MAX_TITLE) return 'INVALID';
   } else if (m.audio !== undefined) {

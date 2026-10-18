@@ -47,6 +47,8 @@ export function createPlayer(src, durationMs) {
 export function createRecorderWidget({ maxMs, onTypeInstead }) {
   const el = h('div', { class: 'rv-recorder' });
   let rec = null, result = null, player = null, url = null, reachedLimit = false, recording = false;
+  // Each start gets a number; a mic that arrives after the widget is gone or a newer start began is closed
+  let generation = 0, pending = false, destroyed = false;
   let storageId = null;               // kept after a successful upload, so retrying a failed post doesn't re-upload
 
   const clearResult = () => {
@@ -75,12 +77,18 @@ export function createRecorderWidget({ maxMs, onTypeInstead }) {
   }
 
   async function start() {
+    if (pending || destroyed) return;
     clearResult();
+    const gen = ++generation;
+    pending = true;
+    show(h('div', { class: 'rv-recording' }, [h('span', { class: 'rv-sub', text: 'Waiting for the microphone…' })]));
     const time = h('span', { class: 'rv-rec-time', text: '0:00' });
+    let started;
     try {
-      rec = await startRecording({ maxMs, onTick: ms => { time.textContent = clock(ms); }, onLimit: () => { reachedLimit = true; finish(); } });
+      started = await startRecording({ maxMs, onTick: ms => { time.textContent = clock(ms); }, onLimit: () => { reachedLimit = true; finish(); } });
     } catch (e) {
-      rec = null;
+      pending = false;
+      if (destroyed || gen !== generation) return;
       if (e?.code === 'MIC_DENIED') {
         problem('Your microphone is blocked. Allow it for this site (look for the microphone icon in the address bar), then try again.', true);
       } else {
@@ -88,6 +96,9 @@ export function createRecorderWidget({ maxMs, onTypeInstead }) {
       }
       return;
     }
+    pending = false;
+    if (destroyed || gen !== generation) { started.cancel(); return; }     // nobody wants this mic any more
+    rec = started;
     recording = true;
     show(h('div', { class: 'rv-recording' }, [
       h('span', { class: 'rv-rec-dot rv-live', 'aria-hidden': 'true' }),
@@ -102,6 +113,7 @@ export function createRecorderWidget({ maxMs, onTypeInstead }) {
     const r = rec; rec = null;
     const done = await r.stop();
     recording = false;
+    if (destroyed) return;
     if (!done || !done.blob.size) { problem("That recording didn't work. Try again.", true); return; }
     result = done;
     url = URL.createObjectURL(done.blob);
@@ -117,9 +129,10 @@ export function createRecorderWidget({ maxMs, onTypeInstead }) {
   return {
     el,
     getResult: () => result,
-    hasContent: () => recording || !!result,
+    hasContent: () => pending || recording || !!result,
+    isRecording: () => pending || recording,
     getStorageId: () => storageId,
     setStorageId: id => { storageId = id; },
-    destroy() { rec?.cancel(); rec = null; recording = false; clearResult(); },
+    destroy() { destroyed = true; generation++; rec?.cancel(); rec = null; recording = false; clearResult(); },
   };
 }

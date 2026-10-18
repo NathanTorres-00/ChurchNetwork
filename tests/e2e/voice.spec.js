@@ -36,8 +36,12 @@ test.describe('with a microphone', () => {
     await expect(timer).toHaveText('0:01', { timeout: 3000 });
     await page.waitForTimeout(600);
     const seconds = text => { const [m, s] = text.split(':').map(Number); return m * 60 + s; };
-    const atStop = seconds(await timer.textContent());
-    await composer(page).getByRole('button', { name: 'Stop' }).click();
+    // read the timer and press Stop in the same moment, so a slow click under load can't skew the comparison
+    const atStop = seconds(await page.evaluate(() => {
+      const shown = document.querySelector('.rv-composer .rv-rec-time').textContent;
+      document.querySelector('.rv-composer .rv-stop').click();
+      return shown;
+    }));
     const preview = composer(page).locator('.rv-player');
     await expect(preview.getByRole('button', { name: 'Play voice memo' })).toBeVisible();
     // the memo's length matches what the timer showed when Stop was pressed (give or take a second)
@@ -65,6 +69,7 @@ test.describe('with a microphone', () => {
     await expect(composer(page).getByRole('button', { name: 'Stop' })).toBeVisible();
     await composer(page).getByRole('button', { name: 'Stop' }).click();
     await composer(page).getByRole('button', { name: 'Discard' }).click();
+    await page.getByRole('alertdialog').getByRole('button', { name: 'Discard' }).click();
     await expect(composer(page)).toHaveCount(0);
     await expect(cards(page)).toHaveCount(0);
   });
