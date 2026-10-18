@@ -231,6 +231,14 @@
   .site-nav a { text-decoration: none; color: var(--text); }
   .site-nav a:hover { color: var(--heading); }
   @media (max-width: 760px) { .site-nav { display: none; } }
+  .header-end { display: flex; align-items: center; gap: 28px; }
+  /* Opens comment mode (review/comment-mode.js), where overseers mark up the page */
+  .comment-toggle {
+    font: 500 15px/1 var(--font); color: var(--heading); cursor: pointer;
+    padding: 9px 16px; border-radius: 999px; border: 1px solid #D4D4D8; background: rgba(255,255,255,.8);
+    transition: border-color .25s ease;
+  }
+  .comment-toggle:hover { border-color: #A1A1AA; }
 
   /* ---------- Hero ---------- */
   .hero {
@@ -676,14 +684,42 @@
 <header class="site-header">
   <div class="wrap">
     <a class="brand" href="#top"><span class="glyph" aria-hidden="true"></span>Church Network</a>
-    <nav class="site-nav" aria-label="Sections">
-      <a href="#story">Our story</a>
-      <a href="#what-we-do">What we do</a>
-      <a href="#app">App</a>
-      <a href="#hubs">Find a hub</a>
-    </nav>
+    <div class="header-end">
+      <nav class="site-nav" aria-label="Sections">
+        <a href="#story">Our story</a>
+        <a href="#what-we-do">What we do</a>
+        <a href="#app">App</a>
+        <a href="#hubs">Find a hub</a>
+      </nav>
+      <button class="comment-toggle" id="comment-toggle" type="button">Comment</button>
+    </div>
   </div>
 </header>
+
+<script>
+/* Comment mode lives in review/ and loads only when it's asked for: the Comment button, a ?comment link, or
+   Nathan's one-time ?owner= link (which just remembers the owner key). The page stays light otherwise. */
+(() => {
+  const params = new URLSearchParams(location.search);
+  let loading = null;
+  const load = () => {
+    if (!loading) {
+      const css = document.createElement('link');
+      css.rel = 'stylesheet'; css.href = 'review/review.css';
+      document.head.appendChild(css);
+      loading = import('./review/comment-mode.js');
+    }
+    return loading;
+  };
+  document.getElementById('comment-toggle').addEventListener('click', () => load().then(m => (m.isOpen() ? m.exit() : m.enter())));
+  if (params.has('owner')) import('./review/identity.js').then(m => m.captureOwnerKey());
+  if (params.has('comment')) {
+    const open = () => load().then(m => m.enter());
+    if (document.documentElement.classList.contains('is-loading')) window.addEventListener('page:revealed', open, { once: true });
+    else open();
+  }
+})();
+</script>
 
 <main>
   <!-- 1. Hero: the multiplying globe with pins -->
@@ -2160,6 +2196,15 @@ const CONTROLS = [
     playing = on;
     if (showControls) document.getElementById('play').textContent = on ? 'Pause globe' : 'Play globe';
   }
+  // Comment mode holds the globe still so reviewers mark up a steady frame, then puts it back as it was
+  let playingBeforeReview = null;
+  const markGlobe = () => { document.documentElement.dataset.globe = playing ? 'playing' : 'paused'; };
+  document.addEventListener('review:enter', () => { playingBeforeReview = playing; setPlaying(false); markGlobe(); });
+  document.addEventListener('review:exit', () => {
+    if (playingBeforeReview !== null) setPlaying(playingBeforeReview);
+    playingBeforeReview = null;
+    markGlobe();
+  });
   function restart() {
     t = 0; clock = 0; flightLon = START_LON; flightClock = 0; cruise = 1;
     pins.forEach(p => { p.closing = true; });
@@ -2516,6 +2561,7 @@ const CONTROLS = [
   const pointer = { x: 0, y: 0, known: false };            // where the mouse is, anywhere in the window
 
   function show(row) {
+    if (document.documentElement.classList.contains('review-open')) return hide();   // off in comment mode
     if (row === current) return;
     current = row;
     cursor.style.setProperty('--hc', getComputedStyle(row).getPropertyValue('--hc'));
