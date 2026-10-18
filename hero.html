@@ -192,9 +192,10 @@
     --h1-leading: 1.04;
     --h2-size: 22px;
     --hero-width: 760px;
-    --hero-top: 52%;
+    --hero-top: 52;                 /* % of the hero's height, unitless so it can scale lengths too */
     --scrim: 0.85;
     --hero-height: 100vh;
+    --hero-curve: 5vw;              /* how far the hero's bottom edge dips at the center */
     --section-space: 128px;
     --radius: 24px;
     --content-width: 1180px;
@@ -232,7 +233,22 @@
   @media (max-width: 760px) { .site-nav { display: none; } }
 
   /* ---------- Hero ---------- */
-  .hero { position: relative; height: var(--hero-height); min-height: 600px; overflow: hidden; background: #fff; }
+  .hero {
+    --hero-view: max(600px, var(--hero-height));     /* the hero's height down to its straight edge */
+    --curve: min(var(--hero-curve), 120px);
+    position: relative; z-index: 1; height: var(--hero-height); min-height: 600px; overflow: clip visible; background: #fff;
+  }
+  /* The globe, fade and pins run --curve past the hero's bottom and are masked to an arc, so the next section
+     starts along a curve. The arc is an ellipse 1.5x the hero's width whose bottom dips --curve below the straight
+     edge and whose sides meet it at the screen edges; that takes a height of --curve / (1 - sqrt(1 - 1/1.5^2)). */
+  .hero-art {
+    --arc: calc(var(--curve) * 3.93);
+    position: absolute; inset: 0 0 calc(-1 * var(--curve)) 0; z-index: 0;
+    -webkit-mask: linear-gradient(#000 0 0) top / 100% calc(100% - var(--curve)) no-repeat,
+                  radial-gradient(ellipse 75% var(--arc) at 50% calc(100% - var(--arc)), #000 99.6%, transparent);
+            mask: linear-gradient(#000 0 0) top / 100% calc(100% - var(--curve)) no-repeat,
+                  radial-gradient(ellipse 75% var(--arc) at 50% calc(100% - var(--arc)), #000 99.6%, transparent);
+  }
   .hero .stage, .hero .pins { position: absolute; inset: 0; }
   .hero .stage { z-index: 0; }
   .hero .pins { z-index: 2; }
@@ -245,7 +261,7 @@
       rgba(255,255,255,0) 64%);
   }
   .hero-copy {
-    position: absolute; z-index: 3; top: var(--hero-top); transform: translateY(-50%);
+    position: absolute; z-index: 3; top: calc(var(--hero-top) * 1%); transform: translateY(-50%);
     left: max(24px, calc((100% - var(--content-width)) / 2 + 24px));
     width: min(var(--hero-width), calc(100% - 48px));
     pointer-events: none;                     /* the globe stays hoverable around the text */
@@ -329,7 +345,8 @@
   .hero[data-align="center"] .hero-actions,
   .hero[data-align="center"] .word-dots { justify-content: center; margin-left: 0; }
   .hero[data-align="center"] .hero-scrim {
-    background: radial-gradient(ellipse 62% 58% at 50% var(--hero-top),
+    /* sized to the hero above the curve, not the taller layer the fade sits in */
+    background: radial-gradient(ellipse 62% calc(var(--hero-view) * .58) at 50% calc(var(--hero-view) * var(--hero-top) / 100),
       rgba(255,255,255,var(--scrim)) 0%, rgba(255,255,255,calc(var(--scrim) * .75)) 45%, rgba(255,255,255,0) 100%);
   }
   @media (prefers-reduced-motion: reduce) { .slot { transition: none; } .cursor.blink { animation: none; } }
@@ -671,12 +688,14 @@
 <main>
   <!-- 1. Hero: the multiplying globe with pins -->
   <section class="hero" id="top" data-layout="typed" data-align="center">
-    <div class="stage" id="stage">
-      <canvas id="canvas" role="img" aria-label="A camera flies low over a pale globe. Dots appear and multiply into networks across the world; photo pins rise above some of them."></canvas>
+    <div class="hero-art">
+      <div class="stage" id="stage">
+        <canvas id="canvas" role="img" aria-label="A camera flies low over a pale globe. Dots appear and multiply into networks across the world; photo pins rise above some of them."></canvas>
+      </div>
+      <div class="hero-scrim" aria-hidden="true"></div>
+      <div class="pins" id="pins"></div>
+      <canvas class="pin-areas" id="pin-areas" aria-hidden="true"></canvas>
     </div>
-    <div class="hero-scrim" aria-hidden="true"></div>
-    <div class="pins" id="pins"></div>
-    <canvas class="pin-areas" id="pin-areas" aria-hidden="true"></canvas>
     <div class="hero-copy" id="hero-copy">
       <h1 class="hero-title" aria-label="Multiplying disciples, leaders, churches, and movements">
         <span class="stacked" aria-hidden="true">
@@ -985,6 +1004,7 @@ const CONFIG = {
   heroTop: 52,              // %, vertical position of the hero text
   scrim: 0.85,              // white fade behind the hero text
   heroHeight: 100,          // vh
+  heroCurve: 5,             // vw, how far the hero's bottom edge dips at the center (0 = straight, capped at 120px)
   soloSize: 92,             // px, the one-line headline in Rotating and Typed
   wordHold: 2.6,            // seconds each word stays in Rotating and Typed
   typeSpeed: 9,             // letters per second in Typed
@@ -1099,9 +1119,10 @@ const PAGE_CONTROLS = [
     { key: 'h1Leading', label: 'Line spacing', type: 'range', min: 0.9, max: 1.4, step: 0.01, fmt: v => v.toFixed(2), css: '--h1-leading' },
     { key: 'h2Size', label: 'Statement size', type: 'range', min: 14, max: 36, step: 1, fmt: v => v + 'px', css: '--h2-size', unit: 'px' },
     { key: 'heroWidth', label: 'Text block width', type: 'range', min: 360, max: 1000, step: 10, fmt: v => v + 'px', css: '--hero-width', unit: 'px' },
-    { key: 'heroTop', label: 'Text position', type: 'range', min: 30, max: 75, step: 1, fmt: v => v + '%', css: '--hero-top', unit: '%' },
+    { key: 'heroTop', label: 'Text position', type: 'range', min: 30, max: 75, step: 1, fmt: v => v + '%', css: '--hero-top' },
     { key: 'scrim', label: 'Fade behind text', type: 'range', min: 0, max: 1, step: 0.01, fmt: pct, css: '--scrim' },
     { key: 'heroHeight', label: 'Hero height', type: 'range', min: 60, max: 100, step: 1, fmt: v => v + 'vh', css: '--hero-height', unit: 'vh' },
+    { key: 'heroCurve', label: 'Bottom curve', type: 'range', min: 0, max: 10, step: 0.5, fmt: v => v + 'vw', css: '--hero-curve', unit: 'vw' },
     { key: 'wordHold', label: 'Each word stays', type: 'range', min: 1, max: 6, step: 0.1, fmt: v => v.toFixed(1) + 's', page: true },
     { key: 'typeSpeed', label: 'Typing speed', type: 'range', min: 3, max: 20, step: 1, fmt: v => v + ' letters/s', page: true },
     { key: 'showWordDots', label: 'Show word dots', type: 'check', page: true },

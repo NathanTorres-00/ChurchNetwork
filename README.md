@@ -180,7 +180,8 @@ motion get a still network and a quick fade.
 
 **Adjust panel:** the **Headline** group has a color picker for each of the four words (and for "Multiplying"),
 plus headline size, colored-word weight, line spacing, statement size, text block width and position, the white
-fade behind the text, and hero height. The **Page** group has section spacing, corner radius, content width and
+fade behind the text, hero height, and the bottom curve (how far the hero's lower edge dips into the next section
+at the center; 0 makes it straight). The **Page** group has section spacing, corner radius, content width and
 body text size. Changing a word's color updates it everywhere it appears (headline, timeline, stats, icons).
 The **Globe:** groups are the same controls as the Pins page.
 
