@@ -25,6 +25,7 @@ const COMPOSER = {
   comment: { title: 'Add a comment', field: 'Comment', post: 'Post comment', required: true },
   arrow: { title: 'Add an arrow', field: 'Note (optional)', post: 'Post arrow' },
   highlight: { title: 'Add a highlight', field: 'Note (optional)', post: 'Post highlight' },
+  voice: { title: 'Record a voice memo', field: 'Title (optional)', post: 'Post voice memo', cancel: 'Discard' },
 };
 
 export function h(tag, attrs = {}, children = []) {
@@ -151,7 +152,7 @@ export function createWorkspace({
     const li = h('li', {
       class: `rv-card${m._id === view.selectedId ? ' rv-card-selected' : ''}${m.resolved ? ' rv-resolved' : ''}`,
       'data-id': m._id, tabindex: '0',
-      onclick: e => { if (!e.target.closest('button, audio, input')) onSelectCard?.(m._id); },
+      onclick: e => { if (!e.target.closest('button, audio, input, .rv-player')) onSelectCard?.(m._id); },
       onkeydown: e => { if (e.key === 'Enter' && e.target === li) onSelectCard?.(m._id); },
     }, [
       h('div', { class: 'rv-card-head' }, [h('span', { class: 'rv-author', text: m.author }), h('span', { class: `rv-tag rv-tag-${m.kind}`, text: KIND_LABEL[m.kind] })]),
@@ -189,11 +190,11 @@ export function createWorkspace({
   }
 
   // ---------- Composer ----------
-  function openComposer({ kind, name, onSubmit, extra = null, title, post }) {
+  function openComposer({ kind, name, onSubmit, extra = null }) {
     closeComposer();
-    const cfg = COMPOSER[kind] ?? { title, field: 'Title (optional)', post };
+    const cfg = COMPOSER[kind];
     const error = h('p', { class: 'rv-error', role: 'alert', hidden: true });
-    const nameInput = name ? null : h('input', { type: 'text', name: 'name', maxlength: '60', autocomplete: 'name', required: true });
+    const nameInput = name ? null : h('input', { type: 'text', name: 'name', maxlength: '60', autocomplete: 'name' });
     let nameRow;
     const showNameField = () => {
       const input = h('input', { type: 'text', name: 'name', maxlength: '60', autocomplete: 'name', value: name ?? '' });
@@ -214,7 +215,8 @@ export function createWorkspace({
       error,
       h('div', { class: 'rv-composer-actions' }, [
         postButton,
-        h('button', { type: 'button', class: 'rv-cancel', text: 'Cancel', onclick: () => api.requestClose() }),
+        // pressing Cancel/Discard is a deliberate choice, so it doesn't ask again
+        h('button', { type: 'button', class: 'rv-cancel', text: cfg.cancel ?? 'Cancel', onclick: () => { closeComposer(); api.onClose?.(); } }),
       ]),
     ]);
     const showError = msg => { error.textContent = msg; error.hidden = !msg; };

@@ -3,7 +3,8 @@
 import { captureOwnerKey, getDeviceId, getName, getOwnerKey, setName } from './identity.js';
 import { createMarksLayer } from './marks-layer.js';
 import { createPlacing } from './placing.js';
-import { createWorkspace } from './workspace.js';
+import { createPlayer, createRecorderWidget } from './voice.js';
+import { createWorkspace, h } from './workspace.js';
 
 let state = null;
 
@@ -45,8 +46,18 @@ export async function enter({ page = 'home' } = {}) {
   };
   s.ready = new Promise(resolve => { s.markReady = resolve; });     // settles once the store connects (or fails to)
 
+  // Voice memo players, kept per mark so a memo keeps playing when other marks arrive
+  s.players = new Map();
+  const playerFor = m => {
+    if (m.kind !== 'voice') return null;
+    if (!m.audioUrl) return h('p', { class: 'rv-sub', text: 'Audio unavailable.' });
+    if (!s.players.has(m._id)) s.players.set(m._id, createPlayer(m.audioUrl, m.audio.durationMs));
+    return s.players.get(m._id).el;
+  };
+
   // Marks shown on the page: open ones, plus resolved ones when the reviewer asks to see them
   const update = () => {
+    for (const [id, p] of s.players) if (!s.marks.some(m => m._id === id)) { p.destroy(); s.players.delete(id); }
     const visible = s.marks.filter(m => s.showResolved || !m.resolved);
     const missing = s.layer.render(visible, { selectedId: s.selectedId, draft: s.draft });
     s.workspace.sidebar.setMarks(s.marks, { showResolved: s.showResolved, selectedId: s.selectedId, missing, deviceId: s.deviceId });
@@ -78,6 +89,7 @@ export async function enter({ page = 'home' } = {}) {
     }),
     onShowResolved: on => { s.showResolved = on; update(); },
   });
+  s.workspace.setCardExtras(playerFor);
   document.body.appendChild(s.workspace.el);
   s.layer = createMarksLayer();
   s.layer.onSelect(id => select(id));
@@ -117,27 +129,51 @@ function startDraft(s, draft) {
   s.draft = { ...draft, _id: null };
   s.update();
   if (moving) return;
+
+  s.voice?.destroy();
+  s.voice = draft.kind === 'voice'
+    ? createRecorderWidget({ maxMs: window.__reviewMaxVoiceMs ?? 180000, onTypeInstead: () => typeInstead(s) })
+    : null;
   const composer = s.workspace.openComposer({
     kind: draft.kind,
     name: getName(),
+    extra: s.voice?.el,
     onSubmit: ({ text, name }) => post(s, { text, name }),
   });
-  composer.onClose = () => { s.draft = null; s.update(); };
+  if (s.voice) composer.hasExtra = () => s.voice.hasContent();
+  composer.onClose = () => { s.voice?.destroy(); s.voice = null; s.draft = null; s.update(); };
+}
+
+// The mic can't be used: keep the pin where it is and switch to a typed comment
+function typeInstead(s) {
+  const at = s.draft?.at;
+  s.voice?.destroy(); s.voice = null;
+  s.workspace.closeComposer();
+  s.draft = null;
+  s.workspace.setTool('comment');
+  if (at) startDraft(s, { kind: 'comment', at });
 }
 
 async function post(s, { text, name }) {
+  const d = s.draft;
+  const memo = d.kind === 'voice' ? s.voice?.getResult() : null;
+  if (d.kind === 'voice' && !memo) throw new Error('Record a memo first, then post it.');
   await s.ready;
   if (!s.store) throw new Error(MESSAGES.NETWORK);
-  const d = s.draft;
   setName(name);
   const input = { page: s.page, kind: d.kind, author: name, deviceId: s.deviceId };
   if (d.at) input.at = d.at; else { input.from = d.from; input.to = d.to; }
   if (text) input.text = text;
   try {
+    if (memo) {
+      if (!s.voice.getStorageId()) s.voice.setStorageId(await s.store.uploadAudio(memo.blob, memo.mime, s.deviceId));
+      input.audio = { storageId: s.voice.getStorageId(), mime: memo.mime, durationMs: Math.max(1, memo.durationMs) };
+    }
     await s.store.create(input);
   } catch (e) {
     throw new Error(message(e));
   }
+  s.voice?.destroy(); s.voice = null;
   s.draft = null;
   s.workspace.closeComposer();
   s.update();
@@ -160,6 +196,8 @@ export async function exit() {
   document.removeEventListener('keydown', s.onKey);
   s.unsubscribe?.();
   if (s.store && s.store !== window.__reviewFake) s.store.close();
+  s.voice?.destroy();
+  for (const p of s.players.values()) p.destroy();
   s.placing.destroy();
   s.layer.destroy();
   s.workspace.destroy();

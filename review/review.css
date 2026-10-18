@@ -131,6 +131,35 @@ html.review-open.has-hub-cursor .hub-row, html.review-open.has-hub-cursor .hub-r
   padding: 12px 16px; border: 1px solid var(--rv-border); border-radius: 12px; background: #fff; font-weight: 600; font-size: 14px; line-height: 1.5; cursor: pointer;
 }
 
+/* ---------- Voice memos ---------- */
+.rv-recorder { display: grid; gap: 8px; justify-items: start; }
+.rv-recorder > .rv-sub { font-size: 13px; }
+.rv-record {
+  display: inline-flex; align-items: center; gap: 10px; padding: 12px 18px; border: 1px solid var(--rv-border); border-radius: 999px;
+  background: #fff; font-weight: 600 !important; font-size: 15px !important; cursor: pointer;
+}
+.rv-record:hover { border-color: #A1A1AA; }
+.rv-rec-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--c-movements, #B23A5B); flex: none; }
+.rv-rec-dot.rv-live { animation: rv-blink 1.2s ease-in-out infinite; }
+@keyframes rv-blink { 50% { opacity: .25; } }
+.rv-recording { display: flex; align-items: center; gap: 10px; width: 100%; }
+.rv-rec-time { font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.rv-recording .rv-stop { margin-left: auto; padding: 8px 14px; }
+.rv-problem { display: grid; gap: 10px; padding: 12px 14px; border-radius: 12px; background: var(--surface, #F5F5F6); }
+.rv-problem p { margin: 0; font-size: 14px; font-weight: 500; line-height: 1.5; color: var(--heading, #1F1F23); }
+.rv-problem-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.rv-problem-actions .rv-cancel { padding: 8px 12px; font-size: 13px; }
+
+.rv-player { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 12px 8px 8px; box-sizing: border-box; border-radius: 999px; background: var(--surface, #F5F5F6); }
+.rv-play {
+  width: 32px; height: 32px; flex: none; display: grid; place-items: center; padding: 0; border: 0; border-radius: 50%;
+  background: var(--rv-accent); color: #fff !important; cursor: pointer;
+}
+.rv-progress { flex: 1; height: 4px; border-radius: 2px; background: #E4E4E7; overflow: hidden; cursor: pointer; }
+.rv-progress-bar { display: block; width: 0; height: 100%; background: var(--rv-accent); transition: width .25s linear; }
+.rv-duration { font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--heading, #1F1F23); }
+.rv-player audio { display: none; }
+
 /* ---------- Confirm dialog ---------- */
 .rv-dialog-backdrop { position: fixed; inset: 0; z-index: 70; display: grid; place-items: center; background: rgba(31, 31, 35, .28); padding: 16px; }
 .rv-dialog { width: min(380px, 100%); display: grid; gap: 10px; padding: 20px; border-radius: 20px; background: #fff; box-shadow: 0 24px 48px rgba(0, 0, 0, .18); }
