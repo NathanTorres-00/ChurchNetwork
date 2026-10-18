@@ -1,0 +1,78 @@
+// Turns clicks and drags on the page into draft marks while a markup tool is active. The page's own links
+// and buttons don't fire while placing; comment mode's interface ([data-review-ui]) works as usual.
+import { anchorAt } from './anchor.js';
+
+const POINT_TOOLS = new Set(['comment', 'voice']);
+const DRAG_TOOLS = new Set(['arrow', 'highlight']);
+const MIN_DRAG = 8;
+
+export function createPlacing({ getTool, onDraft }) {
+  let start = null;            // { x, y, id } in client coordinates
+  let preview = null;
+
+  const placing = () => POINT_TOOLS.has(getTool()) || DRAG_TOOLS.has(getTool());
+  const onPage = e => e.target instanceof Element && !e.target.closest('[data-review-ui]');
+  const block = e => { e.preventDefault(); e.stopPropagation(); };
+
+  function drawPreview(e) {
+    const tool = getTool();
+    if (!preview) {
+      preview = document.createElement('div');
+      preview.className = `rv-preview rv-preview-${tool}`;
+      preview.dataset.reviewUi = '';
+      document.body.appendChild(preview);
+    }
+    const x1 = start.x, y1 = start.y, x2 = e.clientX, y2 = e.clientY;
+    if (tool === 'highlight') {
+      Object.assign(preview.style, { left: Math.min(x1, x2) + 'px', top: Math.min(y1, y2) + 'px', width: Math.abs(x2 - x1) + 'px', height: Math.abs(y2 - y1) + 'px' });
+    } else {
+      const len = Math.hypot(x2 - x1, y2 - y1), angle = Math.atan2(y2 - y1, x2 - x1);
+      Object.assign(preview.style, { left: x1 + 'px', top: y1 + 'px', width: len + 'px', transform: `rotate(${angle}rad)` });
+    }
+  }
+  const clearPreview = () => { preview?.remove(); preview = null; };
+
+  function down(e) {
+    if (!placing() || !onPage(e) || e.button > 0) return;
+    block(e);
+    start = { x: e.clientX, y: e.clientY, id: e.pointerId };
+    try { e.target.setPointerCapture?.(e.pointerId); } catch { /* not capturable */ }
+  }
+  function move(e) {
+    if (!start || e.pointerId !== start.id) return;
+    block(e);
+    if (DRAG_TOOLS.has(getTool()) && Math.hypot(e.clientX - start.x, e.clientY - start.y) >= MIN_DRAG) drawPreview(e);
+  }
+  function up(e) {
+    if (!start || e.pointerId !== start.id) return;
+    block(e);
+    const tool = getTool(), s = start;
+    start = null;
+    clearPreview();
+    if (POINT_TOOLS.has(tool)) onDraft({ kind: tool, at: anchorAt(s.x, s.y) });
+    else if (DRAG_TOOLS.has(tool) && Math.hypot(e.clientX - s.x, e.clientY - s.y) >= MIN_DRAG) {
+      onDraft({ kind: tool, from: anchorAt(s.x, s.y), to: anchorAt(e.clientX, e.clientY) });
+    }
+  }
+  function cancel() { start = null; clearPreview(); }
+  // Clicks that follow a placing gesture shouldn't follow links or press the page's buttons
+  function click(e) { if (placing() && onPage(e)) block(e); }
+
+  const opts = { capture: true };
+  document.addEventListener('pointerdown', down, opts);
+  document.addEventListener('pointermove', move, opts);
+  document.addEventListener('pointerup', up, opts);
+  document.addEventListener('pointercancel', cancel, opts);
+  document.addEventListener('click', click, opts);
+
+  return {
+    destroy() {
+      cancel();
+      document.removeEventListener('pointerdown', down, opts);
+      document.removeEventListener('pointermove', move, opts);
+      document.removeEventListener('pointerup', up, opts);
+      document.removeEventListener('pointercancel', cancel, opts);
+      document.removeEventListener('click', click, opts);
+    },
+  };
+}

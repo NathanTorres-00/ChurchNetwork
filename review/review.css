@@ -89,9 +89,104 @@ html.review-open.has-hub-cursor .hub-row, html.review-open.has-hub-cursor .hub-r
 .rv-stat dd { margin: 0; font-size: 16px; font-weight: 600; line-height: 1.5; font-variant-numeric: tabular-nums; }
 .rv-thread { display: grid; gap: 12px; }
 .rv-cards { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
-.rv-card { display: grid; gap: 8px; padding: 16px; border: 1px solid var(--rv-border); border-radius: 18px; background: #fff; }
-.rv-card-text { margin: 0; font-size: 15px; font-weight: 500; line-height: 1.5; color: var(--text, #52525B); overflow-wrap: anywhere; }
+.rv-card {
+  display: grid; gap: 8px; padding: 16px; border: 1px solid var(--rv-border); border-radius: 18px; background: #fff; cursor: pointer;
+  transition: border-color .2s ease, box-shadow .2s ease;
+}
+.rv-card:hover { border-color: #A1A1AA; }
+.rv-card-selected { border-color: var(--rv-accent); box-shadow: 0 0 0 1px var(--rv-accent); }
+.rv-card.rv-resolved { opacity: .55; }
+.rv-card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.rv-author { font-size: 16px; font-weight: 600; line-height: 1.5; }
+.rv-tag { padding: 4px 10px; border-radius: 999px; background: var(--surface, #F5F5F6); font-size: 12px; font-weight: 500; line-height: 1.5; color: var(--text, #52525B); white-space: nowrap; }
+.rv-card-text { margin: 0; font-size: 15px; font-weight: 500; line-height: 1.5; color: var(--text, #52525B); overflow-wrap: anywhere; white-space: pre-line; }
+.rv-card-foot { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 12px; font-weight: 500; line-height: 1.5; color: var(--text, #52525B); }
+.rv-badge { padding: 2px 8px; border-radius: 999px; border: 1px solid var(--rv-border); }
+.rv-actions { margin-left: auto; display: inline-flex; gap: 12px; }
+.rv-link { padding: 0; border: 0; background: none; cursor: pointer; font-size: 13px !important; font-weight: 600; color: var(--heading, #1F1F23) !important; text-decoration: underline; text-underline-offset: 3px; }
+.rv-link.rv-danger { color: var(--c-movements, #B23A5B) !important; }
+.rv-thread-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.rv-show-resolved { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; color: var(--text, #52525B); cursor: pointer; }
+.rv-show-resolved input { accent-color: var(--rv-accent); margin: 0; }
 .rv-composer-slot:empty { display: none; }
+
+/* ---------- Composer ---------- */
+.rv-composer { display: grid; gap: 10px; padding: 16px; border: 1px solid var(--rv-border); border-radius: 18px; background: #fff; }
+.rv-composer h3 { margin: 0; font-size: 16px; font-weight: 600; line-height: 1.5; }
+.rv-field { display: grid; gap: 6px; font-size: 13px; font-weight: 500; color: var(--text, #52525B); }
+.rv-field input, .rv-field textarea {
+  width: 100%; box-sizing: border-box; padding: 12px 14px; border: 1px solid var(--rv-border); border-radius: 12px; background: #F7F8FA;
+  font: 500 15px/1.5 var(--font, 'Geist', system-ui, sans-serif); color: var(--heading, #1F1F23); resize: vertical;
+}
+.rv-field input:focus, .rv-field textarea:focus { outline: none; border-color: var(--rv-accent); box-shadow: 0 0 0 3px rgba(47, 125, 109, .15); background: #fff; }
+.rv-posting-as { margin: 0; display: flex; gap: 8px; align-items: baseline; font-size: 14px; font-weight: 500; color: var(--text, #52525B); }
+.rv-error { margin: 0; font-size: 14px; font-weight: 500; color: var(--c-movements, #B23A5B); }
+.rv-composer-actions { display: flex; gap: 8px; }
+.rv-post {
+  flex: 1; padding: 12px 16px; border: 0; border-radius: 12px; background: var(--rv-accent); color: #fff !important;
+  font-weight: 600; font-size: 14px; line-height: 1.5; cursor: pointer;
+}
+.rv-post:disabled { opacity: .6; cursor: progress; }
+.rv-cancel {
+  padding: 12px 16px; border: 1px solid var(--rv-border); border-radius: 12px; background: #fff; font-weight: 600; font-size: 14px; line-height: 1.5; cursor: pointer;
+}
+
+/* ---------- Confirm dialog ---------- */
+.rv-dialog-backdrop { position: fixed; inset: 0; z-index: 70; display: grid; place-items: center; background: rgba(31, 31, 35, .28); padding: 16px; }
+.rv-dialog { width: min(380px, 100%); display: grid; gap: 10px; padding: 20px; border-radius: 20px; background: #fff; box-shadow: 0 24px 48px rgba(0, 0, 0, .18); }
+.rv-dialog h3 { margin: 0; font-size: 17px; font-weight: 600; }
+.rv-dialog p { margin: 0; font-size: 15px; font-weight: 500; line-height: 1.5; color: var(--text, #52525B); }
+.rv-dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 6px; }
+.rv-danger-button { padding: 12px 16px; border: 0; border-radius: 12px; background: var(--c-movements, #B23A5B); color: #fff !important; font-weight: 600; font-size: 14px; cursor: pointer; }
+
+/* ---------- Marks on the page ---------- */
+/* While a tool is active, the page is a canvas to draw on: its text is clickable and its links don't fire */
+html.review-open .hero-copy { pointer-events: auto; }
+html.rv-placing body, html.rv-placing body * { cursor: crosshair !important; }
+html.rv-placing body [data-review-ui], html.rv-placing body [data-review-ui] * { cursor: auto !important; }
+html.rv-placing body [data-review-ui] button { cursor: pointer !important; }
+
+.rv-marks { position: absolute; left: 0; top: 0; width: 0; height: 0; z-index: 55; }
+.rv-marks > button { position: absolute; margin: 0; padding: 0; font: inherit; cursor: pointer; }
+.rv-marks > [hidden] { display: none; }
+
+/* The pin's box is its dot, centered on the anchor point; the bubble sits above and to the right */
+.rv-pin { width: 12px; height: 12px; margin: -6px 0 0 -6px !important; border: 0; background: none; }
+.rv-pin-dot {
+  position: absolute; left: 0; top: 0; width: 12px; height: 12px; border-radius: 50%;
+  background: var(--rv-accent); box-shadow: 0 0 0 3px #fff, 0 2px 6px rgba(0, 0, 0, .25);
+}
+.rv-pin-bubble {
+  position: absolute; left: 12px; top: -40px; width: 40px; height: 40px; display: grid; place-items: center;
+  border-radius: 20px 20px 20px 4px; background: rgba(255, 255, 255, .95); color: var(--heading, #1F1F23);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, .12); border: 1px solid #fff;
+  transition: transform .25s var(--rv-ease), background .2s ease, color .2s ease;
+}
+.rv-pin-bubble svg { width: 18px; height: 18px; }
+.rv-pin:hover .rv-pin-bubble, .rv-pin:focus-visible .rv-pin-bubble { transform: translateY(-2px); }
+.rv-pin.rv-selected .rv-pin-bubble { background: var(--rv-accent); color: #fff; }
+.rv-pin.rv-selected .rv-pin-dot { animation: rv-pulse 1.4s ease-out 2; }
+@keyframes rv-pulse { from { box-shadow: 0 0 0 3px #fff, 0 0 0 3px rgba(47, 125, 109, .5); } to { box-shadow: 0 0 0 3px #fff, 0 0 0 18px rgba(47, 125, 109, 0); } }
+
+.rv-arrow { border: 0; background: none; overflow: visible; }
+.rv-arrow svg { display: block; overflow: visible; }
+.rv-arrow-line, .rv-arrow-head { stroke: var(--rv-accent); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; fill: none; }
+.rv-arrow-hit { stroke: transparent; stroke-width: 18; stroke-linecap: round; }
+.rv-arrow.rv-selected .rv-arrow-line, .rv-arrow.rv-selected .rv-arrow-head { stroke-width: 4; }
+
+.rv-highlight { border: 2px solid var(--rv-accent); border-radius: 8px; background: rgba(47, 125, 109, .1); }
+.rv-highlight.rv-selected { background: rgba(47, 125, 109, .2); box-shadow: 0 0 0 4px rgba(47, 125, 109, .2); }
+
+.rv-marks .rv-resolved { opacity: .45; }
+.rv-marks .rv-draft { pointer-events: none; }
+.rv-pin.rv-draft .rv-pin-bubble { border: 2px dashed var(--rv-accent); }
+.rv-highlight.rv-draft { border-style: dashed; }
+.rv-arrow.rv-draft .rv-arrow-line { stroke-dasharray: 6 5; }
+
+/* Live preview while dragging an arrow or highlight (viewport coordinates) */
+.rv-preview { position: fixed; z-index: 56; pointer-events: none; }
+.rv-preview-highlight { border: 2px dashed var(--rv-accent); border-radius: 8px; background: rgba(47, 125, 109, .08); }
+.rv-preview-arrow { height: 0; border-top: 2.5px dashed var(--rv-accent); transform-origin: 0 0; }
 
 /* The sidebar tab only shows where the sidebar overlays the page */
 .rv-sidebar-tab { display: none; }
