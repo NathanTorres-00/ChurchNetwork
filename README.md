@@ -52,9 +52,11 @@ All of these are in the `CONFIG` block and the Adjust panel. Any of them can als
 
 ## Deploying (Vercel)
 
-The repo deploys to Vercel as a static site, no build step. `vercel.json` serves `hero.html` at the site's root and
-turns on clean URLs (`/hero`, `/network-globe`, `/network-globe-pins`, `/network-multiply`; the `.html` addresses
-redirect to them).
+The repo deploys to Vercel as a static site. `vercel.json` serves `hero.html` at the site's root and turns on
+clean URLs (`/hero`, `/network-globe`, `/network-globe-pins`, `/network-multiply`; the `.html` addresses redirect
+to them). Its build command, `npx convex deploy --cmd 'node scripts/build-static.js'`, pushes the comment mode
+backend to Convex and then copies the pages and `review/` into `dist/`, which Vercel serves (see
+[Comment mode](#comment-mode)).
 
 ---
 
@@ -211,3 +213,47 @@ show. On very busy globe settings, the farthest networks (in the horizon fade) a
 jsDelivr). The Page group has a **Smooth scrolling** switch and a **Scroll glide** slider. In-page links like
 **Learn more** glide to their section. Lenis stays off for visitors who prefer reduced motion, and the Adjust panel
 scrolls on its own.
+
+---
+
+# Comment mode
+
+The hero page has a **Comment** button in its header, beside the nav. It turns the page into a review workspace
+where overseers mark up the live page, and everyone in comment mode sees each other's marks appear as they're
+posted. Outside comment mode none of it shows, and nothing for it loads until the button is clicked.
+
+- **Four kinds of marks**, from the tools on the left:
+  - **Comment**: click the page to pin a typed comment.
+  - **Voice memo**: click the page, record from the mic (up to 3 minutes), listen back, then post. The card has a
+    play button and the length.
+  - **Arrow**: drag from where it starts to what it points at, with an optional note.
+  - **Highlight**: drag across an area, with an optional note.
+- Every mark appears on the page and as a card in the **Review activity** sidebar, with counts of what's open.
+  Clicking a card scrolls to its mark. Marks are tied to the element they were made on, so they stay on target at
+  any window width; if that part of the page is removed, the card says **Moved**.
+- Reviewers type their name once per device. They can delete their own marks.
+- **Share review** copies a link that opens straight into comment mode (`/?comment`).
+- **Esc** backs out one step: closes the composer, then the tool, then comment mode. Leaving with something unsent
+  asks first.
+- On phones the tools sit in a bar along the bottom and Review activity slides up as a sheet.
+
+**Owner link:** opening the site once with `?owner=<key>` remembers the owner key on that device (and removes it
+from the address bar). The owner can **Resolve** marks (hidden unless **Show resolved** is on) and delete any mark.
+The key is stored in Convex as the `OWNER_KEY` environment variable on both deployments; change it there with
+`npx convex env set OWNER_KEY <new key>` (add `--prod` for production).
+
+**How it's built:** `review/` holds the browser side as plain ES modules (no bundler): `comment-mode.js` opens
+and closes the workspace, `workspace.js` is the toolbar, tools and sidebar, `marks-layer.js` draws the marks,
+`placing.js` turns clicks and drags into marks, `anchor.js` ties them to elements, `voice.js` and `recorder.js`
+record and play memos, and `store.js` talks to [Convex](https://convex.dev) through its browser bundle
+(`convex@1.47.0` from unpkg). `convex/` is the backend: one `marks` table, file storage for the audio, and the
+rules (length limits, 10 marks per device per minute, owner-only resolve). Convex was set up through the Vercel
+Marketplace, so its deploy keys live in the Vercel project.
+
+**Working on it locally:**
+- `npm install`, then `npx convex dev` to sync the functions to your development deployment (it also writes
+  `.env.local`).
+- `npm run dev:config` writes `review/config.js` pointing at that deployment; serve the folder (for example
+  `python3 -m http.server`) and open `hero.html`.
+- `npm test` runs the backend and helper tests (Vitest, convex-test); `npm run test:e2e` runs the browser tests
+  (Playwright, with an in-memory store instead of Convex). Run `npx playwright install chromium` once first.
