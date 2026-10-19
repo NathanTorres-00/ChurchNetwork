@@ -89,6 +89,16 @@ test('clicking Comment twice quickly ends cleanly out of comment mode', async ({
   expect(errors).toEqual([]);
 });
 
+test("entering from the top keeps the page's header in view", async ({ page }) => {
+  await openPage(page);
+  await page.locator('#comment-toggle').click();
+  await expect.poll(async () => (await box(page, '.rv-toolbar'))?.y, { timeout: 8000 }).toBe(16);
+  expect(await page.evaluate(() => scrollY)).toBe(0);
+  const bar = await box(page, '.rv-toolbar');
+  const brand = await box(page, '.site-header .brand');
+  expect(brand.y).toBeGreaterThanOrEqual(bar.y + bar.height);
+});
+
 test('what you were reading stays in view', async ({ page }) => {
   await openPage(page);
   await page.locator('#story h2').scrollIntoViewIfNeeded();
