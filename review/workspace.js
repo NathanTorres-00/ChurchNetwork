@@ -304,6 +304,10 @@ export function createWorkspace({
     status.textContent = text;
     if (ms) statusTimer = setTimeout(() => { status.textContent = ''; }, ms);
   }
+  // Clears the status only if it still says this, so it doesn't wipe a newer message
+  function clearStatus(text) {
+    if (status.textContent === text) setStatus('');
+  }
 
   // Keep "2 min ago" current
   const clock = setInterval(() => {
@@ -319,6 +323,7 @@ export function createWorkspace({
     getTool: () => tool,
     setOwner(owner) { isOwner = !!owner; el.classList.toggle('rv-owner', isOwner); render(); },
     setStatus,
+    clearStatus,
     setSidebarOpen,
     openComposer,
     closeComposer,

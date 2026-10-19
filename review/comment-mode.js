@@ -25,6 +25,7 @@ const newId = () => globalThis.crypto?.randomUUID?.() ?? Math.random().toString(
 async function makeStore() {
   if (window.__reviewStoreFactory === 'fake') {
     if (window.__reviewFakeFailConnect > 0) { window.__reviewFakeFailConnect--; throw new Error('NETWORK'); }   // tests: a failed first connection
+    if (window.__reviewFakeConnectGate) await window.__reviewFakeConnectGate;   // tests: a connection held back
     window.__reviewFake ??= (await import('./fake-store.js')).createFakeStore();
     return window.__reviewFake;
   }
@@ -144,7 +145,7 @@ async function connect(s) {
   }
   if (state !== s) { if (store !== window.__reviewFake) store.close(); return false; }
   s.store = store;
-  s.workspace.setStatus('');
+  s.workspace.clearStatus(UNREACHABLE);        // only its own message; a newer one ("Link copied") stays
   s.unsubscribe = store.subscribe({ page: s.page, deviceId: s.deviceId }, marks => { s.marks = marks; s.update(); },
     () => s.workspace.setStatus(UNREACHABLE));
   try {

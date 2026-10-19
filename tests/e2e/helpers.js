@@ -10,13 +10,16 @@ export async function useFakeStore(page) {
 
 export async function openPage(page, path = '/hero.html') {
   await useFakeStore(page);
-  await page.goto(path);
+  // the page is ready when its loading screen opens; waiting for every photo would tie tests to Unsplash's speed
+  await page.goto(path, { waitUntil: 'domcontentloaded' });
   await page.waitForFunction(() => window.__revealed === true, null, { timeout: 30_000 });
 }
 
 export async function enterCommentMode(page) {
   await page.locator('#comment-toggle').click();
   await expect(page.locator('.rv-toolbar')).toBeVisible();
+  // the page has landed in its column (a person clicks the page once it's there, not mid-glide)
+  await expect(page.locator('html')).not.toHaveClass(/rv-gliding/, { timeout: 10_000 });
 }
 
 export const tool = (page, name) => page.locator('.rv-rail').getByRole('button', { name, exact: true });

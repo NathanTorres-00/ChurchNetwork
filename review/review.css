@@ -257,14 +257,17 @@ html.rv-placing body [data-review-ui] button { cursor: pointer !important; }
 .rv-root:is([data-phase="hidden"], [data-phase="out"]) .rv-sidebar { transform: translateX(calc(100% + 32px)); opacity: 0; }
 .rv-root:is([data-phase="hidden"], [data-phase="out"]) .rv-sidebar-tab { transform: translateY(12px); opacity: 0; }
 
-/* Entering: a snapshot of the page recedes into its column above the new layout (shrinking a little, its sides
-   drawing in to the column's edges) and fades into the reflowed page while it's still moving, so the change
-   of layout reads as one motion. The movement and the fade are separate animations so each keeps its own curve. */
+/* The two layouts never share the screen: the transition dissolves through a blank white card. Behind it all is
+   the workspace's gray, so the edges match whichever layout is showing. */
+html:is(.rv-gliding-in, .rv-gliding-out)::view-transition { background: #F1F3F5; }
+
+/* Entering: the page snapshot recedes into the column (shrinking a little, its sides drawing in to the column's
+   edges) while its content washes out to plain white; the reflowed page then fades in on that blank card. */
 html.rv-gliding-in::view-transition-old(root) {
-  z-index: 1; transform-origin: 0 0; mix-blend-mode: normal;
-  animation: rv-recede .7s var(--rv-glide-ease) both, rv-fade-out .36s linear .3s both;
+  transform-origin: 0 0; mix-blend-mode: normal;
+  animation: rv-recede .56s var(--rv-glide-ease) both, rv-wash .3s linear .1s both;
 }
-html.rv-gliding-in::view-transition-new(root) { mix-blend-mode: normal; animation: none; opacity: 1; }
+html.rv-gliding-in::view-transition-new(root) { mix-blend-mode: normal; animation: rv-fade-in .26s linear .44s both; }
 @keyframes rv-recede {
   from { transform: none; clip-path: inset(0 0 0 0 round 0px); }
   to {
@@ -272,24 +275,28 @@ html.rv-gliding-in::view-transition-new(root) { mix-blend-mode: normal; animatio
     clip-path: inset(0 var(--rv-clip-r) 0 var(--rv-clip-l) round var(--rv-clip-round));
   }
 }
-@keyframes rv-fade-out { from { opacity: 1; } to { opacity: 0; } }
-
-/* Leaving: the full page comes forward out of the column over the workspace. It starts gently (so it still lines
-   up with the column while the two crossfade), fades in quickly, and the column underneath fades away right after
-   so it doesn't show through as the page speeds up. */
-html.rv-gliding-out::view-transition-new(root) {
-  z-index: 1; transform-origin: 0 0; mix-blend-mode: normal;
-  animation: rv-advance .65s var(--rv-ease) both, rv-fade-in .12s linear both;
-}
-html.rv-gliding-out::view-transition-old(root) { mix-blend-mode: normal; animation: rv-fade-out .2s linear .08s both; }
-@keyframes rv-advance {
-  from {
-    transform: translate(var(--rv-glide-x), var(--rv-glide-y)) scale(var(--rv-glide-s));
-    clip-path: inset(0 var(--rv-clip-r) 0 var(--rv-clip-l) round var(--rv-clip-round));
-  }
-  to { transform: none; clip-path: inset(0 0 0 0 round 0px); }
-}
+/* contrast(0) turns every pixel the same gray and brightness(2) lifts that to white: the content dissolves
+   into a blank card */
+@keyframes rv-wash { to { filter: contrast(0) brightness(2); } }
 @keyframes rv-fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+/* Leaving: the workspace snapshot is cut down to the column's card, its content washes out to white, the blank
+   card grows to fill the window, and the full page fades in on it. */
+html.rv-gliding-out::view-transition-old(root) {
+  transform-origin: 0 0; mix-blend-mode: normal;
+  animation: rv-wash .2s linear both, rv-card-grow .44s var(--rv-glide-ease) .14s both;
+}
+html.rv-gliding-out::view-transition-new(root) { mix-blend-mode: normal; animation: rv-fade-in .24s linear .36s both; }
+@keyframes rv-card-grow {
+  from {
+    transform: none;
+    clip-path: inset(var(--rv-card-top) var(--rv-card-right) 0 var(--rv-card-left) round var(--rv-clip-round));
+  }
+  to {
+    transform: translate(var(--rv-grow-x), var(--rv-grow-y)) scale(var(--rv-grow-sx), var(--rv-grow-sy));
+    clip-path: inset(var(--rv-card-top) var(--rv-card-right) 0 var(--rv-card-left) round 0px);
+  }
+}
 
 /* ---------- Touch ---------- */
 /* With Arrow or Highlight, one finger draws instead of scrolling; with the tap tools and Browse it still scrolls */

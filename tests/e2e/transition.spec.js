@@ -89,6 +89,26 @@ test('clicking Comment twice quickly ends cleanly out of comment mode', async ({
   expect(errors).toEqual([]);
 });
 
+test("the header's Comment button closes comment mode even while a tool is active", async ({ page }) => {
+  await openPage(page);
+  await page.locator('#comment-toggle').click();
+  await expect.poll(async () => (await box(page, '.rv-toolbar'))?.y, { timeout: 8000 }).toBe(16);
+  await expect(page.locator('.rv-rail').getByRole('button', { name: 'Comment', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await page.locator('#comment-toggle').click();
+  await expect(page.locator('html')).not.toHaveClass(/review-open/, { timeout: 8000 });
+  await expect(page.locator('.rv-composer')).toHaveCount(0);
+});
+
+test('clicking the page mid-glide places nothing (it would land on the moving picture)', async ({ page }) => {
+  await openPage(page);
+  await page.locator('#comment-toggle').evaluate(b => b.click());
+  await expect(page.locator('html')).toHaveClass(/rv-gliding-in/);
+  await page.mouse.click(720, 600);
+  await expect(page.locator('html')).not.toHaveClass(/rv-gliding/, { timeout: 8000 });
+  await expect(page.locator('.rv-composer')).toHaveCount(0);
+  await expect(page.locator('.rv-pin')).toHaveCount(0);
+});
+
 test("entering from the top keeps the page's header in view", async ({ page }) => {
   await openPage(page);
   await page.locator('#comment-toggle').click();
@@ -101,13 +121,16 @@ test("entering from the top keeps the page's header in view", async ({ page }) =
 
 test('what you were reading stays in view', async ({ page }) => {
   await openPage(page);
-  await page.locator('#story h2').scrollIntoViewIfNeeded();
+  // one scroll, through the page's smooth scrolling (a native scroll first leaves the two fighting)
   await page.evaluate(() => (window.__lenis ? window.__lenis.scrollTo('#story', { immediate: true }) : document.getElementById('story').scrollIntoView()));
   await page.waitForTimeout(300);
+  await expect(page.locator('#story h2')).toBeInViewport();          // reading it before entering
+  const before = (await box(page, '#story h2')).y;
   await page.locator('#comment-toggle').evaluate(b => b.click());
   await expect.poll(async () => (await box(page, '.rv-toolbar'))?.y, { timeout: 8000 }).toBe(16);
-  await expect(page.locator('#story h2')).toBeInViewport();
+  // the heading stays where it was on screen (within a few pixels), entering and leaving
+  expect(Math.abs((await box(page, '#story h2')).y - before)).toBeLessThan(12);
   await page.getByRole('button', { name: 'Leave comment mode' }).click();
   await expect(page.locator('html')).not.toHaveClass(/review-open/, { timeout: 8000 });
-  await expect(page.locator('#story h2')).toBeInViewport();
+  expect(Math.abs((await box(page, '#story h2')).y - before)).toBeLessThan(12);
 });

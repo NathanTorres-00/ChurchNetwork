@@ -115,6 +115,20 @@ test.describe('posting', () => {
   });
 });
 
+test('"Link copied" stays when the connection finishes after Share review', async ({ page, context }) => {
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+  // the connection waits until the test lets it through
+  await page.addInitScript(() => { window.__reviewFakeConnectGate = new Promise(r => { window.__openGate = r; }); });
+  await openPage(page);
+  await enterCommentMode(page);
+  await page.getByRole('button', { name: 'Share review' }).click();
+  await expect(page.locator('.rv-status')).toHaveText('Link copied');
+  await page.evaluate(() => window.__openGate());                     // now it connects
+  await expect.poll(() => page.evaluate(() => !!window.__reviewFake)).toBe(true);
+  await page.waitForTimeout(300);
+  await expect(page.locator('.rv-status')).toHaveText('Link copied');  // well inside its 2.4 s
+});
+
 test('posting recovers when the connection comes back', async ({ page }) => {
   await page.addInitScript(() => { window.__reviewFakeFailConnect = 1; });
   await openPage(page);

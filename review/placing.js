@@ -11,7 +11,8 @@ export function createPlacing({ getTool, onDraft }) {
   let preview = null;
 
   const placing = () => POINT_TOOLS.has(getTool()) || DRAG_TOOLS.has(getTool());
-  const onPage = e => e.target instanceof Element && !e.target.closest('[data-review-ui]');
+  // comment mode's own interface, and the page's Comment button that opens and closes it, work as usual
+  const onPage = e => e.target instanceof Element && !e.target.closest('[data-review-ui], [data-review-toggle]');
   const block = e => { e.preventDefault(); e.stopPropagation(); };
 
   function drawPreview(e) {
@@ -32,9 +33,14 @@ export function createPlacing({ getTool, onDraft }) {
   }
   const clearPreview = () => { preview?.remove(); preview = null; };
 
+  // While the page glides in or out it's a moving picture: clicks on it would land in the wrong place, so they
+  // do nothing (and don't reach the page either)
+  const gliding = () => /\brv-gliding-(in|out)\b/.test(document.documentElement.className);
+
   function down(e) {
     if (!placing() || !onPage(e) || e.button > 0) return;
     block(e);
+    if (gliding()) return;
     start = { x: e.clientX, y: e.clientY, id: e.pointerId };
     try { e.target.setPointerCapture?.(e.pointerId); } catch { /* not capturable */ }
   }
