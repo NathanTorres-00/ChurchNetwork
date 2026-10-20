@@ -234,8 +234,8 @@ html.rv-placing body [data-review-ui] button { cursor: pointer !important; }
 
 /* ---------- Entering and leaving ----------
    transition.js shrinks a snapshot of the page into its column (a view transition), then sets the workspace's
-   data-phase to "in" so the panels slide in from offscreen, a beat apart. Leaving, "out" slides them away
-   (sidebar first) before the page grows back. */
+   data-phase to "in" so the panels slide in from offscreen, a beat apart. Leaving, they slide away (sidebar
+   first) inside the page's transition, as it grows back; "out" does the same where there's no transition. */
 :root {
   --rv-out-ease: cubic-bezier(.22, 1, .36, 1);       /* panels landing */
   --rv-in-ease: cubic-bezier(.4, 0, 1, 1);          /* panels leaving */
@@ -280,23 +280,43 @@ html.rv-gliding-in::view-transition-new(root) { mix-blend-mode: normal; animatio
 @keyframes rv-wash { to { filter: contrast(0) brightness(2); } }
 @keyframes rv-fade-in { from { opacity: 0; } to { opacity: 1; } }
 
-/* Leaving: the workspace snapshot is cut down to the column's card, its content washes out to white, the blank
-   card grows to fill the window, and the full page fades in on it. */
-html.rv-gliding-out::view-transition-old(root) {
+/* Leaving: entering played backwards, in one transition. The panels slide away as the column fades to a blank
+   card (the full page, receded into the column and washed to white, waits beneath it); then the page grows out of
+   that card to fill the window, its content coming back as it grows. It starts gently and settles, so it never
+   lurches. */
+:root { --rv-expand-ease: cubic-bezier(.45, 0, .15, 1); }
+html.rv-gliding-out .rv-toolbar { view-transition-name: rv-toolbar; }
+html.rv-gliding-out .rv-rail { view-transition-name: rv-rail; }
+html.rv-gliding-out .rv-sidebar { view-transition-name: rv-sidebar; }
+html.rv-gliding-out .rv-sidebar-tab { view-transition-name: rv-sidebar-tab; }
+/* a frosted panel with its own snapshot keeps blurring the spot it left, over the page growing back beneath it;
+   they're nearly opaque, so going without the frost for the exit doesn't show */
+html.rv-gliding-out :is(.rv-toolbar, .rv-rail) { -webkit-backdrop-filter: none; backdrop-filter: none; }
+html.rv-gliding-out::view-transition-old(rv-sidebar) { animation: rv-out-right .32s var(--rv-in-ease) both; }
+html.rv-gliding-out::view-transition-old(rv-sidebar-tab) { animation: rv-out-down-a-little .32s var(--rv-in-ease) both; }
+html.rv-gliding-out::view-transition-old(rv-rail) { animation: rv-out-left .32s var(--rv-in-ease) .04s both; }
+html.rv-gliding-out::view-transition-old(rv-toolbar) { animation: rv-out-up .32s var(--rv-in-ease) .08s both; }
+/* the column stays on top while it fades, so its content dissolves gradually instead of the blank card beneath
+   covering it at once */
+html.rv-gliding-out::view-transition-old(root) { z-index: 1; mix-blend-mode: normal; animation: rv-fade-out .24s linear both; }
+html.rv-gliding-out::view-transition-new(root) {
   transform-origin: 0 0; mix-blend-mode: normal;
-  animation: rv-wash .2s linear both, rv-card-grow .44s var(--rv-glide-ease) .14s both;
+  animation: rv-expand .6s var(--rv-expand-ease) .1s both, rv-unwash .3s linear .24s both;
 }
-html.rv-gliding-out::view-transition-new(root) { mix-blend-mode: normal; animation: rv-fade-in .24s linear .36s both; }
-@keyframes rv-card-grow {
+@keyframes rv-expand {
   from {
-    transform: none;
-    clip-path: inset(var(--rv-card-top) var(--rv-card-right) 0 var(--rv-card-left) round var(--rv-clip-round));
+    transform: translate(var(--rv-glide-x), var(--rv-glide-y)) scale(var(--rv-glide-s));
+    clip-path: inset(0 var(--rv-clip-r) 0 var(--rv-clip-l) round var(--rv-clip-round));
   }
-  to {
-    transform: translate(var(--rv-grow-x), var(--rv-grow-y)) scale(var(--rv-grow-sx), var(--rv-grow-sy));
-    clip-path: inset(var(--rv-card-top) var(--rv-card-right) 0 var(--rv-card-left) round 0px);
-  }
+  to { transform: none; clip-path: inset(0 0 0 0 round 0px); }
 }
+@keyframes rv-unwash { from { filter: contrast(0) brightness(2); } to { filter: none; } }
+@keyframes rv-fade-out { to { opacity: 0; } }
+@keyframes rv-out-up { to { transform: translateY(calc(-100% - 24px)); opacity: 0; } }
+@keyframes rv-out-left { to { transform: translateX(calc(-100% - 32px)); opacity: 0; } }
+@keyframes rv-out-right { to { transform: translateX(calc(100% + 32px)); opacity: 0; } }
+@keyframes rv-out-down-a-little { to { transform: translateY(12px); opacity: 0; } }
+@keyframes rv-out-down { to { transform: translateY(calc(100% + 24px)); opacity: 0; } }
 
 /* ---------- Touch ---------- */
 /* With Arrow or Highlight, one finger draws instead of scrolling; with the tap tools and Browse it still scrolls */
@@ -334,6 +354,9 @@ html[data-rv-tool="comment"] body, html[data-rv-tool="voice"] body { touch-actio
   /* arriving and leaving: the tool bar rises from the bottom, the sheet stays tucked below */
   .rv-root:is([data-phase="hidden"], [data-phase="out"]) .rv-rail { transform: translate(-50%, calc(100% + 24px)); }
   .rv-root:is([data-phase="hidden"], [data-phase="out"]) .rv-sidebar { transform: translateY(100%); }
+  html.rv-gliding-out::view-transition-old(rv-rail), html.rv-gliding-out::view-transition-old(rv-sidebar) {
+    animation-name: rv-out-down;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

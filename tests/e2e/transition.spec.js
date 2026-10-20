@@ -12,18 +12,13 @@ async function watch(page) {
 }
 const box = (page, sel) => page.locator(sel).boundingBox();
 
-// Records, every frame, the highest the toolbar got (offscreen is negative) and whether the page was
-// still in comment mode's column at that moment
+// Records, every frame, the highest the toolbar got (offscreen is negative)
 async function sampleToolbar(page) {
   await page.evaluate(() => {
-    window.__toolbar = { minY: Infinity, offscreenWhileOpen: false };
+    window.__toolbar = { minY: Infinity };
     const tick = () => {
       const t = document.querySelector('.rv-toolbar');
-      if (t) {
-        const y = t.getBoundingClientRect().y;
-        window.__toolbar.minY = Math.min(window.__toolbar.minY, y);
-        if (y < 0 && document.documentElement.classList.contains('review-open')) window.__toolbar.offscreenWhileOpen = true;
-      }
+      if (t) window.__toolbar.minY = Math.min(window.__toolbar.minY, t.getBoundingClientRect().y);
       requestAnimationFrame(tick);
     };
     tick();
@@ -46,17 +41,23 @@ test('entering glides the page in and then slides the panels in', async ({ page 
   await expect(page.locator('html')).not.toHaveClass(/rv-gliding/);
 });
 
-test('leaving takes the panels out first, then the page grows back', async ({ page }) => {
+test('leaving grows the page back in one transition that also takes the panels out', async ({ page }) => {
   await watch(page);
   await openPage(page);
   await page.locator('#comment-toggle').click();
   await expect.poll(async () => (await box(page, '.rv-toolbar'))?.y, { timeout: 8000 }).toBe(16);
-  await sampleToolbar(page);
+  // note where the toolbar was the moment the page's transition began
+  await page.evaluate(() => {
+    new MutationObserver((_, obs) => {
+      if (!document.documentElement.classList.contains('rv-gliding-out')) return;
+      window.__toolbarAtGlide = document.querySelector('.rv-toolbar')?.getBoundingClientRect().y;
+      obs.disconnect();
+    }).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+  });
   await page.getByRole('button', { name: 'Leave comment mode' }).click();
-  // the page comes back to full size…
   await expect(page.locator('html')).not.toHaveClass(/review-open/, { timeout: 8000 });
-  // …after the panels had left while it was still in its column
-  expect((await sampled(page)).offscreenWhileOpen).toBe(true);
+  // the transition started straight away, with the panels still in place (they slide out inside it)
+  expect(await page.evaluate(() => window.__toolbarAtGlide)).toBe(16);
   await expect(page.locator('[data-review-ui]')).toHaveCount(0);
   expect(await page.evaluate(() => window.__glides)).toBe(2);
 });

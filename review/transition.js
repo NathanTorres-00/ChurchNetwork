@@ -3,8 +3,9 @@
 //
 // The page reflows to fit the column, and a layout can't morph smoothly into another one, so this uses a view
 // transition that dissolves through a blank card: a snapshot of the page recedes into the column while its
-// content washes out to white, and the reflowed page fades in on that white card. Leaving, the column washes out
-// to white, the blank card grows to fill the window, and the full page fades in on it. The two layouts are never
+// content washes out to white, and the reflowed page fades in on that white card. Leaving is the same played
+// backwards, all in one transition: the panels slide away as the column fades to its blank card, then the full
+// page grows out of that card to fill the window, its content coming back as it grows. The two layouts are never
 // on screen together, so nothing shows double. Without view transitions the panels still slide; with reduced
 // motion they only fade.
 
@@ -52,16 +53,14 @@ function keepInView(change, place = notePlace()) {
   restorePlace(place);
 }
 
-const VARS = [
-  '--rv-glide-x', '--rv-glide-y', '--rv-glide-s', '--rv-clip-l', '--rv-clip-r', '--rv-clip-round',
-  '--rv-card-top', '--rv-card-left', '--rv-card-right', '--rv-grow-x', '--rv-grow-y', '--rv-grow-sx', '--rv-grow-sy',
-];
+const VARS = ['--rv-glide-x', '--rv-glide-y', '--rv-glide-s', '--rv-clip-l', '--rv-clip-r', '--rv-clip-round'];
 const setVars = vars => { for (const [k, v] of Object.entries(vars)) root.style.setProperty(k, v); };
 const clearVars = () => VARS.forEach(p => root.style.removeProperty(p));
 const RADIUS = 20;
 
-// Entering: where the page snapshot recedes to. It shrinks only a little and its sides draw in to the column's
-// edges with rounded corners, so the receding page becomes the column's card. column: its rect on screen.
+// Where the page snapshot recedes to entering, and grows back from leaving. It shrinks only a little and its sides
+// draw in to the column's edges with rounded corners, so the receding page becomes the column's card. column: its
+// rect on screen.
 function setRecedeVars(column) {
   const W = innerWidth;
   const s = Math.min(0.96, Math.max(0.85, column.width / W));
@@ -72,19 +71,6 @@ function setRecedeVars(column) {
     '--rv-clip-l': `${Math.max(0, (column.left - x) / s)}px`,
     '--rv-clip-r': `${Math.max(0, W - (column.right - x) / s)}px`,
     '--rv-clip-round': `${RADIUS / s}px`,
-  });
-}
-
-// Leaving: the workspace snapshot is cut down to the column's card, which then grows to fill the window.
-// It's blank by then, so stretching it a little out of proportion doesn't show.
-function setGrowVars(column) {
-  const W = innerWidth, H = innerHeight;
-  const top = Math.max(0, column.top);
-  const sx = W / column.width, sy = H / Math.max(1, H - top);
-  setVars({
-    '--rv-card-top': `${top}px`, '--rv-card-left': `${column.left}px`, '--rv-card-right': `${W - column.right}px`,
-    '--rv-clip-round': `${RADIUS}px`,
-    '--rv-grow-x': `${-column.left * sx}px`, '--rv-grow-y': `${-top * sy}px`, '--rv-grow-sx': String(sx), '--rv-grow-sy': String(sy),
   });
 }
 
@@ -111,12 +97,17 @@ export async function glideIn(panels, apply) {
   clearVars();
 }
 
+// Leaving with a view transition, the panels are captured where they sit (rv-gliding-out gives each its own
+// snapshot) and slide away inside the transition, so the page starts growing back without waiting for them
 export async function glideOut(panels, apply) {
-  panels.dataset.phase = 'out';
-  await wait(reduced() ? FADE_MS : PANELS_OUT_MS);
-  if (!canGlide()) { keepInView(apply); return; }
+  if (!canGlide()) {
+    panels.dataset.phase = 'out';
+    await wait(reduced() ? FADE_MS : PANELS_OUT_MS);
+    keepInView(apply);
+    return;
+  }
   root.classList.add('rv-gliding-out');
-  setGrowVars(document.body.getBoundingClientRect());
+  setRecedeVars(document.body.getBoundingClientRect());
   const place = notePlace();
   const vt = document.startViewTransition(() => keepInView(apply, place));
   try { await vt.finished; } finally { root.classList.remove('rv-gliding-out'); clearVars(); }
