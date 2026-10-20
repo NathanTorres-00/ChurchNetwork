@@ -116,8 +116,8 @@ test('marks stay on target at another width', async ({ page }) => {
 });
 
 test('clicking a card scrolls to its mark and selects it', async ({ page }) => {
-  await clickOn(page, '.hub-row h3');
-  await post(page, 'Hub name size', { name: 'Ana' });
+  await clickOn(page, '#app .section-title');
+  await post(page, 'App heading size', { name: 'Ana' });
   await page.evaluate(() => (window.__lenis ? window.__lenis.scrollTo(0, { immediate: true }) : window.scrollTo(0, 0)));
   await expect(page.locator('.rv-pin')).not.toBeInViewport();
   await cards(page).first().click();

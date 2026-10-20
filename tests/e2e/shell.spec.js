@@ -92,7 +92,7 @@ test('page sits between rail and sidebar on wide screens', async ({ page }) => {
 });
 
 test('globe pauses and hub cursor is off in comment mode', async ({ page }) => {
-  await openPage(page);
+  await openPage(page, '/hero.html?showHubs=1');
   await enterCommentMode(page);
   await expect(page.locator('html')).toHaveAttribute('data-globe', 'paused');
   await tool(page, 'Comment').click();          // back to browsing so hovering is plain hovering

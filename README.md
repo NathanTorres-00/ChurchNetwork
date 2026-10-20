@@ -151,9 +151,19 @@ All the globe parameters apply as well.
 6. **Our disciple-making tool:** group photo beside an iPhone mockup of the Jesus Disciple App, with App Store
    and Google Play buttons (placeholders; swap in the official store badges before publishing).
 7. **Find a hub:** full-width rows for Anaheim, Anaheim West, jChurch and Iglesia Mi Ciudad (details to come).
-   Each row is one link. Hovering a row turns the cursor into a circle with an arrow, in that hub's color, with a
-   photo pin rising above it (photos are placeholders, set per row with `data-photo`); the other rows dim. Tabbing to
-   a row raises its pin over the hub's dot. Touch screens keep the normal behavior.
+   **Hidden by default**, along with its header link: turn it on with **Show Find a hub** in the Adjust panel's Page
+   group (`showHubs` in CONFIG, or `?showHubs=1`). Each row is one link. Hovering a row fills it with that hub's color (the Figma "Hub Row=Hover"), turns its text
+   white, and ripples in a grid of white ring-dots beside the name, out from where the pointer came in (as many of
+   the 12 columns as fit; none on narrow screens); the other rows dim. The cursor changes too, in one of three
+   styles set by **Hub cursor** in the Adjust panel (`hubCursor` in CONFIG, or e.g. `?hubCursor=photo`):
+   - **White circle** (`circle`, the default): a white circle with an arrow in the hub's color, with the hub's photo
+     pin rising above it.
+   - **Ringed circle** (`ring`): the circle in the hub's color, ringed in white, with the photo pin.
+   - **Photo** (`photo`): the hub's photo itself follows the pointer in a tall rounded rectangle, with no circle or
+     pin; moving straight to another hub fades its photo in over the last.
+
+   Photos are placeholders, set per row with `data-photo`. Tabbing to a row fills it and raises its pin over the
+   hub's dot. Touch screens keep the plain rows.
 
 All copy, names, stats and photos are placeholders to replace. Links marked `data-placeholder` (Visit, store
 buttons, directions) go nowhere until you add real URLs.
@@ -183,8 +193,8 @@ motion get a still network and a quick fade.
 **Adjust panel:** the **Headline** group has a color picker for each of the four words (and for "Multiplying"),
 plus headline size, colored-word weight, line spacing, statement size, text block width and position, the white
 fade behind the text, hero height, and the bottom curve (how far the hero's lower edge dips into the next section
-at the center; 0 makes it straight). The **Page** group has section spacing, corner radius, content width and
-body text size. Changing a word's color updates it everywhere it appears (headline, timeline, stats, icons).
+at the center; 0 makes it straight). The **Page** group has section spacing, corner radius, content width,
+body text size, smooth scrolling, whether Find a hub shows, and the hub cursor style. Changing a word's color updates it everywhere it appears (headline, timeline, stats, icons).
 The **Globe:** groups are the same controls as the Pins page.
 
 In the hero, random pins keep clear of the actual text (each headline and statement line, and the buttons) and
