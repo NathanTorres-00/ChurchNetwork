@@ -239,8 +239,10 @@ posted. Outside comment mode none of it shows, and nothing for it loads until th
   - **Arrow**: drag from where it starts to what it points at, with an optional note.
   - **Marker**: draw on the page with the **Pen** (circle a word, underline it) or the **Highlighter**. A drawing
     can have many strokes (up to 40, 6,000 points in all) and one optional note, and **Undo** (or Cmd/Ctrl+Z)
-    takes back the last stroke. A highlighter stroke along text follows the words, and a drawing made on a
-    different screen width is badged **Drawn on a wider screen** or **narrower screen**.
+    takes back the last stroke. Strokes follow the words they mark when the text rewraps, and a highlighter
+    stroke along text is drawn line by line over it. When things a pen stroke circled side by side have split
+    apart at another width (stacked on a phone, say), the card is badged **Drawn on a wider screen** or
+    **Drawn on a narrower screen**.
 - Every mark appears on the page and as a card in the **Review activity** sidebar, with counts of what's open.
   Clicking a card scrolls to its mark. Marks are tied to the element they were made on, so they stay on target at
   any window width; if that part of the page is removed, the card says **Moved**.
@@ -252,7 +254,7 @@ posted. Outside comment mode none of it shows, and nothing for it loads until th
 - On phones the tools sit in a bar along the bottom and Review activity slides up as a sheet. With the Marker on,
   one finger draws and two fingers scroll (pinch-zoom is off). Below 1280px a slim drawing bar replaces the
   sidebar, and picking Marker closes the sheet. On an iPad in Safari the Pencil draws while one finger scrolls;
-  in other browsers a pen draws every stroke, fingers don't draw, and two fingers scroll.
+  in other browsers, once a pen has drawn, the pen draws, fingers don't, and two fingers scroll.
 
 **Owner link:** opening the site once with `?owner=<key>` remembers the owner key on that device (and removes it
 from the address bar). The owner can **Resolve** marks (hidden unless **Show resolved** is on) and delete any mark.

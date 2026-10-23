@@ -172,8 +172,10 @@ export function createWorkspace({
   // ---------- Cards ----------
   function placeBadge(m) {
     if (view.missing.has(m._id)) return h('span', { class: 'rv-badge', title: "The part of the page this pointed at has changed, so it isn't drawn.", text: 'Moved' });
-    if (!view.shifted.has(m._id)) return null;
-    const wider = m.strokes?.[0]?.at.vw > innerWidth;
+    // drawn at this same width, it can't say wider or narrower
+    const vw = m.strokes?.[0]?.at.vw;
+    if (!view.shifted.has(m._id) || vw === innerWidth) return null;
+    const wider = vw > innerWidth;
     return h('span', {
       class: 'rv-badge', title: 'What this was drawn around sits differently at this width, so it may not line up.',
       text: `Drawn on a ${wider ? 'wider' : 'narrower'} screen`,

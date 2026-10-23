@@ -258,6 +258,12 @@ test('failed post keeps the strokes and retries once', async ({ page }) => {
   await loopFirstWord(page);
   await composer(page).getByLabel('Your name').fill('Ana');
   await note(page).fill('Try this twice');
+  // every post's clientId, so the retry can be seen to be the same drawing
+  await page.evaluate(() => {
+    const fake = window.__reviewFake, create = fake.create;
+    window.__clientIds = [];
+    fake.create = input => { window.__clientIds.push(input.clientId); return create.call(fake, input); };
+  });
   await page.evaluate(() => window.__reviewFake.failNext('NETWORK'));
   await composer(page).getByRole('button', { name: 'Post drawing' }).click();
   await expect(composer(page).getByRole('alert')).toContainText("Couldn't post");
@@ -266,6 +272,10 @@ test('failed post keeps the strokes and retries once', async ({ page }) => {
   await composer(page).getByRole('button', { name: 'Post drawing' }).click();
   await expect(cards(page)).toHaveCount(1);
   expect(await page.evaluate(() => window.__reviewFake.marks.length)).toBe(1);
+  const ids = await page.evaluate(() => window.__clientIds);
+  expect(ids).toHaveLength(2);
+  expect(ids[0]).toBeTruthy();
+  expect(ids[1]).toBe(ids[0]);
 });
 
 test('a stroke drawn while posting is turned away', async ({ page }) => {

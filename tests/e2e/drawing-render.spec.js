@@ -209,3 +209,18 @@ test('a split drawing says Drawn on a wider screen', async ({ page }) => {
   await expect(card).toContainText('Drawn on a wider screen');
   await expect(card).not.toContainText('Moved');
 });
+
+// Said to be drawn at this same width, there's no wider or narrower to say
+test('a split drawing from this same width has no screen badge', async ({ page }) => {
+  const stroke = await page.evaluate(async () => {
+    const { anchorStroke } = await __dr.mod();
+    const split = document.querySelector('#what-we-do .split');
+    __dr.show(split);
+    return anchorStroke(__dr.loop(split.getBoundingClientRect(), 12).pts, 'pen');
+  });
+  await resize(page, 390);
+  await page.evaluate(s => __dr.seed({ strokes: [{ ...s, at: { ...s.at, vw: 390 } }], text: 'Same width' }), stroke);
+  const card = cards(page).filter({ hasText: 'Same width' });
+  await expect(card).toHaveCount(1);
+  await expect(card.locator('.rv-badge')).toHaveCount(0);
+});
