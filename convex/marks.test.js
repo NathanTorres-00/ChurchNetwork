@@ -11,6 +11,10 @@ const comment = (over = {}) => ({
   page: 'home', kind: 'comment', at, text: 'Make the cursor easier to see', author: 'Ana', deviceId: 'device-a', ...over,
 });
 
+const pen = (over = {}) => ({ ink: 'pen', at, size: 16, origin: { x: 10, y: 20 }, pts: [0, 0, 10, 2, 20, 0], ...over });
+const drawing = (over = {}) => ({ page: 'home', kind: 'drawing', author: 'Ana', deviceId: 'device-a', strokes: [pen()], ...over });
+const flat = n => Array.from({ length: n * 2 }, (_, i) => i % 7);
+
 // The ConvexError code a call rejects with, or null when it succeeds
 async function code(promise) {
   try { await promise; return null; } catch (e) { return e.data ?? e.message; }
@@ -183,5 +187,63 @@ describe('marks', () => {
     expect(await t.query(api.marks.isOwner, { ownerKey: 'owner-secret' })).toBe(true);
     expect(await t.query(api.marks.isOwner, { ownerKey: 'nope' })).toBe(false);
     expect(await t.query(api.marks.isOwner, { ownerKey: null })).toBe(false);
+  });
+
+  describe('drawings', () => {
+    const post = d => convexTest(schema, modules).mutation(api.marks.create, d);
+
+    test('creates a drawing with no note and lists its strokes', async () => {
+      const t = convexTest(schema, modules);
+      await t.mutation(api.marks.create, drawing());
+      const marks = await t.query(api.marks.list, { page: 'home' });
+      expect(marks).toHaveLength(1);
+      expect(marks[0].kind).toBe('drawing');
+      expect(marks[0].strokes[0].pts).toEqual([0, 0, 10, 2, 20, 0]);
+    });
+
+    test('rejects a drawing with no strokes', async () => {
+      expect(await code(post(drawing({ strokes: [] })))).toBe('INVALID');
+    });
+
+    test('rejects 41 strokes', async () => {
+      expect(await code(post(drawing({ strokes: Array.from({ length: 41 }, () => pen()) })))).toBe('INVALID');
+      expect(await code(post(drawing({ strokes: Array.from({ length: 40 }, () => pen()) })))).toBe(null);
+    });
+
+    test('rejects more than 6000 points in all', async () => {
+      const strokes = Array.from({ length: 4 }, () => pen({ pts: flat(1501) }));
+      expect(await code(post(drawing({ strokes })))).toBe('INVALID');
+    });
+
+    test('rejects a stroke over 2000 points, an odd pts length, or fewer than 2 points', async () => {
+      expect(await code(post(drawing({ strokes: [pen({ pts: flat(2001) })] })))).toBe('INVALID');
+      expect(await code(post(drawing({ strokes: [pen({ pts: flat(2000) })] })))).toBe(null);
+      expect(await code(post(drawing({ strokes: [pen({ pts: [0, 0, 1, 1, 2] })] })))).toBe('INVALID');
+      expect(await code(post(drawing({ strokes: [pen({ pts: [0, 0] })] })))).toBe('INVALID');
+    });
+
+    test('rejects a coordinate beyond 20000', async () => {
+      expect(await code(post(drawing({ strokes: [pen({ pts: [0, 0, 20001, 0] })] })))).toBe('INVALID');
+    });
+
+    test('rejects pressure outside 0-1 or a pressure list of the wrong length', async () => {
+      expect(await code(post(drawing({ strokes: [pen({ pr: [0.5, 1.5, 0.2] })] })))).toBe('INVALID');
+      expect(await code(post(drawing({ strokes: [pen({ pr: [0.5, 0.5] })] })))).toBe('INVALID');
+      expect(await code(post(drawing({ strokes: [pen({ pr: [0.5, 1, 0] })] })))).toBe(null);
+    });
+
+    test('rejects a drawing with at, from or to', async () => {
+      expect(await code(post(drawing({ at })))).toBe('INVALID');
+      expect(await code(post(drawing({ from: at })))).toBe('INVALID');
+      expect(await code(post(drawing({ to: at })))).toBe('INVALID');
+    });
+
+    test('rejects strokes on a comment', async () => {
+      expect(await code(post(comment({ strokes: [pen()] })))).toBe('INVALID');
+    });
+
+    test('still accepts a box highlight', async () => {
+      expect(await code(post({ page: 'home', kind: 'highlight', from: at, to: at, author: 'Ana', deviceId: 'device-a' }))).toBe(null);
+    });
   });
 });

@@ -94,4 +94,12 @@ describe('fake store', () => {
     for (let i = 0; i < 10; i++) await store.create(comment);
     await expect(store.create(comment)).rejects.toMatchObject({ code: 'RATE_LIMIT' });
   });
+
+  test('fake store accepts a drawing and rejects 41 strokes', async () => {
+    const store = createFakeStore();
+    const pen = { ink: 'pen', at, size: 16, origin: { x: 10, y: 20 }, pts: [0, 0, 10, 2, 20, 0] };
+    const drawing = { page: 'home', kind: 'drawing', author: 'Ana', deviceId: 'device-a', strokes: [pen] };
+    await expect(store.create(drawing)).resolves.toMatch(/\S/);
+    await expect(store.create({ ...drawing, strokes: Array.from({ length: 41 }, () => pen) })).rejects.toMatchObject({ code: 'INVALID' });
+  });
 });

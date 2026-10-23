@@ -4,12 +4,31 @@ import { v } from 'convex/values';
 // A point tied to an element, as fractions of that element's box. vw is the window width when it was made.
 export const anchor = v.object({ path: v.string(), fx: v.number(), fy: v.number(), vw: v.number() });
 
+// A text position: the element at path, and the character offset o inside its i-th text node.
+export const textPos = v.object({ path: v.string(), i: v.number(), o: v.number() });
+
+// One freehand stroke. pts is flat x0,y0,x1,y1... offsets in CSS px from origin when drawn, rounded to 0.5.
+// pr is per-point pen pressure, 0-1. size is the font size in px at the origin when drawn.
+// origin is the origin's page coordinates when drawn (used only for the card sketch).
+export const stroke = v.object({
+  ink: v.union(v.literal('pen'), v.literal('highlighter')),
+  at: anchor,
+  char: v.optional(textPos),
+  size: v.number(),
+  origin: v.object({ x: v.number(), y: v.number() }),
+  pts: v.array(v.number()),
+  pr: v.optional(v.array(v.number())),
+  text: v.optional(v.object({ start: textPos, end: textPos })),
+  inside: v.optional(v.array(anchor)),
+});
+
 export const markFields = {
   page: v.string(),
-  kind: v.union(v.literal('comment'), v.literal('voice'), v.literal('arrow'), v.literal('highlight')),
+  kind: v.union(v.literal('comment'), v.literal('voice'), v.literal('arrow'), v.literal('highlight'), v.literal('drawing')),
   at: v.optional(anchor),             // comment, voice
   from: v.optional(anchor),           // arrow tail, highlight corner
   to: v.optional(anchor),             // arrow head, opposite highlight corner
+  strokes: v.optional(v.array(stroke)), // drawing
   text: v.optional(v.string()),       // comment text, voice title, arrow/highlight note
   audio: v.optional(v.object({ storageId: v.id('_storage'), mime: v.string(), durationMs: v.number() })),
   author: v.string(),

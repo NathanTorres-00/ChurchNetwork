@@ -11,7 +11,13 @@ export const GLOBAL_RATE_MAX = 60;     // and everyone together GLOBAL_RATE_MAX,
 export const LIST_MAX = 500;           // newest marks a page shows
 export const MAX_AUDIO_BYTES = 10 * 1024 * 1024;
 
-export const KINDS = ['comment', 'voice', 'arrow', 'highlight'];
+export const MAX_STROKES = 40;         // strokes in one drawing
+export const MAX_POINTS = 6000;        // points in one drawing, all strokes together
+export const MAX_STROKE_POINTS = 2000; // points in one stroke
+export const MAX_COORD = 20000;        // furthest a point may sit from its origin, in px
+export const MAX_INSIDE = 4;           // anchors a stroke may record for the elements it was drawn inside
+
+export const KINDS = ['comment', 'voice', 'arrow', 'highlight', 'drawing'];
 export const PAGES = ['home'];
 
 const MAX_PATH = 500;
@@ -27,6 +33,28 @@ function isAnchor(a) {
     typeof a.vw === 'number' && Number.isFinite(a.vw) && a.vw > 0;
 }
 
+const isNum = n => typeof n === 'number' && Number.isFinite(n);
+
+function isTextPos(p) {
+  return !!p && isText(p.path, MAX_PATH) && p.path.length > 0 &&
+    Number.isInteger(p.i) && p.i >= 0 && Number.isInteger(p.o) && p.o >= 0;
+}
+
+// Returns the number of points in the stroke, or -1 when the stroke is not acceptable
+function strokePoints(s) {
+  if (!s || (s.ink !== 'pen' && s.ink !== 'highlighter') || !isAnchor(s.at)) return -1;
+  if (!isNum(s.size) || !(s.size > 0) || s.size > 500) return -1;
+  if (!s.origin || !isNum(s.origin.x) || !isNum(s.origin.y)) return -1;
+  const pts = s.pts;
+  if (!Array.isArray(pts) || pts.length % 2 || pts.length < 4 || pts.length > MAX_STROKE_POINTS * 2) return -1;
+  if (!pts.every(n => isNum(n) && Math.abs(n) <= MAX_COORD)) return -1;
+  if (s.pr !== undefined && (!Array.isArray(s.pr) || s.pr.length !== pts.length / 2 || !s.pr.every(n => isNum(n) && n >= 0 && n <= 1))) return -1;
+  if (s.char !== undefined && !isTextPos(s.char)) return -1;
+  if (s.text !== undefined && (!s.text || !isTextPos(s.text.start) || !isTextPos(s.text.end))) return -1;
+  if (s.inside !== undefined && (!Array.isArray(s.inside) || s.inside.length > MAX_INSIDE || !s.inside.every(isAnchor))) return -1;
+  return pts.length / 2;
+}
+
 // null when the mark is acceptable, 'INVALID' otherwise
 export function validateMark(m) {
   if (!m || !KINDS.includes(m.kind) || !PAGES.includes(m.page)) return 'INVALID';
@@ -36,7 +64,19 @@ export function validateMark(m) {
   if (!isText(m.deviceId, MAX_DEVICE) || !m.deviceId) return 'INVALID';
   if (m.text !== undefined && !isText(m.text, MAX_TEXT)) return 'INVALID';
 
-  if (m.kind === 'comment' || m.kind === 'voice') {
+  if (m.kind === 'drawing') {
+    if (m.at !== undefined || m.from !== undefined || m.to !== undefined) return 'INVALID';
+    if (!Array.isArray(m.strokes) || m.strokes.length < 1 || m.strokes.length > MAX_STROKES) return 'INVALID';
+    let points = 0;
+    for (const s of m.strokes) {
+      const n = strokePoints(s);
+      if (n < 0) return 'INVALID';
+      points += n;
+    }
+    if (points > MAX_POINTS) return 'INVALID';
+  } else if (m.strokes !== undefined) {
+    return 'INVALID';
+  } else if (m.kind === 'comment' || m.kind === 'voice') {
     if (!isAnchor(m.at)) return 'INVALID';
   } else if (!isAnchor(m.from) || !isAnchor(m.to)) {
     return 'INVALID';
