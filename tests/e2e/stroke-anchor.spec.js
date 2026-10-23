@@ -185,6 +185,27 @@ test('a highlighter across a line follows the words when they wrap', async ({ pa
   }
 });
 
+test('a stylus stroke keeps one pressure per kept point, rounded', async ({ page }) => {
+  const result = await page.evaluate(async () => {
+    const { anchorStroke } = await __sa.mod();
+    const h2 = document.querySelector('#story h2');
+    __sa.show(h2);
+    const loop = __sa.loop(__sa.wordRange(h2, 'started').getBoundingClientRect());
+    // a point under 1px from the last is dropped, so its pressure must go with it
+    const input = [loop[0], [loop[0][0] + 0.3, loop[0][1]], ...loop.slice(1)];
+    const pressures = input.map((_, i) => 0.123456 + i / (input.length * 1.5));
+    return { pen: anchorStroke(input, 'pen', pressures), mouse: anchorStroke(input, 'pen', null) };
+  });
+  expect(result.pen.pr.length).toBe(result.pen.pts.length / 2);
+  for (const v of result.pen.pr) {
+    expect(v).toBeGreaterThanOrEqual(0);
+    expect(v).toBeLessThanOrEqual(1);
+    expect(Math.round(v * 100) / 100).toBe(v);
+  }
+  expect(result.pen.pr[0]).toBe(0.12);
+  expect(result.mouse.pr).toBeUndefined();
+});
+
 test('a highlighter loop keeps its shape', async ({ page }) => {
   const stroke = await page.evaluate(async () => {
     const { anchorStroke } = await __sa.mod();

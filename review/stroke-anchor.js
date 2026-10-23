@@ -113,7 +113,7 @@ export function anchorStroke(points, ink, pressures = null) {
   if (Array.isArray(pressures) && pressures.length >= points.length) {
     let j = 0;
     stroke.pr = kept.map(p => {
-      while (points[j] !== p) j++;
+      while (j < points.length && points[j] !== p) j++;
       return Math.round(clamp(Number(pressures[j]) || 0, 0, 1) * 100) / 100;
     });
   }
