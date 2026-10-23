@@ -3,8 +3,10 @@
 // the Marker is on; comment mode's interface ([data-review-ui]) works as usual.
 //
 // On a touch screen one finger draws and two fingers scroll the page (the page's touch-action is none while the
-// Marker is on, so the scrolling is done here). Once a stylus has drawn, it does the drawing and fingers scroll the
-// page as usual, like a notes app (html.rv-stylus gives the page its touch-action back).
+// Marker is on, so the scrolling is done here). Once a stylus has drawn, it does the drawing and fingers don't.
+// Where touches say they're a stylus (Safari's Pencil), fingers then scroll the page as usual, like a notes app:
+// html.rv-stylus gives the page its touch-action back, and the stylus's own touches are kept from scrolling.
+// Elsewhere touch-action stays none, since a pen would pan the page too, and two fingers still scroll.
 import { INK, centerline, inkWidth, penOutline } from './ink.js';
 
 const NS = 'http://www.w3.org/2000/svg';
@@ -17,6 +19,7 @@ export function createMarker({ getTool, getInk, onStroke }) {
   let frame = 0;
   const fingers = new Map();   // touch points down on the page, by pointerId: [x, y] in client coordinates
   let between = null;          // with two fingers down, the point between them; the page scrolls as it moves
+  let penSeen = false;         // a stylus has drawn, so fingers no longer do
 
   const root = document.documentElement;
   const active = () => getTool() === 'marker';
@@ -84,7 +87,7 @@ export function createMarker({ getTool, getInk, onStroke }) {
   function down(e) {
     if (!active() || !onPage(e) || e.button > 0) return;
     block(e);
-    if (e.pointerType === 'pen') root.classList.add('rv-stylus');    // from now on the stylus draws
+    if (e.pointerType === 'pen') penSeen = true;                     // from now on the stylus draws
     if (e.pointerType === 'touch') {
       if (root.classList.contains('rv-stylus')) return;              // fingers scroll the page, and never draw
       // the first finger down: nothing else is touching, so anything left from before (a lost pointerup) goes
@@ -92,6 +95,7 @@ export function createMarker({ getTool, getInk, onStroke }) {
       fingers.set(e.pointerId, [e.clientX, e.clientY]);
       // a second finger turns the gesture into a scroll, and the stroke begun with the first goes without a trace
       if (fingers.size > 1) { drop(); between = midpoint(); return; }
+      if (penSeen) return;                                           // one finger does nothing once a stylus has drawn
     }
     if (gliding() || live) return;
     // a press on the page leaves the note being typed, as a click would, so Cmd/Ctrl+Z then undoes strokes
@@ -129,10 +133,12 @@ export function createMarker({ getTool, getInk, onStroke }) {
     lift(e);
     if (live && e.pointerId === live.id) drop();
   }
-  // A stylus touch would scroll the page once fingers can (html.rv-stylus); kept from it, the stylus draws. Safari
-  // tells a Pencil from a finger only on touch events.
+  // Safari tells a Pencil from a finger only on touch events, and there a stylus touch can be kept from scrolling.
+  // So once one is seen, fingers get to scroll the page natively (html.rv-stylus), and the stylus still draws.
   function touch(e) {
-    if (active() && onPage(e) && [...e.changedTouches].some(t => t.touchType === 'stylus')) e.preventDefault();
+    if (!active() || !onPage(e) || ![...e.changedTouches].some(t => t.touchType === 'stylus')) return;
+    root.classList.add('rv-stylus');
+    e.preventDefault();
   }
   // Esc while drawing takes back just that stroke; the next Esc backs out a step as usual
   function key(e) {

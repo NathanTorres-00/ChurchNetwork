@@ -144,10 +144,11 @@ test('strokes are thicker on a phone', async ({ page }) => {
   expect(phone).toBeGreaterThan(wide * 1.3);
 });
 
-test('a stylus draws and a finger scrolls', async ({ page }) => {
-  await tool(page, 'Marker').tap();
-  const r = await wordRect(page, '#story h2', 'started');
-  await page.evaluate(({ x1, x2, y }) => {
+// A stroke under a rect drawn with a stylus: synthetic pen pointer events with pressure. On iPadOS a Pencil's
+// touches also say touchType 'stylus'; with `stylusTouch` a touchstart saying so follows the pointerdown, as there.
+// Resolves whether that touchstart was kept from scrolling.
+async function penStroke(page, r, { stylusTouch = false } = {}) {
+  return page.evaluate(({ x1, x2, y, stylusTouch }) => {
     const target = document.elementFromPoint(x1, y);
     const fire = (type, x) => target.dispatchEvent(new PointerEvent(type, {
       pointerId: 9, pointerType: 'pen', isPrimary: true, pressure: type === 'pointerup' ? 0 : 0.5,
@@ -155,29 +156,63 @@ test('a stylus draws and a finger scrolls', async ({ page }) => {
       bubbles: true, cancelable: true, composed: true,
     }));
     fire('pointerdown', x1);
+    const prevented = stylusTouch ? window.__touchStart(target, x1, y, 'stylus') : null;
     for (let i = 1; i <= 10; i++) fire('pointermove', x1 + (x2 - x1) * i / 10);
     fire('pointerup', x2);
-  }, { x1: r.x, x2: r.x + r.width, y: r.y + r.height + 4 });
-  await expect(draftStrokes(page)).toHaveCount(1);
-  await expect(page.locator('html')).toHaveClass(/\brv-stylus\b/);
+    return prevented;
+  }, { x1: r.x, x2: r.x + r.width, y: r.y + r.height + 4, stylusTouch });
+}
 
-  // a stylus touch is kept from scrolling the page; a finger's isn't. Chromium has no Touch.touchType (Safari
-  // does), so the event carries touches that say what touched.
-  const prevented = await page.evaluate(({ x, y }) => {
-    const target = document.elementFromPoint(x, y);
-    const send = touchType => {
+// A touchstart whose touch says what touched ('stylus' or 'direct'). Chromium has no Touch.touchType (Safari does),
+// so the event carries plain touches that say so. True when it was kept from scrolling.
+async function addTouchStart(page) {
+  await page.evaluate(() => {
+    window.__touchStart = (target, x, y, touchType) => {
       const e = new TouchEvent('touchstart', { bubbles: true, cancelable: true, composed: true });
       Object.defineProperty(e, 'changedTouches', { value: [{ identifier: 1, target, clientX: x, clientY: y, touchType }] });
       return !target.dispatchEvent(e);
     };
-    return { stylus: send('stylus'), finger: send('direct') };
-  }, { x: r.x, y: r.y + r.height + 4 });
-  expect(prevented).toEqual({ stylus: true, finger: false });
+  });
+}
+const bodyTouchAction = page => page.evaluate(() => getComputedStyle(document.body).touchAction);
+
+test('a stylus draws and a finger scrolls', async ({ page }) => {
+  await addTouchStart(page);
+  await tool(page, 'Marker').tap();
+  const r = await wordRect(page, '#story h2', 'started');
+  // iPadOS: the Pencil's touches say they're a stylus, and are kept from scrolling
+  expect(await penStroke(page, r, { stylusTouch: true })).toBe(true);
+  await expect(draftStrokes(page)).toHaveCount(1);
+  await expect(page.locator('html')).toHaveClass(/\brv-stylus\b/);
+  expect(await bodyTouchAction(page)).toBe('auto');
+  // a finger's touches aren't
+  expect(await page.evaluate(({ x, y }) => window.__touchStart(document.elementFromPoint(x, y), x, y, 'direct'),
+    { x: r.x, y: r.y + r.height + 4 })).toBe(false);
 
   const before = await scrollY(page);
   await touchDrag(page, { x: 200, y: 600 }, { x: 200, y: 200 });
   await expect.poll(() => scrollY(page)).toBeGreaterThan(before + 100);
   await expect(draftStrokes(page)).toHaveCount(1);
+});
+
+test('a stylus whose touches don\'t say so keeps drawing, and fingers don\'t draw', async ({ page }) => {
+  await tool(page, 'Marker').tap();
+  await penStroke(page, await wordRect(page, '#story h2', 'started'));
+  await expect(draftStrokes(page)).toHaveCount(1);
+  // the page keeps touch-action none, or the pen would pan it (Chromium, Firefox)
+  await expect(page.locator('html')).not.toHaveClass(/\brv-stylus\b/);
+  expect(await bodyTouchAction(page)).toBe('none');
+  await penStroke(page, await wordRect(page, '#story h2', 'How'));
+  await expect(draftStrokes(page)).toHaveCount(2);
+
+  await touchDrag(page, { x: 60, y: 400 }, { x: 320, y: 404 }, 12);
+  await page.waitForTimeout(300);
+  await expect(draftStrokes(page)).toHaveCount(2);
+  // two fingers still scroll
+  const before = await scrollY(page);
+  await twoFingerDrag(page, { x: 195, y: 600 }, { x: 195, y: 200 });
+  await expect.poll(() => scrollY(page)).toBeGreaterThan(before + 100);
+  await expect(draftStrokes(page)).toHaveCount(2);
 });
 
 test.describe('on a tablet', () => {
@@ -194,5 +229,15 @@ test.describe('on a tablet', () => {
     const b = await bar(page).boundingBox();
     expect(b.y + b.height).toBeGreaterThan(1366 - 80);
     expect(Math.abs(b.x + b.width / 2 - 512)).toBeLessThan(4);
+  });
+
+  // (on a phone the open sheet covers the tool bar, so Marker can't be picked while it's open)
+  test('picking Marker closes the sidebar', async ({ page }) => {
+    await page.locator('.rv-sidebar-tab').tap();
+    await expect(page.locator('.rv-sidebar')).toBeInViewport();
+    await tool(page, 'Marker').tap();
+    await expect(page.locator('.rv-sidebar')).not.toBeInViewport();
+    await expect(bar(page).getByRole('button', { name: 'Pen', exact: true })).toBeVisible();
+    await expect(bar(page).getByRole('button', { name: 'Highlighter', exact: true })).toBeVisible();
   });
 });

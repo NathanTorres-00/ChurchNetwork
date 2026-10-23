@@ -160,6 +160,8 @@ export function createWorkspace({
     document.documentElement.classList.toggle('rv-placing', tool !== 'browse');
     document.documentElement.dataset.rvTool = tool;     // drag tools stop one-finger scrolling so a drag can draw
     hint.textContent = TOOLS.find(t => t.id === tool)?.hint ?? 'Browsing. Pick a tool to mark up the page.';
+    // below 1280px the sidebar stays closed while drawing (its tab makes way for the drawing bar)
+    if (tool === 'marker' && matchMedia('(max-width: 1279px)').matches) setSidebarOpen(false);
     onToolChange?.(tool);
   }
   async function requestTool(next) {

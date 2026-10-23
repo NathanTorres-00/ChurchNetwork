@@ -406,7 +406,7 @@ html.rv-gliding-out::view-transition-new(root) {
 
 /* ---------- Touch ---------- */
 /* With Arrow and Marker, one finger draws instead of scrolling (marker.js scrolls the page for two fingers); with
-   the tap tools and Browse it still scrolls. Once a stylus has drawn, it does the drawing and fingers scroll. */
+   the tap tools and Browse it still scrolls. Once a touch has said it's a stylus (Safari), fingers scroll. */
 html[data-rv-tool="arrow"] body, html[data-rv-tool="marker"] body { touch-action: none; }
 html.rv-stylus[data-rv-tool="marker"] body { touch-action: auto; }
 html[data-rv-tool="comment"] body, html[data-rv-tool="voice"] body { touch-action: manipulation; }
