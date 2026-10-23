@@ -199,13 +199,19 @@ function startDraft(s, draft) {
 // and the reviewer can keep drawing while it's open. A stroke that would make the drawing too big is dropped.
 const FULL = 'That drawing is full. Post it and start another.';
 const POSTING = "Posting… draw again once it's posted.";
+// Says why a stroke was dropped: in the tool bar's status line, and in the composer, since a phone has no room
+// for the status line
+function turnAway(s, message) {
+  s.workspace.setStatus(message, 4000);
+  s.workspace.getComposer()?.showError(message);
+}
 function addStroke(s, { ink, points, pressures }) {
-  if (s.posting && s.posting === s.draft) return s.workspace.setStatus(POSTING, 4000);   // it would be lost with the post
+  if (s.posting && s.posting === s.draft) { turnAway(s, POSTING); return; }   // it would be lost with the post
   const strokes = s.draft?.kind === 'drawing' ? s.draft.strokes : [];
-  if (strokes.length + 1 > MAX_STROKES) return s.workspace.setStatus(FULL, 4000);
+  if (strokes.length + 1 > MAX_STROKES) { turnAway(s, FULL); return; }
   const stroke = anchorStroke(points, ink, pressures);
   const total = strokes.reduce((n, st) => n + st.pts.length / 2, stroke.pts.length / 2);
-  if (total > MAX_POINTS) return s.workspace.setStatus(FULL, 4000);
+  if (total > MAX_POINTS) { turnAway(s, FULL); return; }
   if (s.draft?.kind !== 'drawing') openDrawing(s);
   s.draft = { ...s.draft, strokes: [...s.draft.strokes, stroke] };
   s.undoButton.disabled = false;

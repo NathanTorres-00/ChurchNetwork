@@ -132,6 +132,26 @@ test('draw, scroll, draw again, add a note, post', async ({ page }) => {
   await expect(page.locator('.rv-sidebar')).not.toBeInViewport();
 });
 
+// A phone has no room for the tool bar's status line, so the bar says why the stroke wasn't kept
+test('a stroke drawn while posting says so in the bar', async ({ page }) => {
+  await tool(page, 'Marker').tap();
+  await touchLoop(page, await wordRect(page, '#story h2', 'How'));
+  await expect(draftStrokes(page)).toHaveCount(1);
+  await bar(page).getByRole('button', { name: 'Post drawing' }).tap();
+  await bar(page).getByLabel('Your name').fill('Ana');
+  await page.evaluate(() => window.__reviewFake.holdNext());
+  await bar(page).getByRole('button', { name: 'Post drawing' }).tap();
+  await touchUnderline(page, await wordRect(page, '#story h2', 'started'));
+  const alert = bar(page).getByRole('alert');
+  await expect(alert).toHaveText("Posting… draw again once it's posted.");
+  await expect(alert).toBeVisible();
+  await expect(alert).toBeInViewport();
+  await expect(draftStrokes(page)).toHaveCount(1);
+  await page.evaluate(() => window.__reviewFake.release());
+  await expect(page.locator('.rv-card')).toHaveCount(1);
+  expect(await page.evaluate(() => window.__reviewFake.marks[0].strokes.length)).toBe(1);
+});
+
 test('strokes are thicker on a phone', async ({ page }) => {
   await tool(page, 'Marker').tap();
   await touchUnderline(page, await wordRect(page, '#story h2', 'started'));
