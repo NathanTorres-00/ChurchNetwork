@@ -28,7 +28,7 @@ const COMPOSER = {
   comment: { title: 'Add a comment', field: 'Comment', post: 'Post comment', required: true },
   arrow: { title: 'Add an arrow', field: 'Note (optional)', post: 'Post arrow' },
   drawing: { title: 'Add a drawing', field: 'Note (optional)', post: 'Post drawing', discard: 'Discard this drawing?' },
-  voice: { title: 'Record a voice memo', field: 'Title (optional)', post: 'Post voice memo', cancel: 'Discard' },
+  voice: { title: 'Record a voice memo', field: 'Title (optional)', post: 'Post voice memo', cancel: 'Discard', discard: 'Discard this voice memo?' },
 };
 
 export function h(tag, attrs = {}, children = []) {
@@ -259,11 +259,12 @@ export function createWorkspace({
       error,
       h('div', { class: 'rv-composer-actions' }, [
         postButton,
-        // Cancel on typed text is a deliberate choice, so it doesn't ask; a recording is costly to redo, so it does
+        // Cancel on typed text is a deliberate choice, so it doesn't ask; a recording or strokes are costly to
+        // redo, so they do
         h('button', {
           type: 'button', class: 'rv-cancel', text: cfg.cancel ?? 'Cancel',
           onclick: async () => {
-            if (api.hasExtra?.() && !(await confirm({ title: 'Discard this voice memo?', body: "It hasn't been posted yet." }))) return;
+            if (api.hasExtra?.() && !(await api.askToDiscard())) return;
             closeComposer();
             api.onClose?.();
           },
@@ -297,8 +298,10 @@ export function createWorkspace({
       hasExtra: null,
       showError,
       setPostEnabled: on => { postButton.disabled = !on; },
+      // Asks before throwing the draft away, titled for what's being discarded where there's a title for it
+      askToDiscard: () => confirm(cfg.discard ? { title: cfg.discard, body: "It hasn't been posted yet." } : undefined),
       async requestClose() {
-        if (api.hasText() && !(await confirm())) return false;
+        if (api.hasText() && !(await api.askToDiscard())) return false;
         closeComposer();
         api.onClose?.();
         return true;
@@ -378,7 +381,7 @@ export function createWorkspace({
     setCardExtras(fn) { cardExtras = fn; render(); },
     // Asks before throwing away an unsent draft; resolves true when it's fine to go on
     async confirmDiscard() {
-      if (composer?.hasText() && !(await confirm())) return false;
+      if (composer?.hasText() && !(await composer.askToDiscard())) return false;
       return true;
     },
     sidebar: {

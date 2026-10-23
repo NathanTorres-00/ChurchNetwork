@@ -1,8 +1,11 @@
 // Comment mode: turns the page into a review workspace where anyone can leave comments, voice memos, arrows
-// and highlights. hero.html loads this module only when someone clicks Comment or opens a ?comment link.
+// and drawings. hero.html loads this module only when someone clicks Comment or opens a ?comment link.
+import { MAX_POINTS, MAX_STROKES } from '../convex/limits.js';
 import { captureOwnerKey, getDeviceId, getName, getOwnerKey, setName } from './identity.js';
+import { createMarker } from './marker.js';
 import { createMarksLayer } from './marks-layer.js';
 import { createPlacing } from './placing.js';
+import { anchorStroke } from './stroke-anchor.js';
 import { glideIn, glideOut } from './transition.js';
 import { createPlayer, createRecorderWidget } from './voice.js';
 import { createWorkspace, h } from './workspace.js';
@@ -106,9 +109,17 @@ async function open({ page = 'home' } = {}) {
   });
   s.workspace.setCardExtras(playerFor);
 
-  // Esc works from the first moment; leaving mid-glide waits its turn like a click does
+  // Esc works from the first moment; leaving mid-glide waits its turn like a click does. Cmd/Ctrl+Z takes back
+  // the last stroke of a drawing, unless it's meant for the text being typed.
   s.onKey = async e => {
-    if (e.key !== 'Escape' || e.defaultPrevented || s.workspace.hasDialog()) return;
+    if (e.defaultPrevented || s.workspace.hasDialog()) return;
+    if ((e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'z' &&
+      s.draft?.kind === 'drawing' && !(e.target instanceof Element && e.target.closest('input, textarea'))) {
+      e.preventDefault();
+      undoStroke(s);
+      return;
+    }
+    if (e.key !== 'Escape') return;
     if (s.workspace.getComposer()) { await closeDraft(s); return; }
     if (s.workspace.getTool() !== 'browse') s.workspace.setTool('browse');
     else exit();
@@ -123,6 +134,12 @@ async function open({ page = 'home' } = {}) {
     s.layer = createMarksLayer();
     s.layer.onSelect(id => select(id));
     s.placing = createPlacing({ getTool: () => s.workspace.getTool(), onDraft: d => startDraft(s, d) });
+    s.marker = createMarker({
+      getTool: () => s.workspace.getTool(),
+      getInk: () => s.workspace.getInk(),
+      // the stroke joins the draft drawing before the live one goes, in the same frame, so it doesn't flicker
+      onStroke: stroke => { try { addStroke(s, stroke); } finally { s.marker.clearLive(); } },
+    });
     document.documentElement.classList.add('review-open');
     document.dispatchEvent(new CustomEvent('review:enter'));
     relayout();
@@ -178,6 +195,42 @@ function startDraft(s, draft) {
   composer.onClose = () => { s.voice?.destroy(); s.voice = null; s.draft = null; s.update(); };
 }
 
+// A stroke drawn with the Marker joins the draft drawing; the first one starts the drawing and opens the composer,
+// and the reviewer can keep drawing while it's open. A stroke that would make the drawing too big is dropped.
+const FULL = 'That drawing is full. Post it and start another.';
+function addStroke(s, { ink, points, pressures }) {
+  const strokes = s.draft?.kind === 'drawing' ? s.draft.strokes : [];
+  if (strokes.length + 1 > MAX_STROKES) return s.workspace.setStatus(FULL, 4000);
+  const stroke = anchorStroke(points, ink, pressures);
+  const total = strokes.reduce((n, st) => n + st.pts.length / 2, stroke.pts.length / 2);
+  if (total > MAX_POINTS) return s.workspace.setStatus(FULL, 4000);
+  if (s.draft?.kind !== 'drawing') openDrawing(s);
+  s.draft = { ...s.draft, strokes: [...s.draft.strokes, stroke] };
+  s.undoButton.disabled = false;
+  s.update();
+}
+
+// Takes back the last stroke. The composer stays open, so the reviewer can draw again.
+function undoStroke(s) {
+  if (s.draft?.kind !== 'drawing' || !s.draft.strokes.length) return;
+  s.draft = { ...s.draft, strokes: s.draft.strokes.slice(0, -1) };
+  s.undoButton.disabled = !s.draft.strokes.length;
+  s.update();
+}
+
+function openDrawing(s) {
+  s.draft = { kind: 'drawing', strokes: [], clientId: newId() };
+  s.undoButton = h('button', { type: 'button', class: 'rv-cancel rv-undo', text: 'Undo', disabled: true, onclick: () => undoStroke(s) });
+  const composer = s.workspace.openComposer({
+    kind: 'drawing',
+    name: getName(),
+    extra: s.undoButton,
+    onSubmit: ({ text, name }) => post(s, { text, name }),
+  });
+  composer.hasExtra = () => s.draft?.kind === 'drawing' && s.draft.strokes.length > 0;
+  composer.onClose = () => { s.draft = null; s.update(); };
+}
+
 // The mic can't be used: keep the pin where it is and switch to a typed comment
 function typeInstead(s) {
   const at = s.draft?.at;
@@ -194,11 +247,14 @@ async function post(s, { text, name }) {
   const memo = d.kind === 'voice' ? voice?.getResult() : null;
   if (d.kind === 'voice' && voice?.isRecording()) throw new Error('Stop recording first, then post it.');
   if (d.kind === 'voice' && !memo) throw new Error('Record a memo first, then post it.');
+  if (d.kind === 'drawing' && !d.strokes.length) throw new Error('Draw something first, then post it.');
   await s.ready;
   if (!s.store && !(await connect(s))) throw new Error(MESSAGES.NETWORK);
   setName(name);
   const input = { page: s.page, kind: d.kind, author: name, deviceId: s.deviceId, clientId: d.clientId };
-  if (d.at) input.at = d.at; else { input.from = d.from; input.to = d.to; }
+  if (d.kind === 'drawing') input.strokes = d.strokes;
+  else if (d.at) input.at = d.at;
+  else { input.from = d.from; input.to = d.to; }
   if (text) input.text = text;
   try {
     if (memo) {
@@ -237,7 +293,8 @@ async function close() {
   if (s.store && s.store !== window.__reviewFake) s.store.close();
   s.voice?.destroy();
   for (const p of s.players.values()) p.destroy();
-  s.placing.destroy();                                     // nothing gets placed while the panels leave
+  s.placing.destroy();                                     // nothing gets placed or drawn while the panels leave
+  s.marker.destroy();
   document.documentElement.classList.remove('rv-placing');
   await glideOut(s.workspace.el, () => {
     s.layer.destroy();

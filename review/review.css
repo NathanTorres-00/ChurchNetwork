@@ -154,6 +154,8 @@ html.review-open.has-hub-cursor .hub-row, html.review-open.has-hub-cursor .hub-r
 .rv-cancel {
   padding: 12px 16px; border: 1px solid var(--rv-border); border-radius: 12px; background: #fff; font-weight: 600; font-size: 14px; line-height: 1.5; cursor: pointer;
 }
+.rv-undo { justify-self: start; padding: 8px 14px; }
+.rv-undo:disabled { opacity: .5; cursor: default !important; }
 
 /* ---------- Voice memos ---------- */
 .rv-recorder { display: grid; gap: 8px; justify-items: start; }
@@ -254,6 +256,12 @@ html[data-rv-tool="marker"] .rv-marks * { pointer-events: none; }
 /* Live preview while dragging an arrow (viewport coordinates) */
 .rv-preview { position: fixed; z-index: 56; pointer-events: none; }
 .rv-preview-arrow { height: 0; border-top: 2.5px dashed var(--rv-accent); transform-origin: 0 0; }
+
+/* The stroke being drawn with the Marker, over the whole window (viewport coordinates). It sits under comment
+   mode's panels, so a stroke dragged into the sidebar goes beneath it. */
+.rv-live { position: fixed; left: 0; top: 0; width: 100vw; height: 100vh; z-index: 56; pointer-events: none; overflow: visible; }
+.rv-live path { stroke-linecap: butt; stroke-linejoin: round; }
+.rv-live-highlighter { mix-blend-mode: multiply; }
 
 /* The sidebar tab only shows where the sidebar overlays the page */
 .rv-sidebar-tab { display: none; }
