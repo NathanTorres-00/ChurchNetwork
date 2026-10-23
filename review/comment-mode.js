@@ -227,6 +227,7 @@ function openDrawing(s) {
     kind: 'drawing',
     name: getName(),
     extra: s.undoButton,
+    compact: matchMedia('(max-width: 1279px)').matches,       // below 1280px, in the drawing bar: the page stays in view
     onSubmit: ({ text, name }) => post(s, { text, name }),
   });
   composer.hasExtra = () => s.draft?.kind === 'drawing' && s.draft.strokes.length > 0;

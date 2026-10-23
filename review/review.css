@@ -263,6 +263,43 @@ html[data-rv-tool="marker"] .rv-marks * { pointer-events: none; }
 .rv-live path { stroke-linecap: butt; stroke-linejoin: round; }
 .rv-live-highlighter { mix-blend-mode: multiply; }
 
+/* ---------- The drawing bar ----------
+   Below 1280px a drawing is made from a slim bar instead of the sidebar: the ink switch while the Marker is
+   picked, then Undo, Add note, Post and close once there's a stroke. Bottom center on tablets and narrower windows,
+   just above the tool bar on phones (see below). */
+.rv-drawbar {
+  position: fixed; z-index: 61; left: var(--rv-gap); right: var(--rv-gap); bottom: 24px; width: fit-content; margin: 0 auto;
+  box-sizing: border-box;
+  display: none; flex-wrap: wrap; align-items: flex-end; justify-content: center; gap: 8px; padding: 6px;
+  background: rgba(255, 255, 255, .92); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
+  border: 1px solid #fff; border-radius: 18px; box-shadow: var(--rv-shadow);
+}
+.rv-drawbar .rv-inks { display: flex; gap: 4px; }
+.rv-drawbar-slot:empty { display: none; }
+.rv-composer-compact { display: grid; gap: 8px; padding: 0; border: 0; border-radius: 0; background: none; }
+.rv-composer-compact [hidden] { display: none; }
+.rv-composer-compact .rv-field textarea { padding: 10px 12px; }
+.rv-composer-compact .rv-composer-actions { align-items: center; }
+.rv-composer-compact :is(.rv-undo, .rv-add-note) { padding: 8px 12px; white-space: nowrap; }
+.rv-composer-compact .rv-post { padding: 8px 16px; white-space: nowrap; }
+.rv-close {
+  width: 40px; height: 40px; flex: none; display: grid; place-items: center; padding: 0; border: 0; border-radius: 12px;
+  background: none; cursor: pointer;
+}
+.rv-close:hover { background: var(--surface, #F5F5F6); }
+.rv-close svg { width: 18px; height: 18px; }
+@media (max-width: 1279px) {
+  .rv-root[data-tool="marker"] .rv-drawbar { display: flex; }
+  /* the sidebar stays closed while drawing, so its tab makes way for the bar */
+  .rv-root[data-tool="marker"] .rv-sidebar-tab { display: none; }
+}
+/* A drawing begun in the bar stays there if the window widens past 1280px (a tablet turned on its side), where the
+   rail has the ink switch */
+@media (min-width: 1280px) {
+  .rv-root[data-tool="marker"] .rv-drawbar:has(.rv-composer) { display: flex; }
+  .rv-drawbar .rv-inks { display: none; }
+}
+
 /* The sidebar tab only shows where the sidebar overlays the page */
 .rv-sidebar-tab { display: none; }
 @media (max-width: 1279px) {
@@ -302,6 +339,9 @@ html[data-rv-tool="marker"] .rv-marks * { pointer-events: none; }
 .rv-root:is([data-phase="hidden"], [data-phase="out"]) .rv-rail { transform: translateX(calc(-100% - 32px)); opacity: 0; }
 .rv-root:is([data-phase="hidden"], [data-phase="out"]) .rv-sidebar { transform: translateX(calc(100% + 32px)); opacity: 0; }
 .rv-root:is([data-phase="hidden"], [data-phase="out"]) .rv-sidebar-tab { transform: translateY(12px); opacity: 0; }
+/* the drawing bar fades where it sits, with the panels */
+.rv-drawbar { transition: opacity .3s var(--rv-in-ease); }
+.rv-root:is([data-phase="hidden"], [data-phase="out"]) .rv-drawbar { opacity: 0; }
 
 /* The two layouts never share the screen: the transition dissolves through a blank white card. Behind it all is
    the workspace's gray, so the edges match whichever layout is showing. */
@@ -365,8 +405,10 @@ html.rv-gliding-out::view-transition-new(root) {
 @keyframes rv-out-down { to { transform: translateY(calc(100% + 24px)); opacity: 0; } }
 
 /* ---------- Touch ---------- */
-/* With Arrow, one finger draws instead of scrolling; with the tap tools and Browse it still scrolls */
-html[data-rv-tool="arrow"] body { touch-action: none; }
+/* With Arrow and Marker, one finger draws instead of scrolling (marker.js scrolls the page for two fingers); with
+   the tap tools and Browse it still scrolls. Once a stylus has drawn, it does the drawing and fingers scroll. */
+html[data-rv-tool="arrow"] body, html[data-rv-tool="marker"] body { touch-action: none; }
+html.rv-stylus[data-rv-tool="marker"] body { touch-action: auto; }
 html[data-rv-tool="comment"] body, html[data-rv-tool="voice"] body { touch-action: manipulation; }
 
 /* ---------- Phones: compact toolbar, tools along the bottom, the sidebar as a sheet ---------- */
@@ -383,6 +425,9 @@ html[data-rv-tool="comment"] body, html[data-rv-tool="voice"] body { touch-actio
     background: rgba(255, 255, 255, .92); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); box-shadow: var(--rv-shadow);
   }
   .rv-tool { width: 52px; height: 52px; border-radius: 16px; box-shadow: none; }
+  /* the drawing bar rises just above the tool bar (12px + its 64px + 8px), the composer over the ink switch */
+  .rv-drawbar { bottom: 84px; width: auto; border-radius: 22px; }
+  .rv-drawbar-slot { order: -1; flex-basis: 100%; }
 
   .rv-sidebar {
     top: auto; left: 0; right: 0; bottom: 0; width: auto; max-height: 62vh; z-index: 62;

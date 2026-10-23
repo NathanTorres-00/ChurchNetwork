@@ -1,6 +1,10 @@
 // Draws with the Marker: turns a press and drag on the page into a stroke, drawn live over the page as the
 // pointer moves, and hands the finished stroke to comment mode. The page's own links and buttons don't fire while
 // the Marker is on; comment mode's interface ([data-review-ui]) works as usual.
+//
+// On a touch screen one finger draws and two fingers scroll the page (the page's touch-action is none while the
+// Marker is on, so the scrolling is done here). Once a stylus has drawn, it does the drawing and fingers scroll the
+// page as usual, like a notes app (html.rv-stylus gives the page its touch-action back).
 import { INK, centerline, inkWidth, penOutline } from './ink.js';
 
 const NS = 'http://www.w3.org/2000/svg';
@@ -11,7 +15,10 @@ export function createMarker({ getTool, getInk, onStroke }) {
   let live = null;             // { id, ink, points, pressures, moved } in client coordinates
   let overlay = null;          // the fixed SVG the live stroke is drawn in
   let frame = 0;
+  const fingers = new Map();   // touch points down on the page, by pointerId: [x, y] in client coordinates
+  let between = null;          // with two fingers down, the point between them; the page scrolls as it moves
 
+  const root = document.documentElement;
   const active = () => getTool() === 'marker';
   // comment mode's own interface, and the page's Comment button that opens and closes it, work as usual
   const onPage = e => e.target instanceof Element && !e.target.closest('[data-review-ui], [data-review-toggle]');
@@ -55,9 +62,37 @@ export function createMarker({ getTool, getInk, onStroke }) {
     live.pressures?.push(e.pressure);
   }
 
+  // The point between the first two fingers down
+  function midpoint() {
+    const [a, b] = fingers.values();
+    return [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+  }
+  // Two fingers moving together scroll the page by as much as they move
+  function scrollWith(e) {
+    fingers.set(e.pointerId, [e.clientX, e.clientY]);
+    const next = midpoint();
+    const dy = next[1] - between[1];
+    between = next;
+    if (!dy) return;
+    if (window.__lenis) window.__lenis.scrollTo(window.scrollY - dy, { immediate: true });
+    else window.scrollBy(0, -dy);
+  }
+  function lift(e) {
+    if (fingers.delete(e.pointerId)) between = fingers.size > 1 ? midpoint() : null;
+  }
+
   function down(e) {
     if (!active() || !onPage(e) || e.button > 0) return;
     block(e);
+    if (e.pointerType === 'pen') root.classList.add('rv-stylus');    // from now on the stylus draws
+    if (e.pointerType === 'touch') {
+      if (root.classList.contains('rv-stylus')) return;              // fingers scroll the page, and never draw
+      // the first finger down: nothing else is touching, so anything left from before (a lost pointerup) goes
+      if (e.isPrimary) { fingers.clear(); between = null; drop(); }
+      fingers.set(e.pointerId, [e.clientX, e.clientY]);
+      // a second finger turns the gesture into a scroll, and the stroke begun with the first goes without a trace
+      if (fingers.size > 1) { drop(); between = midpoint(); return; }
+    }
     if (gliding() || live) return;
     // a press on the page leaves the note being typed, as a click would, so Cmd/Ctrl+Z then undoes strokes
     if (document.activeElement?.matches('input, textarea')) document.activeElement.blur();
@@ -72,6 +107,7 @@ export function createMarker({ getTool, getInk, onStroke }) {
   function drop() { live = null; clearLive(); }
 
   function move(e) {
+    if (between && fingers.has(e.pointerId)) { block(e); scrollWith(e); return; }
     if (!live || e.pointerId !== live.id) return;
     block(e);
     if (!active()) { drop(); return; }
@@ -80,6 +116,7 @@ export function createMarker({ getTool, getInk, onStroke }) {
     schedule();
   }
   function up(e) {
+    lift(e);
     if (!live || e.pointerId !== live.id) return;
     block(e);
     if (!active()) { drop(); return; }
@@ -89,7 +126,13 @@ export function createMarker({ getTool, getInk, onStroke }) {
     onStroke({ ink, points, pressures });
   }
   function cancel(e) {
+    lift(e);
     if (live && e.pointerId === live.id) drop();
+  }
+  // A stylus touch would scroll the page once fingers can (html.rv-stylus); kept from it, the stylus draws. Safari
+  // tells a Pencil from a finger only on touch events.
+  function touch(e) {
+    if (active() && onPage(e) && [...e.changedTouches].some(t => t.touchType === 'stylus')) e.preventDefault();
   }
   // Esc while drawing takes back just that stroke; the next Esc backs out a step as usual
   function key(e) {
@@ -108,24 +151,31 @@ export function createMarker({ getTool, getInk, onStroke }) {
   }
 
   const opts = { capture: true };
+  const touchOpts = { capture: true, passive: false };
   document.addEventListener('pointerdown', down, opts);
   document.addEventListener('pointermove', move, opts);
   document.addEventListener('pointerup', up, opts);
   document.addEventListener('pointercancel', cancel, opts);
   document.addEventListener('click', click, opts);
   document.addEventListener('keydown', key, opts);
+  document.addEventListener('touchstart', touch, touchOpts);
+  document.addEventListener('touchmove', touch, touchOpts);
 
   return {
     // Removes the live stroke; comment mode calls it once the stroke is drawn as part of the draft
     clearLive,
     destroy() {
       drop();
+      fingers.clear();
+      between = null;
       document.removeEventListener('pointerdown', down, opts);
       document.removeEventListener('pointermove', move, opts);
       document.removeEventListener('pointerup', up, opts);
       document.removeEventListener('pointercancel', cancel, opts);
       document.removeEventListener('click', click, opts);
       document.removeEventListener('keydown', key, opts);
+      document.removeEventListener('touchstart', touch, touchOpts);
+      document.removeEventListener('touchmove', touch, touchOpts);
     },
   };
 }

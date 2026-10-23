@@ -140,7 +140,13 @@ export function createWorkspace({
     onclick: () => setSidebarOpen(!el.classList.contains('rv-sidebar-open')),
   }, [h('span', { text: 'Review activity' }), h('span', { class: 'rv-tab-count', text: '0' })]);
 
-  const el = h('div', { class: 'rv-root', 'data-review-ui': true }, [toolbar, rail, sidebar, tab]);
+  // The drawing bar: below 1280px a drawing is made from a slim bar at the bottom of the screen rather than the
+  // sidebar, so the page stays in view. It holds the ink switch while the Marker is picked, and the drawing's
+  // composer once there's a stroke.
+  const drawSlot = h('div', { class: 'rv-drawbar-slot' });
+  const drawbar = h('div', { class: 'rv-drawbar', role: 'group', 'aria-label': 'Drawing', 'data-review-ui': true }, [inkSwitch(), drawSlot]);
+
+  const el = h('div', { class: 'rv-root', 'data-review-ui': true }, [toolbar, rail, sidebar, tab, drawbar]);
 
   function setSidebarOpen(open) {
     el.classList.toggle('rv-sidebar-open', open);
@@ -234,7 +240,10 @@ export function createWorkspace({
   }
 
   // ---------- Composer ----------
-  function openComposer({ kind, name, onSubmit, extra = null }) {
+  // A compact composer (a drawing below 1280px) goes in the drawing bar and leaves the sidebar closed. It's a row of
+  // the extra (Undo), Add note, Post and a close button; the note shows once asked for, and the name field only
+  // when posting without a name on this device.
+  function openComposer({ kind, name, onSubmit, extra = null, compact = false }) {
     closeComposer();
     const cfg = COMPOSER[kind];
     const error = h('p', { class: 'rv-error', role: 'alert', hidden: true });
@@ -245,39 +254,54 @@ export function createWorkspace({
       nameRow.replaceWith(nameRow = h('label', { class: 'rv-field' }, [h('span', { text: 'Your name' }), input]));
       input.focus();
     };
-    nameRow = nameInput
-      ? h('label', { class: 'rv-field' }, [h('span', { text: 'Your name' }), nameInput])
-      : h('p', { class: 'rv-posting-as' }, [h('span', { text: `Posting as ${name}` }), h('button', { type: 'button', class: 'rv-link', text: 'Change', onclick: showNameField })]);
-    const text = h('textarea', { name: 'text', rows: '4', maxlength: kind === 'voice' ? '120' : '2000', placeholder: kind === 'comment' ? 'Write a comment…' : '' });
-    const textRow = h('label', { class: 'rv-field' }, [h('span', { text: cfg.field }), text]);
+    if (nameInput) nameRow = h('label', { class: 'rv-field', hidden: compact }, [h('span', { text: 'Your name' }), nameInput]);
+    else if (!compact) nameRow = h('p', { class: 'rv-posting-as' }, [h('span', { text: `Posting as ${name}` }), h('button', { type: 'button', class: 'rv-link', text: 'Change', onclick: showNameField })]);
+    const text = h('textarea', { name: 'text', rows: compact ? '2' : '4', maxlength: kind === 'voice' ? '120' : '2000', placeholder: kind === 'comment' ? 'Write a comment…' : '' });
+    const textRow = h('label', { class: 'rv-field', hidden: compact }, [h('span', { text: cfg.field }), text]);
     const postButton = h('button', { type: 'submit', class: 'rv-post', text: cfg.post });
-    const form = h('form', { class: `rv-composer rv-composer-${kind}`, novalidate: true }, [
-      h('h3', { text: cfg.title }),
-      nameRow,
-      extra,
-      textRow,
-      error,
-      h('div', { class: 'rv-composer-actions' }, [
-        postButton,
-        // Cancel on typed text is a deliberate choice, so it doesn't ask; a recording or strokes are costly to
-        // redo, so they do
-        h('button', {
-          type: 'button', class: 'rv-cancel', text: cfg.cancel ?? 'Cancel',
-          onclick: async () => {
-            if (api.hasExtra?.() && !(await api.askToDiscard())) return;
-            closeComposer();
-            api.onClose?.();
-          },
-        }),
-      ]),
-    ]);
+    // Cancel on typed text is a deliberate choice, so it doesn't ask; a recording or strokes are costly to redo,
+    // so they do
+    const cancel = async () => {
+      if (api.hasExtra?.() && !(await api.askToDiscard())) return;
+      closeComposer();
+      api.onClose?.();
+    };
+    const form = compact
+      ? h('form', { class: `rv-composer rv-composer-${kind} rv-composer-compact`, 'aria-label': cfg.title, novalidate: true }, [
+        textRow,
+        nameRow,
+        error,
+        h('div', { class: 'rv-composer-actions' }, [
+          extra,
+          h('button', {
+            type: 'button', class: 'rv-cancel rv-add-note', text: 'Add note',
+            onclick: e => { textRow.hidden = false; e.currentTarget.hidden = true; text.focus(); },
+          }),
+          postButton,
+          h('button', { type: 'button', class: 'rv-close', 'aria-label': 'Cancel', title: 'Cancel', html: ICONS.close, onclick: cancel }),
+        ]),
+      ])
+      : h('form', { class: `rv-composer rv-composer-${kind}`, novalidate: true }, [
+        h('h3', { text: cfg.title }),
+        nameRow,
+        extra,
+        textRow,
+        error,
+        h('div', { class: 'rv-composer-actions' }, [
+          postButton,
+          h('button', { type: 'button', class: 'rv-cancel', text: cfg.cancel ?? 'Cancel', onclick: cancel }),
+        ]),
+      ]);
     const showError = msg => { error.textContent = msg; error.hidden = !msg; };
     form.addEventListener('submit', async e => {
       e.preventDefault();
       const nameField = form.querySelector('input[name="name"]');
       const author = (nameField ? nameField.value : name ?? '').trim();
       const body = text.value.trim();
-      if (!author) return showError('Add your name so everyone knows who this is from.'), nameField?.focus();
+      if (!author) {
+        if (nameRow) nameRow.hidden = false;           // in the drawing bar, the name field shows when it's needed
+        return showError('Add your name so everyone knows who this is from.'), nameField?.focus();
+      }
       if (cfg.required && !body) return showError('Write a comment first.'), text.focus();
       showError('');
       postButton.disabled = true;
@@ -289,8 +313,13 @@ export function createWorkspace({
         postButton.disabled = false;
       }
     });
-    composerSlot.replaceChildren(form);
-    setSidebarOpen(true);
+    if (compact) {
+      drawSlot.replaceChildren(form);
+      setSidebarOpen(false);          // the sidebar stays closed while drawing, so the page stays in view
+    } else {
+      composerSlot.replaceChildren(form);
+      setSidebarOpen(true);
+    }
     const api = composer = {
       el: form,
       kind,
@@ -308,7 +337,8 @@ export function createWorkspace({
       },
       onClose: null,
     };
-    (nameInput ?? text).focus({ preventScroll: true });
+    // in the bar nothing takes focus, so a phone's keyboard doesn't cover the page while drawing
+    if (!compact) (nameInput ?? text).focus({ preventScroll: true });
     return api;
   }
   function closeComposer() {
