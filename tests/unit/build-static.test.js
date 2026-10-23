@@ -12,6 +12,7 @@ function fixture() {
   put('review/comment-mode.js', 'export {}');
   put('review/config.js', "export const CONVEX_URL = 'https://local.convex.cloud';");
   put('convex/marks.js');
+  put('convex/limits.js', 'export const MAX_TEXT = 2000;');
   put('node_modules/convex/index.js');
   put('docs/notes.md');
   return { root, out: join(root, 'dist') };
@@ -27,7 +28,9 @@ describe('buildStatic', () => {
     const config = readFileSync(join(out, 'review/config.js'), 'utf8');
     expect(config).toContain('https://x.convex.cloud');
     expect(config).not.toContain('local.convex.cloud');
-    expect(existsSync(join(out, 'convex'))).toBe(false);
+    // review/ imports the shared limits from ../convex/limits.js; the rest of convex/ stays out
+    expect(existsSync(join(out, 'convex/limits.js'))).toBe(true);
+    expect(existsSync(join(out, 'convex/marks.js'))).toBe(false);
     expect(existsSync(join(out, 'node_modules'))).toBe(false);
     expect(existsSync(join(out, 'docs'))).toBe(false);
   });
