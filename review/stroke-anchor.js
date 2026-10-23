@@ -15,6 +15,7 @@ import { bounds, fromFlat, isAlongText, simplify, toFlat } from './ink.js';
 const ABOVE = [6, 14, 24];     // px above a flat stroke where the text it underlines may be, nearest first
 const MIN_INSIDE = 16;         // a pen stroke this big on both sides records what it surrounds
 const SHIFT_SLACK = 8;         // px a surrounded point may sit outside the stroke before it counts as split off
+const TEXT_SLACK = 8;          // px above and below a highlighter stroke where the lines of text it covers may reach
 const LINE_SLOP = 2;           // px between the tops of text boxes on the same line
 const BAND = 0.75;             // a highlighter band's height, as a share of its line's
 
@@ -72,6 +73,9 @@ function nodeAt(pos) {
   return node && pos.o <= node.length ? node : null;
 }
 
+// Whether a stroke's points (pts) run wider than they are tall: the axis its surrounded points were recorded along
+const isWide = pts => { const b = bounds(fromFlat(pts, { x: 0, y: 0 })); return b.w >= b.h; };
+
 const inOrder = (a, b) => a.node === b.node
   ? a.offset <= b.offset
   : !!(a.node.compareDocumentPosition(b.node) & Node.DOCUMENT_POSITION_FOLLOWING);
@@ -123,25 +127,32 @@ export function anchorStroke(points, ink, pressures = null) {
     let end = textNear(box.x + box.w - 2, midY);
     if (start && end) {
       if (!inOrder(start, end)) [start, end] = [end, start];
-      stroke.text = { start: textPos(start.node, start.offset), end: textPos(end.node, end.offset) };
+      const text = { start: textPos(start.node, start.offset), end: textPos(end.node, end.offset) };
+      // only when the text is all on the stroke's own line(s): across side-by-side columns it would run through
+      // the rest of the first column, far from the stroke, so the stroke is drawn as drawn instead
+      const lines = textLines(text);
+      if (lines?.every(l => l.bottom >= box.y - TEXT_SLACK && l.top <= box.y + box.h + TEXT_SLACK)) stroke.text = text;
     }
   }
 
   if (ink === 'pen' && box.w >= MIN_INSIDE && box.h >= MIN_INSIDE) {
-    const wide = box.w >= box.h;
-    const spot = f => (wide ? [box.x + box.w * f, midY] : [midX, box.y + box.h * f]);
+    // what the stroke surrounds, apart from the element it's anchored on (and those around that), which moves
+    // with the stroke and so can't split off from it
+    const own = findByPath(stroke.at.path);
+    const spot = f => (isWide(stroke.pts) ? [box.x + box.w * f, midY] : [midX, box.y + box.h * f]);
     const inside = [];
     for (const [x, y] of [[midX, midY], spot(0.25), spot(0.75)]) {
       const a = anchorAt(x, y);
+      if (own && findByPath(a.path)?.contains(own)) continue;
       if (!inside.some(b => b.path === a.path)) inside.push(a);
     }
-    stroke.inside = inside;
+    if (inside.length >= 2) stroke.inside = inside;
   }
   return stroke;
 }
 
-// One band per line of the text a highlighter stroke covers, in page coordinates, or null when it can't be found
-function textBands(text) {
+// The lines of a stretch of text, as client rects merged per line, top to bottom, or null when it can't be found
+function textLines(text) {
   const start = nodeAt(text.start);
   const end = nodeAt(text.end);
   if (!start || !end) return null;
@@ -165,8 +176,12 @@ function textBands(text) {
       });
     }
   }
-  if (!lines.length) return null;
-  return lines.sort((a, b) => a.top - b.top).map(l => ({
+  return lines.length ? lines.sort((a, b) => a.top - b.top) : null;
+}
+
+// One band per line of the text a highlighter stroke covers, in page coordinates, or null when it can't be found
+function textBands(text) {
+  return textLines(text)?.map(l => ({
     x1: l.left + window.scrollX,
     x2: l.right + window.scrollX,
     y: (l.top + l.bottom) / 2 + window.scrollY,
@@ -201,13 +216,15 @@ export function resolveStroke(stroke) {
 // that stack): one of them has moved out from inside the stroke, or they no longer sit side by side. They were
 // recorded along the stroke's middle line, so ones that have stacked since sit far apart across it, even when
 // the stroke, which keeps its size, is still big enough to take them in.
+// Only two or more things can split apart; one alone moves with its text, so it's never judged.
 export function strokeShifted(stroke, resolved) {
-  if (!resolved || !stroke.inside?.length) return false;
+  if (!resolved || !(stroke.inside?.length >= 2)) return false;
   const b = bounds(resolved.points);
   const now = stroke.inside.map(resolveAnchor).filter(Boolean);
+  if (now.length < 2) return false;
   const out = now.some(p => p.x < b.x - SHIFT_SLACK || p.x > b.x + b.w + SHIFT_SLACK ||
     p.y < b.y - SHIFT_SLACK || p.y > b.y + b.h + SHIFT_SLACK);
-  if (out || now.length < 2) return out;
-  const across = now.map(p => (b.w >= b.h ? p.y : p.x));
+  if (out) return true;
+  const across = now.map(p => (isWide(stroke.pts) ? p.y : p.x));
   return Math.max(...across) - Math.min(...across) > Math.min(b.w, b.h) / 2;
 }

@@ -272,6 +272,54 @@ test('strokeShifted is true when what a loop surrounded has split apart', async 
   }
 });
 
+// A loop round one word surrounds only the word's own element, which rewraps but can't split apart. The loop
+// follows the word, so the card mustn't say it was drawn on another screen.
+test('a loop around a word isn\'t badged as shifted when its text rewraps', async ({ page }) => {
+  const drawn = {};
+  for (const [sel, word] of [['#story h2', 'started'], ['#app .lead', 'reading']]) {
+    drawn[sel] = await page.evaluate(async ([sel, word]) => {
+      const { anchorStroke, resolveStroke, strokeShifted } = await __sa.mod();
+      const el = document.querySelector(sel);
+      __sa.show(el);
+      const stroke = anchorStroke(__sa.loop(__sa.wordRange(el, word).getBoundingClientRect()), 'pen');
+      return { stroke, shifted: strokeShifted(stroke, resolveStroke(stroke)) };
+    }, [sel, word]);
+    expect(drawn[sel].stroke.char, sel).toBeTruthy();
+    expect(drawn[sel].shifted, sel).toBe(false);
+  }
+
+  for (const [width, sels] of [[1100, ['#story h2']], [900, ['#story h2']], [390, ['#story h2', '#app .lead']]]) {
+    await resize(page, width);
+    for (const sel of sels) {
+      const shifted = await page.evaluate(async ([sel, stroke]) => {
+        const { resolveStroke, strokeShifted } = await __sa.mod();
+        __sa.show(document.querySelector(sel));
+        return strokeShifted(stroke, resolveStroke(stroke));
+      }, [sel, drawn[sel].stroke]);
+      expect(shifted, `${sel} at ${width}`).toBe(false);
+    }
+  }
+});
+
+// Side by side, the text from a word in one column to a word in the next runs through the rest of the first
+// column, so it would be highlighted line by line far from the stroke; the stroke is drawn as drawn instead.
+test('a highlighter across two side-by-side columns keeps no text', async ({ page }) => {
+  const result = await page.evaluate(async () => {
+    const { anchorStroke } = await __sa.mod();
+    const [a, b] = document.querySelectorAll('#story .step h3');
+    __sa.show(a);
+    const ra = __sa.wordRange(a, 'church').getBoundingClientRect();
+    const rb = __sa.wordRange(b, 'Disciples').getBoundingClientRect();
+    const y = (ra.top + ra.bottom) / 2;
+    return {
+      sideBySide: Math.abs(rb.top - ra.top) < 4 && rb.left > ra.right,
+      stroke: anchorStroke(__sa.line(ra.left + 2, rb.left + rb.width / 2, y), 'highlighter'),
+    };
+  });
+  expect(result.sideBySide).toBe(true);
+  expect(result.stroke.text).toBeUndefined();
+});
+
 test('a stroke over the typed headline survives retyping', async ({ page }) => {
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.waitForFunction(() => (document.getElementById('slot')?.textContent.trim().length ?? 0) >= 4);
