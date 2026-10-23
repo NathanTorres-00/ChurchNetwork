@@ -68,9 +68,13 @@ export function createMarker({ getTool, getInk, onStroke }) {
     try { e.target.setPointerCapture?.(e.pointerId); } catch { /* not capturable */ }
     schedule();
   }
+  // The stroke being drawn goes without a trace: Esc, a cancelled pointer, or the tool changing mid-stroke
+  function drop() { live = null; clearLive(); }
+
   function move(e) {
     if (!live || e.pointerId !== live.id) return;
     block(e);
+    if (!active()) { drop(); return; }
     for (const c of e.getCoalescedEvents?.() ?? []) add(c);
     add(e);
     schedule();
@@ -78,13 +82,20 @@ export function createMarker({ getTool, getInk, onStroke }) {
   function up(e) {
     if (!live || e.pointerId !== live.id) return;
     block(e);
+    if (!active()) { drop(); return; }
     const { ink, points, pressures, moved } = live;
     live = null;
     if (moved < MIN_MOVE) { clearLive(); return; }
     onStroke({ ink, points, pressures });
   }
   function cancel(e) {
-    if (live && e.pointerId === live.id) { live = null; clearLive(); }
+    if (live && e.pointerId === live.id) drop();
+  }
+  // Esc while drawing takes back just that stroke; the next Esc backs out a step as usual
+  function key(e) {
+    if (e.key !== 'Escape' || !live) return;
+    block(e);
+    drop();
   }
   // Clicks that follow a stroke, or a press that never moved, shouldn't follow links or press the page's buttons
   function click(e) { if (active() && onPage(e)) block(e); }
@@ -102,18 +113,19 @@ export function createMarker({ getTool, getInk, onStroke }) {
   document.addEventListener('pointerup', up, opts);
   document.addEventListener('pointercancel', cancel, opts);
   document.addEventListener('click', click, opts);
+  document.addEventListener('keydown', key, opts);
 
   return {
     // Removes the live stroke; comment mode calls it once the stroke is drawn as part of the draft
     clearLive,
     destroy() {
-      live = null;
-      clearLive();
+      drop();
       document.removeEventListener('pointerdown', down, opts);
       document.removeEventListener('pointermove', move, opts);
       document.removeEventListener('pointerup', up, opts);
       document.removeEventListener('pointercancel', cancel, opts);
       document.removeEventListener('click', click, opts);
+      document.removeEventListener('keydown', key, opts);
     },
   };
 }

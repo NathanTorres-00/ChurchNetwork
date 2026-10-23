@@ -198,7 +198,9 @@ function startDraft(s, draft) {
 // A stroke drawn with the Marker joins the draft drawing; the first one starts the drawing and opens the composer,
 // and the reviewer can keep drawing while it's open. A stroke that would make the drawing too big is dropped.
 const FULL = 'That drawing is full. Post it and start another.';
+const POSTING = "Posting… draw again once it's posted.";
 function addStroke(s, { ink, points, pressures }) {
+  if (s.posting && s.posting === s.draft) return s.workspace.setStatus(POSTING, 4000);   // it would be lost with the post
   const strokes = s.draft?.kind === 'drawing' ? s.draft.strokes : [];
   if (strokes.length + 1 > MAX_STROKES) return s.workspace.setStatus(FULL, 4000);
   const stroke = anchorStroke(points, ink, pressures);
@@ -248,22 +250,27 @@ async function post(s, { text, name }) {
   if (d.kind === 'voice' && voice?.isRecording()) throw new Error('Stop recording first, then post it.');
   if (d.kind === 'voice' && !memo) throw new Error('Record a memo first, then post it.');
   if (d.kind === 'drawing' && !d.strokes.length) throw new Error('Draw something first, then post it.');
-  await s.ready;
-  if (!s.store && !(await connect(s))) throw new Error(MESSAGES.NETWORK);
-  setName(name);
-  const input = { page: s.page, kind: d.kind, author: name, deviceId: s.deviceId, clientId: d.clientId };
-  if (d.kind === 'drawing') input.strokes = d.strokes;
-  else if (d.at) input.at = d.at;
-  else { input.from = d.from; input.to = d.to; }
-  if (text) input.text = text;
+  if (d.kind === 'drawing') s.posting = d;           // no more strokes join it until the post is done
   try {
-    if (memo) {
-      if (!voice.getStorageId()) voice.setStorageId(await s.store.uploadAudio(memo.blob, memo.mime, s.deviceId));
-      input.audio = { storageId: voice.getStorageId(), mime: memo.mime, durationMs: Math.max(1, memo.durationMs) };
+    await s.ready;
+    if (!s.store && !(await connect(s))) throw new Error(MESSAGES.NETWORK);
+    setName(name);
+    const input = { page: s.page, kind: d.kind, author: name, deviceId: s.deviceId, clientId: d.clientId };
+    if (d.kind === 'drawing') input.strokes = d.strokes;
+    else if (d.at) input.at = d.at;
+    else { input.from = d.from; input.to = d.to; }
+    if (text) input.text = text;
+    try {
+      if (memo) {
+        if (!voice.getStorageId()) voice.setStorageId(await s.store.uploadAudio(memo.blob, memo.mime, s.deviceId));
+        input.audio = { storageId: voice.getStorageId(), mime: memo.mime, durationMs: Math.max(1, memo.durationMs) };
+      }
+      await s.store.create(input);
+    } catch (e) {
+      throw new Error(message(e));
     }
-    await s.store.create(input);
-  } catch (e) {
-    throw new Error(message(e));
+  } finally {
+    if (s.posting === d) s.posting = null;
   }
   if (state !== s) return;
   s.workspace.setStatus('Posted', 2000);

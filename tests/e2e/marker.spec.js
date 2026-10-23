@@ -152,6 +152,26 @@ test('Esc, Cancel and switching tools with strokes ask first', async ({ page }) 
   await expect(page.locator('.rv-draft')).toHaveCount(0);
 });
 
+test('Esc mid-stroke takes back only that stroke', async ({ page }) => {
+  await tool(page, 'Marker').click();
+  const r = await wordRect(page, '#story h2', 'started');
+  await page.mouse.move(r.x, r.y + r.height + 4);
+  await page.mouse.down();
+  await page.mouse.move(r.x + r.width, r.y + r.height + 6, { steps: 10 });
+  await expect(page.locator('.rv-live')).toHaveCount(1);
+  await page.keyboard.press('Escape');
+  await expect(page.locator('.rv-live')).toHaveCount(0);
+  await page.mouse.move(r.x + r.width + 40, r.y + r.height + 8, { steps: 4 });
+  await page.mouse.up();
+  await expect(page.locator('.rv-live')).toHaveCount(0);
+  await expect(composer(page)).toHaveCount(0);
+  await expect(page.locator('.rv-draft')).toHaveCount(0);
+  await expect(tool(page, 'Marker')).toHaveAttribute('aria-pressed', 'true');
+  // the next Esc backs out a step as before
+  await page.keyboard.press('Escape');
+  await expect(tool(page, 'Marker')).toHaveAttribute('aria-pressed', 'false');
+});
+
 test('with no strokes left, Cancel closes without asking', async ({ page }) => {
   await tool(page, 'Marker').click();
   await loopFirstWord(page);
@@ -246,6 +266,23 @@ test('failed post keeps the strokes and retries once', async ({ page }) => {
   await composer(page).getByRole('button', { name: 'Post drawing' }).click();
   await expect(cards(page)).toHaveCount(1);
   expect(await page.evaluate(() => window.__reviewFake.marks.length)).toBe(1);
+});
+
+test('a stroke drawn while posting is turned away', async ({ page }) => {
+  await tool(page, 'Marker').click();
+  await loopFirstWord(page);
+  await composer(page).getByLabel('Your name').fill('Ana');
+  await note(page).fill('held');
+  await page.evaluate(() => window.__reviewFake.holdNext());
+  await composer(page).getByRole('button', { name: 'Post drawing' }).click();
+  await underline(page, await wordRect(page, '#story h2', 'started'));
+  await expect(page.locator('.rv-status')).toHaveText("Posting… draw again once it's posted.");
+  await expect(draftStrokes(page)).toHaveCount(1);
+  await page.evaluate(() => window.__reviewFake.release());
+  await expect(cards(page)).toHaveCount(1);
+  await expect(page.locator('.rv-drawing:not(.rv-draft) .rv-stroke')).toHaveCount(1);
+  expect(await page.evaluate(() => window.__reviewFake.marks[0].strokes.length)).toBe(1);
+  await expect(composer(page)).toHaveCount(0);
 });
 
 test('a live mark arriving keeps the draft', async ({ page }) => {
