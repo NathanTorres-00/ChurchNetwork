@@ -55,7 +55,7 @@ All of these are in the `CONFIG` block and the Adjust panel. Any of them can als
 The repo deploys to Vercel as a static site. `vercel.json` serves `hero.html` at the site's root and turns on
 clean URLs (`/hero`, `/network-globe`, `/network-globe-pins`, `/network-multiply`; the `.html` addresses redirect
 to them). Its build command, `npx convex deploy --cmd 'node scripts/build-static.js'`, pushes the comment mode
-backend to Convex and then copies the pages and `review/` into `dist/`, which Vercel serves (see
+backend to Convex and then copies the pages, `review/` and `convex/limits.js` (the shared limits; nothing else from `convex/`) into `dist/`, which Vercel serves (see
 [Comment mode](#comment-mode)).
 
 ---
@@ -237,15 +237,22 @@ posted. Outside comment mode none of it shows, and nothing for it loads until th
   - **Voice memo**: click the page, record from the mic (up to 3 minutes), listen back, then post. The card has a
     play button and the length.
   - **Arrow**: drag from where it starts to what it points at, with an optional note.
-  - **Highlight**: drag across an area, with an optional note.
+  - **Marker**: draw on the page with the **Pen** (circle a word, underline it) or the **Highlighter**. A drawing
+    can have many strokes (up to 40, 6,000 points in all) and one optional note, and **Undo** (or Cmd/Ctrl+Z)
+    takes back the last stroke. A highlighter stroke along text follows the words, and a drawing made on a
+    different screen width is badged **Drawn on a wider screen** or **narrower screen**.
 - Every mark appears on the page and as a card in the **Review activity** sidebar, with counts of what's open.
   Clicking a card scrolls to its mark. Marks are tied to the element they were made on, so they stay on target at
   any window width; if that part of the page is removed, the card says **Moved**.
 - Reviewers type their name once per device. They can delete their own marks.
 - **Share review** copies a link that opens straight into comment mode (`/?comment`).
-- **Esc** backs out one step: closes the composer, then the tool, then comment mode. Leaving with something unsent
-  asks first.
-- On phones the tools sit in a bar along the bottom and Review activity slides up as a sheet.
+- **Esc** backs out one step: cancels a stroke being drawn, closes the composer, then the tool, then comment
+  mode. Leaving with something unsent asks first. While a drawing is posting, new strokes are turned away with a
+  short message.
+- On phones the tools sit in a bar along the bottom and Review activity slides up as a sheet. With the Marker on,
+  one finger draws and two fingers scroll (pinch-zoom is off). Below 1280px a slim drawing bar replaces the
+  sidebar, and picking Marker closes the sheet. On an iPad in Safari the Pencil draws while one finger scrolls;
+  in other browsers a pen draws every stroke, fingers don't draw, and two fingers scroll.
 
 **Owner link:** opening the site once with `?owner=<key>` remembers the owner key on that device (and removes it
 from the address bar). The owner can **Resolve** marks (hidden unless **Show resolved** is on) and delete any mark.
@@ -254,10 +261,12 @@ The key is stored in Convex as the `OWNER_KEY` environment variable on both depl
 
 **How it's built:** `review/` holds the browser side as plain ES modules (no bundler): `comment-mode.js` opens
 and closes the workspace, `workspace.js` is the toolbar, tools and sidebar, `marks-layer.js` draws the marks,
-`placing.js` turns clicks and drags into marks, `anchor.js` ties them to elements, `voice.js` and `recorder.js`
+`placing.js` turns clicks and drags into marks, `anchor.js` ties them to elements, `marker.js` turns pointer
+input into strokes, `ink.js` smooths them and builds the pen's tapered outline, `stroke-anchor.js` ties a stroke
+to its word or element, `voice.js` and `recorder.js`
 record and play memos, and `store.js` talks to [Convex](https://convex.dev) through its browser bundle
 (`convex@1.47.0` from unpkg). `convex/` is the backend: one `marks` table, file storage for the audio, and the
-rules (length limits, 10 marks per device and 60 overall per minute, voice memos must be audio files of at most
+rules (length limits, drawing limits in `convex/limits.js`, 10 marks per device and 60 overall per minute, voice memos must be audio files of at most
 10 MB, owner-only resolve). Device IDs never leave the backend, so only the device that made a mark (or the owner)
 can delete it. `convex/crons.js` deletes uploaded recordings that were never posted, once an hour. Convex was set up through the Vercel
 Marketplace, so its deploy keys live in the Vercel project.
