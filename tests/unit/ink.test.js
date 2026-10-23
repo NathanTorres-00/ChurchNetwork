@@ -43,6 +43,9 @@ describe('penOutline', () => {
     const half = p => Math.max(...endpoints(penOutline(line(40), { width: 4, pressures: Array(40).fill(p) })).map(e => Math.abs(e.y)));
     expect(half(1)).toBeGreaterThan(half(0.2));
   });
+  test('a pressures array shorter than the points gives no NaN', () => {
+    expect(penOutline(line(10), { width: 4, pressures: [1, 1, 1] })).not.toContain('NaN');
+  });
   test('a single point is a small closed circle', () => {
     expect(penOutline([[5, 5]], { width: 4 }).endsWith('Z')).toBe(true);
   });
