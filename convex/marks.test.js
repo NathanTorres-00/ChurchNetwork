@@ -226,6 +226,12 @@ describe('marks', () => {
       expect(await code(post(drawing({ strokes: [pen({ pts: [0, 0, 20001, 0] })] })))).toBe('INVALID');
     });
 
+    test('rejects an origin beyond 1e6 page px', async () => {
+      expect(await code(post(drawing({ strokes: [pen({ origin: { x: 1e6 + 1, y: 0 } })] })))).toBe('INVALID');
+      expect(await code(post(drawing({ strokes: [pen({ origin: { x: 0, y: -1e6 - 1 } })] })))).toBe('INVALID');
+      expect(await code(post(drawing({ strokes: [pen({ origin: { x: -1e6, y: 1e6 } })] })))).toBe(null);
+    });
+
     test('rejects pressure outside 0-1 or a pressure list of the wrong length', async () => {
       expect(await code(post(drawing({ strokes: [pen({ pr: [0.5, 1.5, 0.2] })] })))).toBe('INVALID');
       expect(await code(post(drawing({ strokes: [pen({ pr: [0.5, 0.5] })] })))).toBe('INVALID');

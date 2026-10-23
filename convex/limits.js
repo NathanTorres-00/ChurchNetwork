@@ -15,6 +15,7 @@ export const MAX_STROKES = 40;         // strokes in one drawing
 export const MAX_POINTS = 6000;        // points in one drawing, all strokes together
 export const MAX_STROKE_POINTS = 2000; // points in one stroke
 export const MAX_COORD = 20000;        // furthest a point may sit from its origin, in px
+export const MAX_ORIGIN = 1e6;         // furthest a stroke's origin may sit from the page's top-left, in px
 export const MAX_INSIDE = 4;           // anchors a stroke may record for the elements it was drawn inside
 
 export const KINDS = ['comment', 'voice', 'arrow', 'highlight', 'drawing'];
@@ -44,7 +45,7 @@ function isTextPos(p) {
 function strokePoints(s) {
   if (!s || (s.ink !== 'pen' && s.ink !== 'highlighter') || !isAnchor(s.at)) return -1;
   if (!isNum(s.size) || !(s.size > 0) || s.size > 500) return -1;
-  if (!s.origin || !isNum(s.origin.x) || !isNum(s.origin.y)) return -1;
+  if (!s.origin || ![s.origin.x, s.origin.y].every(n => isNum(n) && Math.abs(n) <= MAX_ORIGIN)) return -1;
   const pts = s.pts;
   if (!Array.isArray(pts) || pts.length % 2 || pts.length < 4 || pts.length > MAX_STROKE_POINTS * 2) return -1;
   if (!pts.every(n => isNum(n) && Math.abs(n) <= MAX_COORD)) return -1;

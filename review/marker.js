@@ -14,7 +14,7 @@ const MIN_STEP = 1;            // px; points closer than this to the last one ar
 const MIN_MOVE = 3;            // px of movement in all before a press counts as a stroke
 
 export function createMarker({ getTool, getInk, onStroke }) {
-  let live = null;             // { id, ink, points, pressures, moved } in client coordinates
+  let live = null;             // { id, type, ink, points, pressures, moved } in client coordinates
   let overlay = null;          // the fixed SVG the live stroke is drawn in
   let frame = 0;
   const fingers = new Map();   // touch points down on the page, by pointerId: [x, y] in client coordinates
@@ -90,29 +90,34 @@ export function createMarker({ getTool, getInk, onStroke }) {
     if (e.pointerType === 'pen') penSeen = true;                     // from now on the stylus draws
     if (e.pointerType === 'touch') {
       if (root.classList.contains('rv-stylus')) return;              // fingers scroll the page, and never draw
-      // the first finger down: nothing else is touching, so anything left from before (a lost pointerup) goes
-      if (e.isPrimary) { fingers.clear(); between = null; drop(); }
+      // the first finger down: nothing else is touching, so anything left from before (a lost pointerup) goes.
+      // A stylus stroke being drawn isn't a finger's, so it stays.
+      if (e.isPrimary) { fingers.clear(); between = null; dropTouch(); }
       fingers.set(e.pointerId, [e.clientX, e.clientY]);
       // a second finger turns the gesture into a scroll, and the stroke begun with the first goes without a trace
-      if (fingers.size > 1) { drop(); between = midpoint(); return; }
+      if (fingers.size > 1) { dropTouch(); between = midpoint(); return; }
       if (penSeen) return;                                           // one finger does nothing once a stylus has drawn
     }
     if (gliding() || live) return;
     // a press on the page leaves the note being typed, as a click would, so Cmd/Ctrl+Z then undoes strokes
     if (document.activeElement?.matches('input, textarea')) document.activeElement.blur();
     live = {
-      id: e.pointerId, ink: getInk(), points: [[e.clientX, e.clientY]],
+      id: e.pointerId, type: e.pointerType, ink: getInk(), points: [[e.clientX, e.clientY]],
       pressures: e.pointerType === 'pen' ? [e.pressure] : null, moved: 0,
     };
-    try { e.target.setPointerCapture?.(e.pointerId); } catch { /* not capturable */ }
+    // on the page itself, since what was pressed may go mid-stroke (the typed headline's letters)
+    try { root.setPointerCapture(e.pointerId); } catch { /* not capturable */ }
     schedule();
   }
   // The stroke being drawn goes without a trace: Esc, a cancelled pointer, or the tool changing mid-stroke
   function drop() { live = null; clearLive(); }
+  function dropTouch() { if (live?.type === 'touch') drop(); }
 
   function move(e) {
     if (between && fingers.has(e.pointerId)) { block(e); scrollWith(e); return; }
     if (!live || e.pointerId !== live.id) return;
+    // a mouse moving with no button down was released where we didn't hear it (outside the window, say)
+    if (e.pointerType === 'mouse' && e.buttons === 0) { up(e); return; }
     block(e);
     if (!active()) { drop(); return; }
     for (const c of e.getCoalescedEvents?.() ?? []) add(c);

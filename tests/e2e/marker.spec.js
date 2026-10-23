@@ -285,6 +285,27 @@ test('a stroke drawn while posting is turned away', async ({ page }) => {
   await expect(composer(page)).toHaveCount(0);
 });
 
+test('a stroke whose release is lost ends when the mouse moves with no button down', async ({ page }) => {
+  await tool(page, 'Marker').click();
+  const r = await wordRect(page, '#story h2', 'started');
+  const y = r.y + r.height + 4;
+  await page.mouse.move(r.x, y);
+  await page.mouse.down();
+  await page.mouse.move(r.x + r.width, y + 1, { steps: 12 });
+  // the stroke is captured on the page itself, so it keeps coming however the page under it changes
+  expect(await page.evaluate(() => document.documentElement.hasPointerCapture(1))).toBe(true);
+  // the button comes up where the page doesn't hear it, and the mouse comes back with no button down
+  await page.evaluate(({ x, y }) => document.elementFromPoint(x, y).dispatchEvent(new PointerEvent('pointermove', {
+    pointerId: 1, pointerType: 'mouse', isPrimary: true, clientX: x, clientY: y, button: -1, buttons: 0,
+    bubbles: true, cancelable: true, composed: true,
+  })), { x: r.x + r.width + 20, y: y + 30 });
+  await expect(draftStrokes(page)).toHaveCount(1);
+  await expect(page.locator('.rv-live')).toHaveCount(0);
+  await page.mouse.up();
+  await loopFirstWord(page);
+  await expect(draftStrokes(page)).toHaveCount(2);
+});
+
 test('a live mark arriving keeps the draft', async ({ page }) => {
   await tool(page, 'Marker').click();
   await loopFirstWord(page);

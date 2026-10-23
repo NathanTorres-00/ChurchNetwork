@@ -235,6 +235,27 @@ test('a stylus whose touches don\'t say so keeps drawing, and fingers don\'t dra
   await expect(draftStrokes(page)).toHaveCount(2);
 });
 
+// Off Safari a stylus's touches don't say so, so a finger landing mid-stroke (a resting hand) is a finger
+test('a finger landing while a stylus draws leaves the stylus stroke alone', async ({ page }) => {
+  await tool(page, 'Marker').tap();
+  const r = await wordRect(page, '#story h2', 'started');
+  await page.evaluate(({ x1, x2, y }) => {
+    const target = document.elementFromPoint(x1, y);
+    const fire = (type, x, more = {}) => target.dispatchEvent(new PointerEvent(type, {
+      pointerId: 9, pointerType: 'pen', isPrimary: true, pressure: type === 'pointerup' ? 0 : 0.5,
+      clientX: x, clientY: y, button: type === 'pointermove' ? -1 : 0, buttons: type === 'pointerup' ? 0 : 1,
+      bubbles: true, cancelable: true, composed: true, ...more,
+    }));
+    fire('pointerdown', x1);
+    for (let i = 1; i <= 5; i++) fire('pointermove', x1 + (x2 - x1) * i / 10);
+    fire('pointerdown', 200, { pointerId: 3, pointerType: 'touch', clientY: 700 });
+    for (let i = 6; i <= 10; i++) fire('pointermove', x1 + (x2 - x1) * i / 10);
+    fire('pointerup', x2);
+    fire('pointerup', 200, { pointerId: 3, pointerType: 'touch', clientY: 700 });
+  }, { x1: r.x, x2: r.x + r.width, y: r.y + r.height + 4 });
+  await expect(draftStrokes(page)).toHaveCount(1);
+});
+
 test.describe('on a tablet', () => {
   test.use({ viewport: { width: 1024, height: 1366 }, hasTouch: true, isMobile: true });
 
