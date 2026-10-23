@@ -49,14 +49,27 @@ test('tap places a comment', async ({ page }) => {
   await expect(page.locator('.rv-card')).toHaveCount(1);
 });
 
-test('drag draws a highlight by touch', async ({ page }) => {
-  await tool(page, 'Highlight').tap();
+test('drag draws an arrow by touch', async ({ page }) => {
+  await tool(page, 'Arrow').tap();
   await touchDrag(page, { x: 60, y: 420 }, { x: 320, y: 560 });
-  const composer = page.locator('.rv-composer-highlight');
+  const composer = page.locator('.rv-composer-arrow');
   await expect(composer).toBeVisible();
   await composer.getByLabel('Your name').fill('Ana');
-  await composer.getByRole('button', { name: 'Post highlight' }).tap();
-  await expect(page.locator('.rv-highlight:not(.rv-draft)')).toHaveCount(1);
+  await composer.getByRole('button', { name: 'Post arrow' }).tap();
+  await expect(page.locator('.rv-arrow:not(.rv-draft)')).toHaveCount(1);
+});
+
+test('an old box highlight still shows on a phone', async ({ page }) => {
+  await page.evaluate(async () => {
+    while (!window.__reviewFake) await new Promise(r => setTimeout(r, 20));
+    await window.__reviewFake.create({
+      page: 'home', kind: 'highlight', author: 'Bo', deviceId: 'someone-else',
+      from: { path: '#story', fx: 0.1, fy: 0.1, vw: 1440 }, to: { path: '#story', fx: 0.5, fy: 0.3, vw: 1440 },
+    });
+  });
+  await expect(page.locator('.rv-highlight')).toHaveCount(1);
+  await page.locator('.rv-highlight').scrollIntoViewIfNeeded();
+  await expect(page.locator('.rv-highlight')).toBeVisible();
 });
 
 test('one finger scrolls while browsing', async ({ page }) => {

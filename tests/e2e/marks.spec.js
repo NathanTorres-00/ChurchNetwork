@@ -77,20 +77,22 @@ test('a name is required before posting', async ({ page }) => {
   await expect(cards(page)).toHaveCount(0);
 });
 
-test('draws an arrow and a highlight', async ({ page }) => {
+test('draws an arrow; an old box highlight still shows', async ({ page }) => {
   await tool(page, 'Arrow').click();
   await drag(page, { x: 400, y: 760 }, { x: 560, y: 690 });
   await post(page, '', { name: 'Ana' });
   await expect(page.locator('.rv-arrow:not(.rv-draft)')).toHaveCount(1);
 
-  await tool(page, 'Highlight').click();
-  await drag(page, { x: 300, y: 300 }, { x: 600, y: 420 });
-  await post(page, 'This area feels empty');
+  // the Highlight tool is gone, but highlights posted before the marker keep showing
+  await seed(page, {
+    kind: 'highlight', text: 'This area feels empty', at: undefined,
+    from: { path: '#story', fx: 0.1, fy: 0.1, vw: 1440 }, to: { path: '#story', fx: 0.5, fy: 0.3, vw: 1440 },
+  });
   await expect(page.locator('.rv-highlight:not(.rv-draft)')).toHaveCount(1);
 
   await expect(cards(page)).toHaveCount(2);
   await expect(stat(page, 'Arrows')).toHaveText('1');
-  await expect(stat(page, 'Highlights')).toHaveText('1');
+  await expect(stat(page, 'Drawings')).toHaveText('1');
   await expect(cards(page).locator('.rv-tag')).toHaveText(['Arrow', 'Highlight']);
 });
 
@@ -233,6 +235,6 @@ test('nothing remains after exit', async ({ page }) => {
   await post(page, '');
   await expect(page.locator('.rv-arrow')).toHaveCount(1);
   await page.getByRole('button', { name: 'Leave comment mode' }).click();
-  await expect(page.locator('.rv-marks, .rv-pin, .rv-arrow, .rv-highlight')).toHaveCount(0);
+  await expect(page.locator('.rv-marks, .rv-pin, .rv-arrow, .rv-highlight, .rv-drawing')).toHaveCount(0);
   await expect(page.locator('[data-review-ui]')).toHaveCount(0);
 });

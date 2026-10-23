@@ -34,7 +34,7 @@ test('entering shows the workspace', async ({ page }) => {
   await expect(toolbar).toContainText('Reviewing Church Network — Home');
   await expect(toolbar.getByRole('button', { name: 'Share review' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Save review' })).toHaveCount(0);
-  for (const name of ['Comment', 'Voice memo', 'Arrow', 'Highlight']) await expect(tool(page, name)).toBeVisible();
+  for (const name of ['Comment', 'Voice memo', 'Arrow', 'Marker']) await expect(tool(page, name)).toBeVisible();
   await expect(page.locator('.rv-sidebar').getByRole('heading', { name: 'Review activity' })).toBeVisible();
   await expect(tool(page, 'Comment')).toHaveAttribute('aria-pressed', 'true');
   await expect(page.locator('.adjust')).toBeHidden();

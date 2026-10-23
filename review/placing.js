@@ -3,7 +3,7 @@
 import { anchorAt } from './anchor.js';
 
 const POINT_TOOLS = new Set(['comment', 'voice']);
-const DRAG_TOOLS = new Set(['arrow', 'highlight']);
+const DRAG_TOOLS = new Set(['arrow']);
 const MIN_DRAG = 8;
 
 export function createPlacing({ getTool, onDraft }) {
@@ -24,12 +24,8 @@ export function createPlacing({ getTool, onDraft }) {
       document.body.appendChild(preview);
     }
     const x1 = start.x, y1 = start.y, x2 = e.clientX, y2 = e.clientY;
-    if (tool === 'highlight') {
-      Object.assign(preview.style, { left: Math.min(x1, x2) + 'px', top: Math.min(y1, y2) + 'px', width: Math.abs(x2 - x1) + 'px', height: Math.abs(y2 - y1) + 'px' });
-    } else {
-      const len = Math.hypot(x2 - x1, y2 - y1), angle = Math.atan2(y2 - y1, x2 - x1);
-      Object.assign(preview.style, { left: x1 + 'px', top: y1 + 'px', width: len + 'px', transform: `rotate(${angle}rad)` });
-    }
+    const len = Math.hypot(x2 - x1, y2 - y1), angle = Math.atan2(y2 - y1, x2 - x1);
+    Object.assign(preview.style, { left: x1 + 'px', top: y1 + 'px', width: len + 'px', transform: `rotate(${angle}rad)` });
   }
   const clearPreview = () => { preview?.remove(); preview = null; };
 

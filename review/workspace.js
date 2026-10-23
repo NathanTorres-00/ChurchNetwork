@@ -1,13 +1,14 @@
 // The review workspace: a toolbar along the top, the markup tools down the left, and the "Review activity"
 // sidebar on the right with its stats, the thread of cards and the composer (see the Figma frame
 // "Church Network — Review Workspace").
+import { sketchSvg } from './ink.js';
 
 const svg = paths => `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths}</svg>`;
 export const ICONS = {
   comment: svg('<path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/>'),
   voice: svg('<path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><path d="M12 19v3"/>'),
   arrow: svg('<path d="M7 7h10v10"/><path d="M7 17 17 7"/>'),
-  highlight: svg('<path d="m9 11-6 6v3h9l3-3"/><path d="m22 12-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4"/>'),
+  marker: svg('<path d="M12 20h9"/><path d="M16.38 3.62a1 1 0 0 1 3 3L7.37 18.64a2 2 0 0 1-.86.5l-2.87.84a.5.5 0 0 1-.62-.62l.84-2.87a2 2 0 0 1 .5-.86Z"/>'),
   close: svg('<path d="M18 6 6 18"/><path d="m6 6 12 12"/>'),
   link: svg('<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>'),
 };
@@ -16,15 +17,17 @@ export const TOOLS = [
   { id: 'comment', label: 'Comment', hint: 'Click the page to pin a comment.' },
   { id: 'voice', label: 'Voice memo', hint: 'Click the page, then record what you want to say.' },
   { id: 'arrow', label: 'Arrow', hint: 'Drag from where the arrow starts to what it points at.' },
-  { id: 'highlight', label: 'Highlight', hint: 'Drag across the area you want to highlight.' },
+  { id: 'marker', label: 'Marker', hint: 'Draw on the page. Circle or underline what you mean.' },
 ];
+const INKS = [{ id: 'pen', label: 'Pen' }, { id: 'highlighter', label: 'Highlighter' }];
 
-export const KIND_LABEL = { comment: 'Comment', voice: 'Voice memo', arrow: 'Arrow', highlight: 'Highlight' };
-const STAT_LABEL = { comment: 'Comments', voice: 'Voice memos', arrow: 'Arrows', highlight: 'Highlights' };
+// Box highlights came before the marker; they still show, and count as drawings
+export const KIND_LABEL = { comment: 'Comment', voice: 'Voice memo', arrow: 'Arrow', highlight: 'Highlight', drawing: 'Drawing' };
+const STATS = [['Comments', ['comment']], ['Voice memos', ['voice']], ['Arrows', ['arrow']], ['Drawings', ['drawing', 'highlight']]];
 const COMPOSER = {
   comment: { title: 'Add a comment', field: 'Comment', post: 'Post comment', required: true },
   arrow: { title: 'Add an arrow', field: 'Note (optional)', post: 'Post arrow' },
-  highlight: { title: 'Add a highlight', field: 'Note (optional)', post: 'Post highlight' },
+  drawing: { title: 'Add a drawing', field: 'Note (optional)', post: 'Post drawing', discard: 'Discard this drawing?' },
   voice: { title: 'Record a voice memo', field: 'Title (optional)', post: 'Post voice memo', cancel: 'Discard' },
 };
 
@@ -40,6 +43,12 @@ export function h(tag, attrs = {}, children = []) {
   }
   for (const c of [].concat(children)) if (c != null && c !== false) el.append(c);
   return el;
+}
+
+// The marker's ink, remembered on this device
+const INK_KEY = 'rv-ink';
+function readInk() {
+  try { return localStorage.getItem(INK_KEY) === 'highlighter' ? 'highlighter' : 'pen'; } catch { return 'pen'; }
 }
 
 export function ago(ts, now = Date.now()) {
@@ -59,7 +68,8 @@ export function createWorkspace({
   let composer = null;           // the open composer, if any
   let dialog = null;             // the open confirm dialog, if any
   let pendingDelete = null;      // id whose Delete was pressed once
-  let view = { marks: [], showResolved: false, selectedId: null, missing: new Set() };
+  let ink = readInk();
+  let view = { marks: [], showResolved: false, selectedId: null, missing: new Set(), shifted: new Set() };
 
   // Toolbar
   const status = h('span', { class: 'rv-status', role: 'status', 'aria-live': 'polite' });
@@ -78,7 +88,25 @@ export function createWorkspace({
     ]),
   ]);
 
-  // Tool rail
+  // The ink switch: Pen or Highlighter. Every copy of it shows the same choice.
+  const inkButtons = [];
+  function inkSwitch() {
+    return h('div', { class: 'rv-inks', role: 'group', 'aria-label': 'Ink' }, INKS.map(i => {
+      const b = h('button', {
+        class: 'rv-ink', type: 'button', 'aria-pressed': String(i.id === ink), 'data-ink': i.id, onclick: () => setInk(i.id),
+      }, [h('span', { class: `rv-ink-swatch rv-ink-swatch-${i.id}`, 'aria-hidden': 'true' }), h('span', { text: i.label })]);
+      inkButtons.push(b);
+      return b;
+    }));
+  }
+  function setInk(next) {
+    if (!INKS.some(i => i.id === next)) return;
+    ink = next;
+    for (const b of inkButtons) b.setAttribute('aria-pressed', String(b.dataset.ink === ink));
+    try { localStorage.setItem(INK_KEY, ink); } catch { /* remembered for this visit only */ }
+  }
+
+  // Tool rail. With the Marker picked, the ink switch shows beside it (on wide screens).
   const toolButtons = new Map();
   const rail = h('nav', { class: 'rv-rail', 'aria-label': 'Markup tools', 'data-review-ui': true },
     TOOLS.map(t => {
@@ -87,7 +115,7 @@ export function createWorkspace({
         html: ICONS[t.id], onclick: () => requestTool(tool === t.id ? 'browse' : t.id),
       });
       toolButtons.set(t.id, b);
-      return b;
+      return t.id === 'marker' ? h('div', { class: 'rv-tool-slot' }, [b, inkSwitch()]) : b;
     }));
 
   // Sidebar
@@ -134,6 +162,16 @@ export function createWorkspace({
   }
 
   // ---------- Cards ----------
+  function placeBadge(m) {
+    if (view.missing.has(m._id)) return h('span', { class: 'rv-badge', title: "The part of the page this pointed at has changed, so it isn't drawn.", text: 'Moved' });
+    if (!view.shifted.has(m._id)) return null;
+    const wider = m.strokes?.[0]?.at.vw > innerWidth;
+    return h('span', {
+      class: 'rv-badge', title: 'What this was drawn around sits differently at this width, so it may not line up.',
+      text: `Drawn on a ${wider ? 'wider' : 'narrower'} screen`,
+    });
+  }
+
   function card(m) {
     const canDelete = isOwner || m.mine;
     const actions = [];
@@ -157,11 +195,16 @@ export function createWorkspace({
       onkeydown: e => { if (e.key === 'Enter' && e.target === li) onSelectCard?.(m._id); },
     }, [
       h('div', { class: 'rv-card-head' }, [h('span', { class: 'rv-author', text: m.author }), h('span', { class: `rv-tag rv-tag-${m.kind}`, text: KIND_LABEL[m.kind] })]),
-      m.text ? h('p', { class: 'rv-card-text', text: m.text }) : null,
+      m.kind === 'drawing'
+        ? h('div', { class: 'rv-card-body' }, [
+          h('span', { class: 'rv-sketch', 'aria-hidden': 'true', html: sketchSvg(m.strokes ?? []) }),
+          m.text ? h('p', { class: 'rv-card-text', text: m.text }) : null,
+        ])
+        : m.text ? h('p', { class: 'rv-card-text', text: m.text }) : null,
       cardExtras(m),
       h('div', { class: 'rv-card-foot' }, [
         h('time', { datetime: new Date(m._creationTime).toISOString(), 'data-ts': String(m._creationTime), text: ago(m._creationTime) }),
-        view.missing.has(m._id) ? h('span', { class: 'rv-badge', title: "The part of the page this pointed at has changed, so it isn't drawn.", text: 'Moved' }) : null,
+        placeBadge(m),
         m.resolved ? h('span', { class: 'rv-badge', text: 'Resolved' }) : null,
         actions.length ? h('span', { class: 'rv-actions' }, actions) : null,
       ]),
@@ -174,8 +217,8 @@ export function createWorkspace({
     const { marks, showResolved } = view;
     const open = marks.filter(m => !m.resolved);
     const resolvedCount = marks.length - open.length;
-    stats.replaceChildren(...Object.entries(STAT_LABEL).map(([kind, label]) =>
-      h('div', { class: 'rv-stat' }, [h('dt', { text: label }), h('dd', { text: String(open.filter(m => m.kind === kind).length) })])));
+    stats.replaceChildren(...STATS.map(([label, kinds]) =>
+      h('div', { class: 'rv-stat' }, [h('dt', { text: label }), h('dd', { text: String(open.filter(m => kinds.includes(m.kind)).length) })])));
     tab.querySelector('.rv-tab-count').textContent = String(open.length);
     showResolvedBox.checked = showResolved;
     showResolvedText.textContent = `Show resolved (${resolvedCount})`;
@@ -186,7 +229,7 @@ export function createWorkspace({
   }
 
   function setMarks(marks, opts = {}) {
-    view = { ...view, ...opts, marks, missing: opts.missing ?? view.missing };
+    view = { ...view, ...opts, marks, missing: opts.missing ?? view.missing, shifted: opts.shifted ?? view.shifted };
     render();
   }
 
@@ -321,6 +364,8 @@ export function createWorkspace({
     el,
     setTool,
     getTool: () => tool,
+    getInk: () => ink,
+    setInk,
     setOwner(owner) { isOwner = !!owner; el.classList.toggle('rv-owner', isOwner); render(); },
     setStatus,
     clearStatus,

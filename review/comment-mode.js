@@ -75,7 +75,7 @@ async function open({ page = 'home' } = {}) {
     for (const [id, p] of s.players) if (!s.marks.some(m => m._id === id)) { p.destroy(); s.players.delete(id); }
     const visible = s.marks.filter(m => s.showResolved || !m.resolved);
     const missing = s.layer.render(visible, { selectedId: s.selectedId, draft: s.draft });
-    s.workspace.sidebar.setMarks(s.marks, { showResolved: s.showResolved, selectedId: s.selectedId, missing, deviceId: s.deviceId });
+    s.workspace.sidebar.setMarks(s.marks, { showResolved: s.showResolved, selectedId: s.selectedId, missing, shifted: s.layer.shifted(), deviceId: s.deviceId });
   };
   s.update = update;
 

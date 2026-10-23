@@ -74,6 +74,27 @@ html.review-open.has-hub-cursor .hub-row, html.review-open.has-hub-cursor .hub-r
 .rv-tool:hover { background: #fff; transform: translateY(-1px); }
 .rv-tool[aria-pressed="true"] { background: var(--rv-accent); border-color: var(--rv-accent); color: #fff; }
 
+/* The ink switch, beside the Marker while it's picked (wide screens; narrower ones get it in the drawing bar) */
+.rv-tool-slot { position: relative; }
+.rv-inks { display: none; }
+@media (min-width: 1280px) {
+  .rv-root[data-tool="marker"] .rv-rail .rv-inks {
+    position: absolute; left: calc(100% + 12px); top: 50%; transform: translateY(-50%);
+    display: flex; gap: 4px; padding: 6px; white-space: nowrap;
+    background: rgba(255, 255, 255, .92); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
+    border: 1px solid #fff; border-radius: 16px; box-shadow: 0 6px 16px rgba(0, 0, 0, .07);
+  }
+}
+.rv-ink {
+  display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border: 0; border-radius: 11px; background: none; cursor: pointer;
+  font-weight: 600; font-size: 14px; line-height: 1.5; color: var(--heading, #1F1F23);
+}
+.rv-ink:hover { background: var(--surface, #F5F5F6); }
+.rv-ink[aria-pressed="true"] { background: var(--heading, #1F1F23); color: #fff !important; }
+.rv-ink-swatch { width: 14px; height: 6px; border-radius: 3px; flex: none; }
+.rv-ink-swatch-pen { height: 3px; background: #D93A22; }
+.rv-ink-swatch-highlighter { background: #FFCD28; border-radius: 0; }
+
 /* ---------- Sidebar ---------- */
 .rv-sidebar {
   position: fixed; z-index: 60; top: var(--rv-top); right: var(--rv-gap); bottom: 16px; width: var(--rv-side);
@@ -99,6 +120,9 @@ html.review-open.has-hub-cursor .hub-row, html.review-open.has-hub-cursor .hub-r
 .rv-card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .rv-author { font-size: 16px; font-weight: 600; line-height: 1.5; }
 .rv-tag { padding: 4px 10px; border-radius: 999px; background: var(--surface, #F5F5F6); font-size: 12px; font-weight: 500; line-height: 1.5; color: var(--text, #52525B); white-space: nowrap; }
+.rv-card-body { display: flex; align-items: flex-start; gap: 12px; }
+.rv-sketch { flex: none; width: 96px; height: 56px; border-radius: 10px; background: #F7F8FA; }
+.rv-sketch svg { width: 100%; height: 100%; }
 .rv-card-text { margin: 0; font-size: 15px; font-weight: 500; line-height: 1.5; color: var(--text, #52525B); overflow-wrap: anywhere; white-space: pre-line; }
 .rv-card-foot { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 12px; font-weight: 500; line-height: 1.5; color: var(--text, #52525B); }
 .rv-badge { padding: 2px 8px; border-radius: 999px; border: 1px solid var(--rv-border); }
@@ -175,8 +199,10 @@ html.rv-placing body, html.rv-placing body * { cursor: crosshair !important; }
 html.rv-placing body [data-review-ui], html.rv-placing body [data-review-ui] * { cursor: auto !important; }
 html.rv-placing body [data-review-ui] button { cursor: pointer !important; }
 
-.rv-marks { position: absolute; left: 0; top: 0; width: 0; height: 0; z-index: 55; }
-.rv-marks > button { position: absolute; margin: 0; padding: 0; font: inherit; cursor: pointer; }
+/* The layer itself isn't a stacking context (no z-index), so a highlighter can blend with the page beneath it.
+   Each mark carries the layer's z-index instead; a drawing's SVGs carry it for the drawing. */
+.rv-marks { position: absolute; left: 0; top: 0; width: 0; height: 0; }
+.rv-marks > button { position: absolute; z-index: 55; margin: 0; padding: 0; font: inherit; cursor: pointer; }
 .rv-marks > [hidden] { display: none; }
 
 /* The pin's box is its dot, centered on the anchor point; the bubble sits above and to the right */
@@ -203,18 +229,30 @@ html.rv-placing body [data-review-ui] button { cursor: pointer !important; }
 .rv-arrow-hit { stroke: transparent; stroke-width: 18; stroke-linecap: round; }
 .rv-arrow.rv-selected .rv-arrow-line, .rv-arrow.rv-selected .rv-arrow-head { stroke-width: 4; }
 
+/* Ink and nothing else: no box, no fill. The drawing isn't a stacking context (z-index auto, and no opacity or
+   filter of its own), or its highlighter would only blend within it; its SVGs sit over the page instead. */
+.rv-drawing { border: 0; background: none; padding: 0; pointer-events: none; }
+.rv-marks > .rv-drawing { z-index: auto; }
+.rv-drawing > svg { position: absolute; left: 0; top: 0; z-index: 55; display: block; overflow: visible; }
+.rv-ink-highlighter, .rv-stroke-highlighter { mix-blend-mode: multiply; }
+/* the ink alone is clickable, along a forgiving invisible line, never the space inside a circle */
+.rv-stroke-hit { fill: none; stroke: transparent; stroke-width: 18; stroke-linecap: round; stroke-linejoin: round; pointer-events: stroke; }
+.rv-drawing.rv-selected > svg { filter: drop-shadow(0 0 4px rgba(217, 58, 34, .55)); }
+.rv-marks > .rv-drawing.rv-resolved { opacity: 1; }
+.rv-drawing.rv-resolved > svg { opacity: .45; }
+/* while drawing, a press on existing marks starts a stroke instead of selecting */
+html[data-rv-tool="marker"] .rv-marks * { pointer-events: none; }
+
 .rv-highlight { border: 2px solid var(--rv-accent); border-radius: 8px; background: rgba(47, 125, 109, .1); }
 .rv-highlight.rv-selected { background: rgba(47, 125, 109, .2); box-shadow: 0 0 0 4px rgba(47, 125, 109, .2); }
 
 .rv-marks .rv-resolved { opacity: .45; }
 .rv-marks .rv-draft { pointer-events: none; }
 .rv-pin.rv-draft .rv-pin-bubble { border: 2px dashed var(--rv-accent); }
-.rv-highlight.rv-draft { border-style: dashed; }
 .rv-arrow.rv-draft .rv-arrow-line { stroke-dasharray: 6 5; }
 
-/* Live preview while dragging an arrow or highlight (viewport coordinates) */
+/* Live preview while dragging an arrow (viewport coordinates) */
 .rv-preview { position: fixed; z-index: 56; pointer-events: none; }
-.rv-preview-highlight { border: 2px dashed var(--rv-accent); border-radius: 8px; background: rgba(47, 125, 109, .08); }
 .rv-preview-arrow { height: 0; border-top: 2.5px dashed var(--rv-accent); transform-origin: 0 0; }
 
 /* The sidebar tab only shows where the sidebar overlays the page */
@@ -319,8 +357,8 @@ html.rv-gliding-out::view-transition-new(root) {
 @keyframes rv-out-down { to { transform: translateY(calc(100% + 24px)); opacity: 0; } }
 
 /* ---------- Touch ---------- */
-/* With Arrow or Highlight, one finger draws instead of scrolling; with the tap tools and Browse it still scrolls */
-html[data-rv-tool="arrow"] body, html[data-rv-tool="highlight"] body { touch-action: none; }
+/* With Arrow, one finger draws instead of scrolling; with the tap tools and Browse it still scrolls */
+html[data-rv-tool="arrow"] body { touch-action: none; }
 html[data-rv-tool="comment"] body, html[data-rv-tool="voice"] body { touch-action: manipulation; }
 
 /* ---------- Phones: compact toolbar, tools along the bottom, the sidebar as a sheet ---------- */
