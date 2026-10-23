@@ -4,7 +4,7 @@
 
 // Parts of the page that change on their own (typed letters, moving pins). A point inside one attaches to the
 // nearest ancestor outside it, which stays put.
-const VOLATILE = '#slot, #pins, #pin-areas, .hub-cursor';
+export const VOLATILE = '#slot, #pins, #pin-areas, .hub-cursor';
 
 const ID = /^[A-Za-z][\w-]*$/;
 
@@ -49,6 +49,33 @@ export function anchorAt(clientX, clientY) {
   const el = stableTarget(hit && document.body.contains(hit) ? hit : document.body);
   const { fx, fy } = toFraction(el.getBoundingClientRect(), clientX, clientY);
   return { path: pathFor(el), fx, fy, vw: window.innerWidth };
+}
+
+// The caret position (text node and offset) nearest a point in the window, or null when it isn't in text.
+// Comment mode's own interface is looked through: parts of it under the point stop catching hits while the
+// browser looks, and a caret that still lands inside it doesn't count.
+export function caretAt(clientX, clientY) {
+  const ui = document.elementsFromPoint(clientX, clientY).filter(el => el.closest('[data-review-ui]'));
+  const saved = ui.map(el => [el, el.style.getPropertyValue('pointer-events'), el.style.getPropertyPriority('pointer-events')]);
+  ui.forEach(el => el.style.setProperty('pointer-events', 'none', 'important'));
+  let node = null;
+  let offset = 0;
+  try {
+    if (document.caretPositionFromPoint) {
+      const pos = document.caretPositionFromPoint(clientX, clientY);
+      if (pos) ({ offsetNode: node, offset } = pos);
+    } else if (document.caretRangeFromPoint) {
+      const range = document.caretRangeFromPoint(clientX, clientY);
+      if (range) ({ startContainer: node, startOffset: offset } = range);
+    }
+  } finally {
+    saved.forEach(([el, value, priority]) => {
+      if (value) el.style.setProperty('pointer-events', value, priority);
+      else el.style.removeProperty('pointer-events');
+    });
+  }
+  if (!node || node.nodeType !== Node.TEXT_NODE || !node.parentElement || node.parentElement.closest('[data-review-ui]')) return null;
+  return { node, offset };
 }
 
 // Where an anchor sits now, in page coordinates, or null when its element is gone or hidden
