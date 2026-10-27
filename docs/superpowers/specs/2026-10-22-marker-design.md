@@ -69,8 +69,11 @@ It's mainly for pointing at specific words, choices and layout decisions on the 
 
 ## Non-goals
 
-- Color choices or thickness controls. There's exactly one pen color and one highlighter color.
-- An eraser, or editing a drawing after posting (delete and redraw, as with other marks).
+- Color choices. There's exactly one pen color and one highlighter color. (Thickness was a non-goal too; on
+  2026-10-27 a size slider was added for Pen, Highlighter, Eraser and Arrow.)
+- Editing a drawing after posting (delete and redraw, as with other marks). An eraser was a non-goal too; one was
+  added on 2026-10-27 for the drawing not yet posted. It rubs out the ink it passes over, cutting strokes in two,
+  and Undo brings a sweep back.
 - Shape recognition (snapping a wobbly circle into a perfect ellipse).
 - Seeing other people's strokes while they're still drawing. Others see a drawing only when it's posted.
 - Drawing anywhere outside comment mode, or on pages other than `hero.html`.

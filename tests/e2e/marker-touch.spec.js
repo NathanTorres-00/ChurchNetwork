@@ -108,6 +108,50 @@ test('two fingers scroll and don\'t draw', async ({ page }) => {
   await expect(page.locator('.rv-live')).toHaveCount(0);
 });
 
+test('one finger rubs out; a second finger landing puts the sweep back and scrolls', async ({ page }) => {
+  await tool(page, 'Marker').tap();
+  const how = await wordRect(page, '#story h2', 'How');
+  await touchLoop(page, how);
+  await touchUnderline(page, await wordRect(page, '#story h2', 'started'));
+  await expect(draftStrokes(page)).toHaveCount(2);
+  await bar(page).getByRole('button', { name: 'Eraser', exact: true }).tap();
+
+  // down across the loop's top, then a second finger lands
+  const x = how.x + how.width / 2;
+  const before = await scrollY(page);
+  await touches(page, [
+    [[x, how.y - 40]], [[x, how.y - 20]], [[x, how.y + 4]],
+    [[x, how.y + 4], [x + 90, how.y + 4]],
+    ...Array.from({ length: 8 }, (_, i) => [[x, how.y + 4 - 40 * (i + 1)], [x + 90, how.y + 4 - 40 * (i + 1)]]),
+  ]);
+  await expect(draftStrokes(page)).toHaveCount(2);
+  await expect.poll(() => scrollY(page)).toBeGreaterThan(before + 100);
+
+  // down across the loop's top: the loop is cut in two
+  const again = await wordRect(page, '#story h2', 'How');
+  const mid = again.x + again.width / 2;
+  await touchDrag(page, { x: mid, y: again.y - 40 }, { x: mid, y: again.y + 4 });
+  await expect(draftStrokes(page)).toHaveCount(3);
+});
+
+test('the bar holds the inks and a size slider, and fits the screen', async ({ page }) => {
+  await tool(page, 'Marker').tap();
+  const slider = bar(page).getByRole('slider', { name: 'Pen width' });
+  await expect(slider).toBeVisible();
+  await bar(page).getByRole('button', { name: 'Highlighter', exact: true }).tap();
+  await expect(bar(page).getByRole('slider', { name: 'Highlighter width' })).toBeVisible();
+  await touchLoop(page, await wordRect(page, '#story h2', 'How'));
+  const b = await bar(page).boundingBox();
+  expect(b.x).toBeGreaterThanOrEqual(0);
+  expect(b.x + b.width).toBeLessThanOrEqual(390);
+  // with the Arrow, the bar holds just its size
+  await bar(page).getByRole('button', { name: 'Cancel' }).tap();
+  await page.getByRole('alertdialog').getByRole('button', { name: 'Discard' }).tap();
+  await tool(page, 'Arrow').tap();
+  await expect(bar(page).getByRole('slider', { name: 'Arrow width' })).toBeVisible();
+  await expect(bar(page).getByRole('button', { name: 'Pen', exact: true })).toBeHidden();
+});
+
 test('draw, scroll, draw again, add a note, post', async ({ page }) => {
   await tool(page, 'Marker').tap();
   await touchLoop(page, await wordRect(page, '#story h2', 'How'));

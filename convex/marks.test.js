@@ -248,6 +248,26 @@ describe('marks', () => {
       expect(await code(post(comment({ strokes: [pen()] })))).toBe('INVALID');
     });
 
+    test('a stroke may say its width, within 0.25 to 5 times the usual', async () => {
+      expect(await code(post(drawing({ strokes: [pen({ w: 0.25 }), pen({ w: 5 })] })))).toBe(null);
+      expect(await code(post(drawing({ strokes: [pen({ w: 0.2 })] })))).toBe('INVALID');
+      expect(await code(post(drawing({ strokes: [pen({ w: 5.5 })] })))).toBe('INVALID');
+    });
+
+    test('a stroke may say which ends were cut', async () => {
+      expect(await code(post(drawing({ strokes: [pen({ cut: 1 }), pen({ cut: 3 })] })))).toBe(null);
+      expect(await code(post(drawing({ strokes: [pen({ cut: 4 })] })))).toBe('INVALID');
+      expect(await code(post(drawing({ strokes: [pen({ cut: 1.5 })] })))).toBe('INVALID');
+    });
+
+    test('an arrow may say its width; other marks may not', async () => {
+      const arrow = w => ({ page: 'home', kind: 'arrow', from: at, to: at, author: 'Ana', deviceId: 'device-a', w });
+      expect(await code(post(arrow(2)))).toBe(null);
+      expect(await code(post(arrow(6)))).toBe('INVALID');
+      expect(await code(post(comment({ w: 2 })))).toBe('INVALID');
+      expect(await code(post(drawing({ w: 2 })))).toBe('INVALID');
+    });
+
     test('still accepts a box highlight', async () => {
       expect(await code(post({ page: 'home', kind: 'highlight', from: at, to: at, author: 'Ana', deviceId: 'device-a' }))).toBe(null);
     });

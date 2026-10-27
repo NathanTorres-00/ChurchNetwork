@@ -5,8 +5,10 @@ import { anchorAt } from './anchor.js';
 const POINT_TOOLS = new Set(['comment', 'voice']);
 const DRAG_TOOLS = new Set(['arrow']);
 const MIN_DRAG = 8;
+const ARROW_WIDTH = 2.5;       // px, an arrow's usual line width
 
-export function createPlacing({ getTool, onDraft }) {
+// getWidth: the arrow's width, as a share of the usual
+export function createPlacing({ getTool, getWidth = () => 1, onDraft }) {
   let start = null;            // { x, y, id } in client coordinates
   let preview = null;
 
@@ -22,6 +24,7 @@ export function createPlacing({ getTool, onDraft }) {
       preview.className = `rv-preview rv-preview-${tool}`;
       preview.dataset.reviewUi = '';
       document.body.appendChild(preview);
+      preview.style.borderTopWidth = `${ARROW_WIDTH * getWidth()}px`;
     }
     const x1 = start.x, y1 = start.y, x2 = e.clientX, y2 = e.clientY;
     const len = Math.hypot(x2 - x1, y2 - y1), angle = Math.atan2(y2 - y1, x2 - x1);

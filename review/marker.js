@@ -1,6 +1,7 @@
 // Draws with the Marker: turns a press and drag on the page into a stroke, drawn live over the page as the
-// pointer moves, and hands the finished stroke to comment mode. The page's own links and buttons don't fire while
-// the Marker is on; comment mode's interface ([data-review-ui]) works as usual.
+// pointer moves, and hands the finished stroke to comment mode. With the eraser, nothing is drawn: the sweep's path
+// goes to comment mode as it moves, to rub out the ink it passes over. The page's own links and buttons don't
+// fire while the Marker is on; comment mode's interface ([data-review-ui]) works as usual.
 //
 // On a touch screen one finger draws and two fingers scroll the page (the page's touch-action is none while the
 // Marker is on, so the scrolling is done here). Once a stylus has drawn, it does the drawing and fingers don't.
@@ -13,8 +14,8 @@ const NS = 'http://www.w3.org/2000/svg';
 const MIN_STEP = 1;            // px; points closer than this to the last one are dropped as they come in
 const MIN_MOVE = 3;            // px of movement in all before a press counts as a stroke
 
-export function createMarker({ getTool, getInk, onStroke }) {
-  let live = null;             // { id, type, ink, points, pressures, moved } in client coordinates
+export function createMarker({ getTool, getInk, getSize, onStroke, onErase, onEraseDropped }) {
+  let live = null;             // { id, type, ink, w, points, pressures, moved } in client coordinates
   let overlay = null;          // the fixed SVG the live stroke is drawn in
   let frame = 0;
   const fingers = new Map();   // touch points down on the page, by pointerId: [x, y] in client coordinates
@@ -40,9 +41,19 @@ export function createMarker({ getTool, getInk, onStroke }) {
       document.documentElement.appendChild(overlay);
     }
     const path = overlay.firstChild;
-    const width = inkWidth(live.ink);
-    const { color } = INK[live.ink];
+    const width = inkWidth(live.ink) * live.w;
     overlay.classList.toggle('rv-live-highlighter', live.ink === 'highlighter');
+    if (live.ink === 'eraser') {
+      // under a finger or stylus there's no cursor, so the eraser shows where it is
+      const [x, y] = live.points[live.points.length - 1];
+      const r = width / 2;
+      path.setAttribute('d', `M${x - r} ${y} A${r} ${r} 0 1 0 ${x + r} ${y} A${r} ${r} 0 1 0 ${x - r} ${y} Z`);
+      path.setAttribute('fill', 'rgba(255, 255, 255, .6)');
+      path.setAttribute('stroke', '#1F1F23');
+      path.setAttribute('stroke-width', 1.5);
+      return;
+    }
+    const { color } = INK[live.ink];
     if (live.ink === 'pen') {
       path.setAttribute('d', penOutline(live.points, { width, pressures: live.pressures }));
       path.setAttribute('fill', color);
@@ -102,15 +113,21 @@ export function createMarker({ getTool, getInk, onStroke }) {
     // a press on the page leaves the note being typed, as a click would, so Cmd/Ctrl+Z then undoes strokes
     if (document.activeElement?.matches('input, textarea')) document.activeElement.blur();
     live = {
-      id: e.pointerId, type: e.pointerType, ink: getInk(), points: [[e.clientX, e.clientY]],
+      id: e.pointerId, type: e.pointerType, ink: getInk(), w: getSize(), points: [[e.clientX, e.clientY]],
       pressures: e.pointerType === 'pen' ? [e.pressure] : null, moved: 0,
     };
     // on the page itself, since what was pressed may go mid-stroke (the typed headline's letters)
     try { root.setPointerCapture(e.pointerId); } catch { /* not capturable */ }
-    schedule();
+    if (live.ink === 'eraser') onErase(live.points, true);
+    if (live.ink !== 'eraser' || e.pointerType !== 'mouse') schedule();
   }
-  // The stroke being drawn goes without a trace: Esc, a cancelled pointer, or the tool changing mid-stroke
-  function drop() { live = null; clearLive(); }
+  // The stroke being drawn goes without a trace: Esc, a cancelled pointer, or the tool changing mid-stroke. A sweep
+  // of the eraser puts back what it took.
+  function drop() {
+    if (live?.ink === 'eraser') onEraseDropped();
+    live = null;
+    clearLive();
+  }
   function dropTouch() { if (live?.type === 'touch') drop(); }
 
   function move(e) {
@@ -120,19 +137,21 @@ export function createMarker({ getTool, getInk, onStroke }) {
     if (e.pointerType === 'mouse' && e.buttons === 0) { up(e); return; }
     block(e);
     if (!active()) { drop(); return; }
+    const from = live.points.length - 1;
     for (const c of e.getCoalescedEvents?.() ?? []) add(c);
     add(e);
-    schedule();
+    if (live.ink === 'eraser' && live.points.length - 1 > from) onErase(live.points.slice(from), false);
+    if (live.ink !== 'eraser' || e.pointerType !== 'mouse') schedule();
   }
   function up(e) {
     lift(e);
     if (!live || e.pointerId !== live.id) return;
     block(e);
     if (!active()) { drop(); return; }
-    const { ink, points, pressures, moved } = live;
+    const { ink, w, points, pressures, moved } = live;
     live = null;
-    if (moved < MIN_MOVE) { clearLive(); return; }
-    onStroke({ ink, points, pressures });
+    if (ink === 'eraser' || moved < MIN_MOVE) { clearLive(); return; }
+    onStroke({ ink, w, points, pressures });
   }
   function cancel(e) {
     lift(e);
@@ -145,7 +164,7 @@ export function createMarker({ getTool, getInk, onStroke }) {
     root.classList.add('rv-stylus');
     e.preventDefault();
   }
-  // Esc while drawing takes back just that stroke; the next Esc backs out a step as usual
+  // Esc while drawing takes back just that stroke (or sweep of the eraser); the next Esc backs out a step as usual
   function key(e) {
     if (e.key !== 'Escape' || !live) return;
     block(e);
@@ -176,7 +195,8 @@ export function createMarker({ getTool, getInk, onStroke }) {
     // Removes the live stroke; comment mode calls it once the stroke is drawn as part of the draft
     clearLive,
     destroy() {
-      drop();
+      live = null;                                                   // comment mode is leaving: nothing to put back
+      clearLive();
       fingers.clear();
       between = null;
       document.removeEventListener('pointerdown', down, opts);

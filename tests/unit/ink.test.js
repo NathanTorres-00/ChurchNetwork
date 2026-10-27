@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { INK, bounds, centerline, fromFlat, inkWidth, isAlongText, penOutline, simplify, sketchSvg, toFlat } from '../../review/ink.js';
+import { INK, bounds, centerline, eraseLine, fromFlat, inkWidth, isAlongText, linesNear, penOutline, segmentDistance, simplify, sketchSvg, toFlat } from '../../review/ink.js';
 
 // Endpoints of each M/L/A command in a path: left side forward, cap, right side back, cap.
 function endpoints(d) {
@@ -70,7 +70,7 @@ describe('isAlongText', () => {
 
 describe('inkWidth', () => {
   test('is wider at 390 than at 1440', () => {
-    for (const ink of ['pen', 'highlighter']) {
+    for (const ink of ['pen', 'highlighter', 'eraser']) {
       expect(inkWidth(ink, 390)).toBeGreaterThan(inkWidth(ink, 1440));
       expect(inkWidth(ink, 759)).toBe(INK[ink].phoneWidth);
       expect(inkWidth(ink, 760)).toBe(INK[ink].width);
@@ -92,5 +92,73 @@ describe('sketchSvg', () => {
       expect(e.y).toBeGreaterThanOrEqual(0);
       expect(e.y).toBeLessThanOrEqual(56);
     }
+  });
+});
+
+describe('segmentDistance and linesNear', () => {
+  test('crossing segments are 0 apart, parallel ones their gap, and a segment end the distance to the other', () => {
+    expect(segmentDistance([0, 0], [10, 10], [0, 10], [10, 0])).toBe(0);
+    expect(segmentDistance([0, 0], [10, 0], [0, 5], [10, 5])).toBe(5);
+    expect(segmentDistance([0, 0], [10, 0], [13, 4], [20, 4])).toBe(5);
+    expect(segmentDistance([3, 4], [3, 4], [0, 0], [0, 0])).toBe(5);
+  });
+  test('a sweep across a circle is near it; one beside it, or through its middle, is not', () => {
+    const circle = Array.from({ length: 40 }, (_, i) => [50 + 40 * Math.cos(i / 39 * 2 * Math.PI), 50 + 40 * Math.sin(i / 39 * 2 * Math.PI)]);
+    expect(linesNear([[0, 50], [20, 50]], circle, 8)).toBe(true);
+    expect(linesNear([[120, 0], [120, 100]], circle, 8)).toBe(false);
+    expect(linesNear([[50, 40], [50, 60]], circle, 8)).toBe(false);
+  });
+  test('a single point counts', () => {
+    expect(linesNear([[5, 3]], [[0, 0], [10, 0]], 4)).toBe(true);
+    expect(linesNear([[5, 3]], [[0, 0], [10, 0]], 2)).toBe(false);
+  });
+});
+
+describe('eraseLine', () => {
+  const flatLine = Array.from({ length: 11 }, (_, i) => [i * 10, 0]);   // 0..100 along y = 0
+  const ends = pieces => pieces.map(p => [p[0][0], p[p.length - 1][0]]);
+
+  test('a dab in the middle cuts the line in two, as wide as the eraser, with the ends at its edge', () => {
+    const pieces = eraseLine(flatLine, 1, [[50, 0]], 8);
+    expect(pieces).toHaveLength(2);
+    const [[a0, a1], [b0, b1]] = ends(pieces);
+    expect(a0).toBe(0);
+    expect(b1).toBe(100);
+    expect(a1).toBeGreaterThanOrEqual(41);
+    expect(a1).toBeLessThan(43);
+    expect(b0).toBeGreaterThan(57);
+    expect(b0).toBeLessThanOrEqual(59);
+  });
+  test('the eraser touching only the edge of thick ink still cuts it', () => {
+    expect(eraseLine(flatLine, 10, [[50, 15]], 8)).toHaveLength(2);
+    expect(eraseLine(flatLine, 10, [[50, 19]], 8)).toBeNull();
+  });
+  test('a sweep along the whole line wipes it; one off the end trims it', () => {
+    expect(eraseLine(flatLine, 1, [[-10, 0], [110, 0]], 8)).toEqual([]);
+    const [piece] = eraseLine(flatLine, 1, [[100, 0], [130, 0]], 8);
+    expect(piece[0][0]).toBe(0);
+    expect(piece[piece.length - 1][0]).toBeLessThan(93);
+  });
+  test('keeps the line\'s own points and carries pressure to the new ends', () => {
+    const pressed = flatLine.map(([x, y]) => [x, y, x / 100]);
+    const [left] = eraseLine(pressed, 1, [[50, 0]], 8);
+    expect(left.slice(0, 5)).toEqual(pressed.slice(0, 5));
+    const end = left[left.length - 1];
+    expect(end[2]).toBeCloseTo(end[0] / 100, 5);
+  });
+  test('misses return null', () => {
+    expect(eraseLine(flatLine, 1, [[50, 30]], 8)).toBeNull();
+  });
+});
+
+describe('penOutline cut ends', () => {
+  test('a cut end is square and full width instead of a tapered round tip', () => {
+    const pts = line(12);
+    const round = penOutline(pts, { width: 10 });
+    const square = penOutline(pts, { width: 10, cut: 3 });
+    expect(round).toMatch(/A/);
+    expect(square).not.toMatch(/A/);
+    const firstY = d => Math.abs(endpoints(d)[0].y);
+    expect(firstY(square)).toBeGreaterThan(firstY(round));
   });
 });

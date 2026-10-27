@@ -8,13 +8,17 @@ export const anchor = v.object({ path: v.string(), fx: v.number(), fy: v.number(
 export const textPos = v.object({ path: v.string(), i: v.number(), o: v.number() });
 
 // One freehand stroke. pts is flat x0,y0,x1,y1... offsets in CSS px from origin when drawn, rounded to 0.5.
-// pr is per-point pen pressure, 0-1. size is the font size in px at the origin when drawn.
+// pr is per-point pen pressure, 0-1. size is the font size in px at the origin when drawn. w is the width it was
+// drawn at, as a share of its ink's usual width (1 when missing). cut says which ends the eraser cut (1 the start,
+// 2 the end, 3 both), drawn square rather than tapered.
 // origin is the origin's page coordinates when drawn (used only for the card sketch).
 export const stroke = v.object({
   ink: v.union(v.literal('pen'), v.literal('highlighter')),
   at: anchor,
   char: v.optional(textPos),
   size: v.number(),
+  w: v.optional(v.number()),
+  cut: v.optional(v.number()),
   origin: v.object({ x: v.number(), y: v.number() }),
   pts: v.array(v.number()),
   pr: v.optional(v.array(v.number())),
@@ -28,6 +32,7 @@ export const markFields = {
   at: v.optional(anchor),             // comment, voice
   from: v.optional(anchor),           // arrow tail, highlight corner
   to: v.optional(anchor),             // arrow head, opposite highlight corner
+  w: v.optional(v.number()),          // arrow width, as a share of the usual (1 when missing)
   strokes: v.optional(v.array(stroke)), // drawing
   text: v.optional(v.string()),       // comment text, voice title, arrow/highlight note
   audio: v.optional(v.object({ storageId: v.id('_storage'), mime: v.string(), durationMs: v.number() })),

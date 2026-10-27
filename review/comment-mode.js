@@ -1,7 +1,9 @@
 // Comment mode: turns the page into a review workspace where anyone can leave comments, voice memos, arrows
 // and drawings. hero.html loads this module only when someone clicks Comment or opens a ?comment link.
 import { MAX_POINTS, MAX_STROKES } from '../convex/limits.js';
+import { rubOut } from './eraser.js';
 import { captureOwnerKey, getDeviceId, getName, getOwnerKey, setName } from './identity.js';
+import { inkWidth } from './ink.js';
 import { createMarker } from './marker.js';
 import { createMarksLayer } from './marks-layer.js';
 import { createPlacing } from './placing.js';
@@ -106,17 +108,19 @@ async function open({ page = 'home' } = {}) {
       if (s.selectedId === id) s.selectedId = null;
     }),
     onShowResolved: on => { s.showResolved = on; update(); },
+    // an arrow not yet posted takes the new width at once
+    onSizeChange: (tool, w) => { if (tool === 'arrow' && s.draft?.kind === 'arrow') { s.draft = withWidth(s.draft, w); update(); } },
   });
   s.workspace.setCardExtras(playerFor);
 
   // Esc works from the first moment; leaving mid-glide waits its turn like a click does. Cmd/Ctrl+Z takes back
-  // the last stroke of a drawing, unless it's meant for the text being typed.
+  // the last change to a drawing, unless it's meant for the text being typed.
   s.onKey = async e => {
     if (e.defaultPrevented || s.workspace.hasDialog()) return;
     if ((e.metaKey || e.ctrlKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'z' &&
       s.draft?.kind === 'drawing' && !(e.target instanceof Element && e.target.closest('input, textarea'))) {
       e.preventDefault();
-      undoStroke(s);
+      undo(s);
       return;
     }
     if (e.key !== 'Escape') return;
@@ -133,12 +137,17 @@ async function open({ page = 'home' } = {}) {
     document.body.appendChild(s.workspace.el);
     s.layer = createMarksLayer();
     s.layer.onSelect(id => select(id));
-    s.placing = createPlacing({ getTool: () => s.workspace.getTool(), onDraft: d => startDraft(s, d) });
+    s.placing = createPlacing({
+      getTool: () => s.workspace.getTool(), getWidth: () => s.workspace.getSize('arrow'), onDraft: d => startDraft(s, d),
+    });
     s.marker = createMarker({
       getTool: () => s.workspace.getTool(),
       getInk: () => s.workspace.getInk(),
+      getSize: () => s.workspace.getSize(s.workspace.getInk()),
       // the stroke joins the draft drawing before the live one goes, in the same frame, so it doesn't flicker
       onStroke: stroke => { try { addStroke(s, stroke); } finally { s.marker.clearLive(); } },
+      onErase: (points, start) => erase(s, points, start),
+      onEraseDropped: () => { if (s.sweepErased) { s.sweepErased = false; undo(s); } },
     });
     document.documentElement.classList.add('review-open');
     document.dispatchEvent(new CustomEvent('review:enter'));
@@ -172,12 +181,20 @@ async function connect(s) {
   return true;
 }
 
+// A width as stored: a share of the usual, to two places, left out when it's the usual
+function withWidth(obj, w) {
+  const { w: _, ...rest } = obj;
+  const r = Math.round(w * 100) / 100;
+  return r === 1 ? rest : { ...rest, w: r };
+}
+
 // A click or drag on the page with a tool: show the draft mark and open the composer for it.
 // Clicking somewhere else while the composer is open moves the draft and keeps what was typed.
 function startDraft(s, draft) {
   const moving = s.draft && s.workspace.getComposer()?.kind === draft.kind;
   // the draft keeps one clientId for its whole life, so retrying its post can't make a second mark
   s.draft = { ...draft, _id: null, clientId: moving ? s.draft.clientId : newId() };
+  if (draft.kind === 'arrow') s.draft = withWidth(s.draft, s.workspace.getSize('arrow'));
   s.update();
   if (moving) return;
 
@@ -205,30 +222,56 @@ function turnAway(s, message) {
   s.workspace.setStatus(message, 4000);
   s.workspace.getComposer()?.showError(message);
 }
-function addStroke(s, { ink, points, pressures }) {
+function addStroke(s, { ink, w = 1, points, pressures }) {
   if (s.posting && s.posting === s.draft) { turnAway(s, POSTING); return; }   // it would be lost with the post
   const strokes = s.draft?.kind === 'drawing' ? s.draft.strokes : [];
   if (strokes.length + 1 > MAX_STROKES) { turnAway(s, FULL); return; }
-  const stroke = anchorStroke(points, ink, pressures);
+  const stroke = withWidth(anchorStroke(points, ink, pressures), w);
   const total = strokes.reduce((n, st) => n + st.pts.length / 2, stroke.pts.length / 2);
   if (total > MAX_POINTS) { turnAway(s, FULL); return; }
   if (s.draft?.kind !== 'drawing') openDrawing(s);
-  s.draft = { ...s.draft, strokes: [...s.draft.strokes, stroke] };
+  setStrokes(s, [...s.draft.strokes, stroke]);
+}
+
+// The eraser rubs out the ink of the drawing being made where it passes, cutting strokes it crosses; posted
+// drawings stay as they are. Everything one sweep rubs out is one step for Undo. Cutting makes more strokes, so
+// a sweep that would take the drawing past its limits stops there.
+const NOTHING_TO_ERASE = "Nothing to erase. The eraser rubs out strokes you haven't posted.";
+const TOO_MANY_CUTS = 'That would cut the drawing into too many pieces. Post it, or Undo and erase less.';
+function erase(s, points, start) {
+  if (start) s.sweepErased = false;
+  if (s.draft?.kind !== 'drawing' || !s.draft.strokes.length) { if (start) s.workspace.setStatus(NOTHING_TO_ERASE, 4000); return; }
+  if (s.posting && s.posting === s.draft) { if (start) turnAway(s, POSTING); return; }
+  const reach = inkWidth('eraser') * s.workspace.getSize('eraser') / 2;
+  const strokes = rubOut(s.draft.strokes, s.layer.draftPlaced(), points, reach);
+  if (!strokes) return;
+  const total = strokes.reduce((n, st) => n + st.pts.length / 2, 0);
+  if (strokes.length > MAX_STROKES || total > MAX_POINTS) { turnAway(s, TOO_MANY_CUTS); return; }
+  if (s.sweepErased) { s.draft = { ...s.draft, strokes }; s.update(); return; }
+  s.sweepErased = true;
+  setStrokes(s, strokes);
+}
+
+// Changes the drawing's strokes, keeping what they were so Undo can bring it back
+function setStrokes(s, strokes) {
+  s.draft = { ...s.draft, strokes, past: [...s.draft.past, s.draft.strokes] };
   s.undoButton.disabled = false;
   s.update();
 }
 
-// Takes back the last stroke. The composer stays open, so the reviewer can draw again.
-function undoStroke(s) {
-  if (s.draft?.kind !== 'drawing' || !s.draft.strokes.length) return;
-  s.draft = { ...s.draft, strokes: s.draft.strokes.slice(0, -1) };
-  s.undoButton.disabled = !s.draft.strokes.length;
+// Takes back the last change: a stroke drawn, or what a sweep of the eraser took. The composer stays open, so the
+// reviewer can draw again.
+function undo(s) {
+  if (s.draft?.kind !== 'drawing' || !s.draft.past.length) return;
+  const past = s.draft.past.slice(0, -1);
+  s.draft = { ...s.draft, strokes: s.draft.past[past.length], past };
+  s.undoButton.disabled = !past.length;
   s.update();
 }
 
 function openDrawing(s) {
-  s.draft = { kind: 'drawing', strokes: [], clientId: newId() };
-  s.undoButton = h('button', { type: 'button', class: 'rv-cancel rv-undo', text: 'Undo', disabled: true, onclick: () => undoStroke(s) });
+  s.draft = { kind: 'drawing', strokes: [], past: [], clientId: newId() };
+  s.undoButton = h('button', { type: 'button', class: 'rv-cancel rv-undo', text: 'Undo', disabled: true, onclick: () => undo(s) });
   const composer = s.workspace.openComposer({
     kind: 'drawing',
     name: getName(),
@@ -266,6 +309,7 @@ async function post(s, { text, name }) {
     if (d.kind === 'drawing') input.strokes = d.strokes;
     else if (d.at) input.at = d.at;
     else { input.from = d.from; input.to = d.to; }
+    if (d.kind === 'arrow' && d.w != null) input.w = d.w;
     if (text) input.text = text;
     try {
       if (memo) {

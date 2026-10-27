@@ -17,6 +17,8 @@ export const MAX_STROKE_POINTS = 2000; // points in one stroke
 export const MAX_COORD = 20000;        // furthest a point may sit from its origin, in px
 export const MAX_ORIGIN = 1e6;         // furthest a stroke's origin may sit from the page's top-left, in px
 export const MAX_INSIDE = 4;           // anchors a stroke may record for the elements it was drawn inside
+export const MIN_WIDTH = 0.25;         // thinnest and thickest a stroke or arrow may be drawn, as a share of its
+export const MAX_WIDTH = 5;            // tool's usual width
 
 export const KINDS = ['comment', 'voice', 'arrow', 'highlight', 'drawing'];
 export const PAGES = ['home'];
@@ -35,6 +37,7 @@ function isAnchor(a) {
 }
 
 const isNum = n => typeof n === 'number' && Number.isFinite(n);
+const isWidth = w => w === undefined || (isNum(w) && w >= MIN_WIDTH && w <= MAX_WIDTH);
 
 function isTextPos(p) {
   return !!p && isText(p.path, MAX_PATH) && p.path.length > 0 &&
@@ -45,6 +48,8 @@ function isTextPos(p) {
 function strokePoints(s) {
   if (!s || (s.ink !== 'pen' && s.ink !== 'highlighter') || !isAnchor(s.at)) return -1;
   if (!isNum(s.size) || !(s.size > 0) || s.size > 500) return -1;
+  if (!isWidth(s.w)) return -1;
+  if (s.cut !== undefined && ![1, 2, 3].includes(s.cut)) return -1;
   if (!s.origin || ![s.origin.x, s.origin.y].every(n => isNum(n) && Math.abs(n) <= MAX_ORIGIN)) return -1;
   const pts = s.pts;
   if (!Array.isArray(pts) || pts.length % 2 || pts.length < 4 || pts.length > MAX_STROKE_POINTS * 2) return -1;
@@ -64,6 +69,7 @@ export function validateMark(m) {
   if (!author || author.length > MAX_NAME) return 'INVALID';
   if (!isText(m.deviceId, MAX_DEVICE) || !m.deviceId) return 'INVALID';
   if (m.text !== undefined && !isText(m.text, MAX_TEXT)) return 'INVALID';
+  if (m.w !== undefined && (m.kind !== 'arrow' || !isWidth(m.w))) return 'INVALID';
 
   if (m.kind === 'drawing') {
     if (m.at !== undefined || m.from !== undefined || m.to !== undefined) return 'INVALID';

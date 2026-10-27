@@ -74,26 +74,42 @@ html.review-open.has-hub-cursor .hub-row, html.review-open.has-hub-cursor .hub-r
 .rv-tool:hover { background: #fff; transform: translateY(-1px); }
 .rv-tool[aria-pressed="true"] { background: var(--rv-accent); border-color: var(--rv-accent); color: #fff; }
 
-/* The ink switch, beside the Marker while it's picked (wide screens; narrower ones get it in the drawing bar) */
+/* A tool's options while it's picked: the Marker's ink switch and size, the Arrow's size. Beside the tool on wide
+   screens; narrower ones get them in the drawing bar. */
 .rv-tool-slot { position: relative; }
-.rv-inks { display: none; }
+.rv-tool-options { display: none; }
+.rv-inks { display: flex; gap: 4px; }
 @media (min-width: 1280px) {
-  .rv-root[data-tool="marker"] .rv-rail .rv-inks {
+  .rv-root[data-tool="marker"] .rv-rail .rv-tool-options-marker,
+  .rv-root[data-tool="arrow"] .rv-rail .rv-tool-options-arrow {
     position: absolute; left: calc(100% + 12px); top: 50%; transform: translateY(-50%);
-    display: flex; gap: 4px; padding: 6px; white-space: nowrap;
+    display: flex; align-items: center; gap: 4px; padding: 6px; white-space: nowrap;
     background: rgba(255, 255, 255, .92); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
     border: 1px solid #fff; border-radius: 16px; box-shadow: 0 6px 16px rgba(0, 0, 0, .07);
   }
 }
+/* the size slider, with a dot as wide as the line (up to what fits in its well) */
+.rv-size { display: flex; align-items: center; gap: 8px; padding: 2px 8px 2px 4px; cursor: pointer; }
+.rv-size-well { width: 28px; height: 28px; flex: none; display: grid; place-items: center; }
+.rv-size-dot { box-sizing: border-box; border-radius: 50%; background: var(--heading, #1F1F23); }
+.rv-size-dot[data-tool="highlighter"] { border-radius: 0; }
+.rv-size-dot[data-tool="eraser"] { background: #fff !important; border: 1.5px solid var(--heading, #1F1F23); }
+.rv-size-dot[data-tool="arrow"] { background: var(--rv-accent); }
+.rv-size-range { flex: 1; min-width: 120px; margin: 0; accent-color: var(--heading, #1F1F23); cursor: pointer; }
+/* an ink is just its swatch, named on hover, so the inks and size fit in one slim row */
 .rv-ink {
-  display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border: 0; border-radius: 11px; background: none; cursor: pointer;
-  font-weight: 600; font-size: 14px; line-height: 1.5; color: var(--heading, #1F1F23);
+  position: relative; display: inline-flex; align-items: center; padding: 11px 10px; border: 0; border-radius: 11px;
+  background: none; cursor: pointer; color: var(--heading, #1F1F23);
+}
+.rv-ink > span:not(.rv-ink-swatch) {
+  position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
 }
 .rv-ink:hover { background: var(--surface, #F5F5F6); }
 .rv-ink[aria-pressed="true"] { background: var(--heading, #1F1F23); color: #fff !important; }
-.rv-ink-swatch { width: 14px; height: 6px; border-radius: 3px; flex: none; }
+.rv-ink-swatch { width: 16px; height: 6px; border-radius: 3px; flex: none; }
 .rv-ink-swatch-pen { height: 3px; background: #D93A22; }
 .rv-ink-swatch-highlighter { background: #FFCD28; border-radius: 0; }
+.rv-ink-swatch-eraser { box-sizing: border-box; height: 9px; border: 1.5px solid currentColor; border-radius: 2px; }
 
 /* ---------- Sidebar ---------- */
 .rv-sidebar {
@@ -198,6 +214,12 @@ html.review-open.has-hub-cursor .hub-row, html.review-open.has-hub-cursor .hub-r
 /* While a tool is active, the page is a canvas to draw on: its text is clickable and its links don't fire */
 html.review-open .hero-copy { pointer-events: auto; }
 html.rv-placing body, html.rv-placing body * { cursor: crosshair !important; }
+/* the eraser's cursor is the path it clears (no more specific than the rules below, so comment mode's own interface
+   keeps its own) */
+html.rv-placing:where([data-rv-tool="marker"][data-rv-ink="eraser"]) body,
+html.rv-placing:where([data-rv-tool="marker"][data-rv-ink="eraser"]) body * {
+  cursor: var(--rv-eraser-cursor), cell !important;     /* set by the workspace at the eraser's size */
+}
 html.rv-placing body [data-review-ui], html.rv-placing body [data-review-ui] * { cursor: auto !important; }
 html.rv-placing body [data-review-ui] button { cursor: pointer !important; }
 
@@ -227,9 +249,9 @@ html.rv-placing body [data-review-ui] button { cursor: pointer !important; }
 
 .rv-arrow { border: 0; background: none; overflow: visible; }
 .rv-arrow svg { display: block; overflow: visible; }
-.rv-arrow-line, .rv-arrow-head { stroke: var(--rv-accent); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; fill: none; }
-.rv-arrow-hit { stroke: transparent; stroke-width: 18; stroke-linecap: round; }
-.rv-arrow.rv-selected .rv-arrow-line, .rv-arrow.rv-selected .rv-arrow-head { stroke-width: 4; }
+.rv-arrow-line, .rv-arrow-head { stroke: var(--rv-accent); stroke-width: var(--rv-arrow-w, 2.5px); stroke-linecap: round; stroke-linejoin: round; fill: none; }
+.rv-arrow-hit { stroke: transparent; stroke-width: var(--rv-arrow-hit, 18px); stroke-linecap: round; }
+.rv-arrow.rv-selected .rv-arrow-line, .rv-arrow.rv-selected .rv-arrow-head { stroke-width: calc(var(--rv-arrow-w, 2.5px) + 1.5px); }
 
 /* Ink and nothing else: no box, no fill. The drawing isn't a stacking context (z-index auto, and no opacity or
    filter of its own), or its highlighter would only blend within it; its SVGs sit over the page instead. */
@@ -274,7 +296,6 @@ html[data-rv-tool="marker"] .rv-marks * { pointer-events: none; }
   background: rgba(255, 255, 255, .92); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
   border: 1px solid #fff; border-radius: 18px; box-shadow: var(--rv-shadow);
 }
-.rv-drawbar .rv-inks { display: flex; gap: 4px; }
 .rv-drawbar-slot:empty { display: none; }
 .rv-composer-compact { display: grid; gap: 8px; padding: 0; border: 0; border-radius: 0; background: none; }
 .rv-composer-compact [hidden] { display: none; }
@@ -289,15 +310,19 @@ html[data-rv-tool="marker"] .rv-marks * { pointer-events: none; }
 .rv-close:hover { background: var(--surface, #F5F5F6); }
 .rv-close svg { width: 18px; height: 18px; }
 @media (max-width: 1279px) {
-  .rv-root[data-tool="marker"] .rv-drawbar { display: flex; }
+  /* with the Arrow, the bar holds only its size, and makes way for the sidebar when an arrow's note is open */
+  .rv-root[data-tool="marker"] .rv-drawbar, .rv-root[data-tool="arrow"]:not(.rv-sidebar-open) .rv-drawbar { display: flex; }
+  .rv-root[data-tool="marker"] .rv-drawbar .rv-tool-options-marker,
+  .rv-root[data-tool="arrow"] .rv-drawbar .rv-tool-options-arrow {
+    display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px;
+  }
   /* the sidebar stays closed while drawing, so its tab makes way for the bar */
-  .rv-root[data-tool="marker"] .rv-sidebar-tab { display: none; }
+  .rv-root:is([data-tool="marker"], [data-tool="arrow"]) .rv-sidebar-tab { display: none; }
 }
 /* A drawing begun in the bar stays there if the window widens past 1280px (a tablet turned on its side), where the
    rail has the ink switch */
 @media (min-width: 1280px) {
   .rv-root[data-tool="marker"] .rv-drawbar:has(.rv-composer) { display: flex; }
-  .rv-drawbar .rv-inks { display: none; }
 }
 
 /* The sidebar tab only shows where the sidebar overlays the page */
@@ -428,6 +453,7 @@ html[data-rv-tool="comment"] body, html[data-rv-tool="voice"] body { touch-actio
   /* the drawing bar rises just above the tool bar (12px + its 64px + 8px), the composer over the ink switch */
   .rv-drawbar { bottom: 84px; width: auto; border-radius: 22px; }
   .rv-drawbar-slot { order: -1; flex-basis: 100%; }
+  .rv-drawbar .rv-size-range { min-width: 120px; }
 
   .rv-sidebar {
     top: auto; left: 0; right: 0; bottom: 0; width: auto; max-height: 62vh; z-index: 62;

@@ -1,7 +1,7 @@
 // The review workspace: a toolbar along the top, the markup tools down the left, and the "Review activity"
 // sidebar on the right with its stats, the thread of cards and the composer (see the Figma frame
 // "Church Network — Review Workspace").
-import { sketchSvg } from './ink.js';
+import { INK, inkWidth, sketchSvg } from './ink.js';
 
 const svg = paths => `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths}</svg>`;
 export const ICONS = {
@@ -19,7 +19,7 @@ export const TOOLS = [
   { id: 'arrow', label: 'Arrow', hint: 'Drag from where the arrow starts to what it points at.' },
   { id: 'marker', label: 'Marker', hint: 'Draw on the page. Circle or underline what you mean.' },
 ];
-const INKS = [{ id: 'pen', label: 'Pen' }, { id: 'highlighter', label: 'Highlighter' }];
+const INKS = [{ id: 'pen', label: 'Pen' }, { id: 'highlighter', label: 'Highlighter' }, { id: 'eraser', label: 'Eraser' }];
 
 // Box highlights came before the marker; they still show, and count as drawings
 export const KIND_LABEL = { comment: 'Comment', voice: 'Voice memo', arrow: 'Arrow', highlight: 'Highlight', drawing: 'Drawing' };
@@ -45,10 +45,31 @@ export function h(tag, attrs = {}, children = []) {
   return el;
 }
 
-// The marker's ink, remembered on this device
+// The marker's ink, remembered on this device. The eraser isn't: picking the Marker next time draws.
 const INK_KEY = 'rv-ink';
 function readInk() {
   try { return localStorage.getItem(INK_KEY) === 'highlighter' ? 'highlighter' : 'pen'; } catch { return 'pen'; }
+}
+
+// How thin and thick each tool can be set, as a share of its usual width: the size slider's ends. Each tool's
+// size is remembered on this device.
+const SIZES = { pen: [0.4, 4], highlighter: [0.4, 3], eraser: [0.5, 4], arrow: [0.6, 4] };
+const SIZE_LABEL = { pen: 'Pen', highlighter: 'Highlighter', eraser: 'Eraser', arrow: 'Arrow' };
+const SIZE_KEY = 'rv-sizes';
+const ARROW_WIDTH = 2.5;
+function readSizes() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(SIZE_KEY)) ?? {};
+    return Object.fromEntries(Object.entries(SIZES)
+      .filter(([id, [lo, hi]]) => typeof saved[id] === 'number' && saved[id] >= lo && saved[id] <= hi)
+      .map(([id]) => [id, saved[id]]));
+  } catch { return {}; }
+}
+// The eraser's cursor: a circle as wide as the path it clears
+function eraserCursor(width) {
+  const d = Math.round(Math.min(124, Math.max(8, width))), c = d / 2 + 2;
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='${d + 4}' height='${d + 4}'><circle cx='${c}' cy='${c}' r='${d / 2}' fill='%23fff' fill-opacity='.6' stroke='%231F1F23' stroke-width='1.5'/></svg>`;
+  return `url("data:image/svg+xml,${svg.replace(/</g, '%3C').replace(/>/g, '%3E')}") ${c} ${c}`;
 }
 
 export function ago(ts, now = Date.now()) {
@@ -60,7 +81,7 @@ export function ago(ts, now = Date.now()) {
 }
 
 export function createWorkspace({
-  onExit, onShare, beforeToolChange, onToolChange, onSelectCard, onResolve, onDelete, onShowResolved,
+  onExit, onShare, beforeToolChange, onToolChange, onSelectCard, onResolve, onDelete, onShowResolved, onSizeChange,
 } = {}) {
   let tool = 'comment';
   let statusTimer = 0;
@@ -69,6 +90,8 @@ export function createWorkspace({
   let dialog = null;             // the open confirm dialog, if any
   let pendingDelete = null;      // id whose Delete was pressed once
   let ink = readInk();
+  let sizes = readSizes();
+  const getSize = id => sizes[id] ?? 1;
   let view = { marks: [], showResolved: false, selectedId: null, missing: new Set(), shifted: new Set() };
 
   // Toolbar
@@ -88,12 +111,12 @@ export function createWorkspace({
     ]),
   ]);
 
-  // The ink switch: Pen or Highlighter. Every copy of it shows the same choice.
+  // The ink switch: Pen, Highlighter or Eraser. Every copy of it shows the same choice.
   const inkButtons = [];
   function inkSwitch() {
     return h('div', { class: 'rv-inks', role: 'group', 'aria-label': 'Ink' }, INKS.map(i => {
       const b = h('button', {
-        class: 'rv-ink', type: 'button', 'aria-pressed': String(i.id === ink), 'data-ink': i.id, onclick: () => setInk(i.id),
+        class: 'rv-ink', type: 'button', title: i.label, 'aria-pressed': String(i.id === ink), 'data-ink': i.id, onclick: () => setInk(i.id),
       }, [h('span', { class: `rv-ink-swatch rv-ink-swatch-${i.id}`, 'aria-hidden': 'true' }), h('span', { text: i.label })]);
       inkButtons.push(b);
       return b;
@@ -103,10 +126,54 @@ export function createWorkspace({
     if (!INKS.some(i => i.id === next)) return;
     ink = next;
     for (const b of inkButtons) b.setAttribute('aria-pressed', String(b.dataset.ink === ink));
+    document.documentElement.dataset.rvInk = ink;        // the eraser has its own cursor
+    syncSizes();
+    if (ink === 'eraser') return;
     try { localStorage.setItem(INK_KEY, ink); } catch { /* remembered for this visit only */ }
   }
 
-  // Tool rail. With the Marker picked, the ink switch shows beside it (on wide screens).
+  // The size slider: for the Marker, it sets the size of the ink picked; for the Arrow, the arrow's. It moves on a
+  // log scale, so the usual size sits near the middle and thin sizes get as much room as thick ones. The dot
+  // beside it shows the size (up to what fits).
+  const sliders = [];
+  function sizeSlider(forTool) {
+    const input = h('input', { type: 'range', class: 'rv-size-range', step: 'any' });
+    const dot = h('span', { class: 'rv-size-dot', 'aria-hidden': 'true' });
+    input.addEventListener('input', () => setSize(sliderTool(forTool), Math.exp(+input.value)));
+    const el = h('label', { class: 'rv-size' }, [h('span', { class: 'rv-size-well' }, [dot]), input]);
+    sliders.push({ forTool, input, dot });
+    return el;
+  }
+  const sliderTool = forTool => (forTool === 'marker' ? ink : forTool);
+  function syncSizes() {
+    for (const { forTool, input, dot } of sliders) {
+      const id = sliderTool(forTool);
+      const [lo, hi] = SIZES[id];
+      Object.assign(input, { min: String(Math.log(lo)), max: String(Math.log(hi)) });
+      input.value = String(Math.log(getSize(id)));
+      input.setAttribute('aria-label', `${SIZE_LABEL[id]} width`);
+      const px = id === 'arrow' ? ARROW_WIDTH * getSize(id) : inkWidth(id) * getSize(id);
+      const d = Math.min(24, Math.max(2, px));
+      Object.assign(dot.style, { width: d + 'px', height: d + 'px' });
+      dot.dataset.tool = id;
+      dot.style.background = id === 'arrow' ? '' : INK[id].color ?? '';
+    }
+    document.documentElement.style.setProperty('--rv-eraser-cursor', eraserCursor(inkWidth('eraser') * getSize('eraser')));
+  }
+  function setSize(id, value) {
+    const [lo, hi] = SIZES[id];
+    sizes = { ...sizes, [id]: Math.min(hi, Math.max(lo, Math.round(value * 100) / 100)) };
+    try { localStorage.setItem(SIZE_KEY, JSON.stringify(sizes)); } catch { /* remembered for this visit only */ }
+    syncSizes();
+    onSizeChange?.(id, getSize(id));
+  }
+
+  // What a tool can be set to while it's picked: the Marker's ink and size, the Arrow's size
+  const toolOptions = id => (id === 'marker'
+    ? h('div', { class: 'rv-tool-options rv-tool-options-marker' }, [inkSwitch(), sizeSlider('marker')])
+    : id === 'arrow' ? h('div', { class: 'rv-tool-options rv-tool-options-arrow' }, [sizeSlider('arrow')]) : null);
+
+  // Tool rail. With the Marker or Arrow picked, its options show beside it (on wide screens).
   const toolButtons = new Map();
   const rail = h('nav', { class: 'rv-rail', 'aria-label': 'Markup tools', 'data-review-ui': true },
     TOOLS.map(t => {
@@ -115,7 +182,8 @@ export function createWorkspace({
         html: ICONS[t.id], onclick: () => requestTool(tool === t.id ? 'browse' : t.id),
       });
       toolButtons.set(t.id, b);
-      return t.id === 'marker' ? h('div', { class: 'rv-tool-slot' }, [b, inkSwitch()]) : b;
+      const options = toolOptions(t.id);
+      return options ? h('div', { class: 'rv-tool-slot' }, [b, options]) : b;
     }));
 
   // Sidebar
@@ -141,10 +209,12 @@ export function createWorkspace({
   }, [h('span', { text: 'Review activity' }), h('span', { class: 'rv-tab-count', text: '0' })]);
 
   // The drawing bar: below 1280px a drawing is made from a slim bar at the bottom of the screen rather than the
-  // sidebar, so the page stays in view. It holds the ink switch while the Marker is picked, and the drawing's
-  // composer once there's a stroke.
+  // sidebar, so the page stays in view. It holds the ink switch and size while the Marker is picked, and the
+  // drawing's composer once there's a stroke. With the Arrow picked it holds the arrow's size.
   const drawSlot = h('div', { class: 'rv-drawbar-slot' });
-  const drawbar = h('div', { class: 'rv-drawbar', role: 'group', 'aria-label': 'Drawing', 'data-review-ui': true }, [inkSwitch(), drawSlot]);
+  const drawbar = h('div', { class: 'rv-drawbar', role: 'group', 'aria-label': 'Drawing', 'data-review-ui': true }, [
+    toolOptions('marker'), toolOptions('arrow'), drawSlot,
+  ]);
 
   const el = h('div', { class: 'rv-root', 'data-review-ui': true }, [toolbar, rail, sidebar, tab, drawbar]);
 
@@ -395,6 +465,8 @@ export function createWorkspace({
   }, 30000);
 
   setTool(tool);
+  document.documentElement.dataset.rvInk = ink;
+  syncSizes();
   render();
 
   return {
@@ -403,6 +475,7 @@ export function createWorkspace({
     getTool: () => tool,
     getInk: () => ink,
     setInk,
+    getSize,
     setOwner(owner) { isOwner = !!owner; el.classList.toggle('rv-owner', isOwner); render(); },
     setStatus,
     clearStatus,
@@ -429,6 +502,8 @@ export function createWorkspace({
       dialog?.close(false);
       document.documentElement.classList.remove('rv-placing');
       delete document.documentElement.dataset.rvTool;
+      delete document.documentElement.dataset.rvInk;
+      document.documentElement.style.removeProperty('--rv-eraser-cursor');
       el.remove();
     },
   };

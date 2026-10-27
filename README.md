@@ -236,10 +236,16 @@ posted. Outside comment mode none of it shows, and nothing for it loads until th
   - **Comment**: click the page to pin a typed comment.
   - **Voice memo**: click the page, record from the mic (up to 3 minutes), listen back, then post. The card has a
     play button and the length.
-  - **Arrow**: drag from where it starts to what it points at, with an optional note.
+  - **Arrow**: drag from where it starts to what it points at, with an optional note. Its width is set with the
+    size slider beside it.
   - **Marker**: draw on the page with the **Pen** (circle a word, underline it) or the **Highlighter**. A drawing
-    can have many strokes (up to 40, 6,000 points in all) and one optional note, and **Undo** (or Cmd/Ctrl+Z)
-    takes back the last stroke. Strokes follow the words they mark when the text rewraps, and a highlighter
+    can have many strokes (up to 40, 6,000 points in all) and one optional note. The **Eraser** rubs out the ink
+    it passes over, as wide as the eraser, in the drawing not yet posted (a posted drawing is deleted and redrawn
+    instead): a stroke it crosses is cut in two, and a highlight over text keeps the words on either side. Pen,
+    Highlighter and Eraser each have a size slider, remembered on the device; the width is posted with each
+    stroke. **Undo** (or Cmd/Ctrl+Z) takes back the last change: a stroke, or everything one sweep of the eraser
+    rubbed out.
+    Strokes follow the words they mark when the text rewraps, and a highlighter
     stroke along text is drawn line by line over it. When things a pen stroke circled side by side have split
     apart at another width (stacked on a phone, say), the card is badged **Drawn on a wider screen** or
     **Drawn on a narrower screen**.
