@@ -60,7 +60,7 @@ test('places a comment on the headline', async ({ page }) => {
 });
 
 test('name is asked only once', async ({ page }) => {
-  await clickOn(page, '.hero-sub');
+  await clickOn(page, '.hero-lead');
   await post(page, 'First', { name: 'Ana' });
   await clickOn(page, '#story h2');
   await expect(composer(page)).toBeVisible();
@@ -71,7 +71,7 @@ test('name is asked only once', async ({ page }) => {
 });
 
 test('a name is required before posting', async ({ page }) => {
-  await clickOn(page, '.hero-sub');
+  await clickOn(page, '.hero-lead');
   await post(page, 'No name yet');
   await expect(composer(page).getByRole('alert')).toContainText('name');
   await expect(cards(page)).toHaveCount(0);
@@ -128,7 +128,7 @@ test('clicking a card scrolls to its mark and selects it', async ({ page }) => {
 });
 
 test('clicking a mark selects its card', async ({ page }) => {
-  await clickOn(page, '.hero-sub');
+  await clickOn(page, '.hero-lead');
   await post(page, 'One', { name: 'Ana' });
   await clickOn(page, '.hero-actions');
   await post(page, 'Two');
@@ -138,7 +138,7 @@ test('clicking a mark selects its card', async ({ page }) => {
 });
 
 test('failed post keeps the draft and retries', async ({ page }) => {
-  await clickOn(page, '.hero-sub');
+  await clickOn(page, '.hero-lead');
   await page.evaluate(() => window.__reviewFake.failNext('NETWORK'));
   await post(page, 'Try this twice', { name: 'Ana' });
   await expect(composer(page).getByRole('alert')).toContainText("Couldn't post");
@@ -148,7 +148,7 @@ test('failed post keeps the draft and retries', async ({ page }) => {
 });
 
 test('exit with an unsent draft asks first', async ({ page }) => {
-  await clickOn(page, '.hero-sub');
+  await clickOn(page, '.hero-lead');
   await composer(page).getByLabel('Your name').fill('Ana');
   await composer(page).getByLabel('Comment').fill('Not sent yet');
   await page.getByRole('button', { name: 'Leave comment mode' }).click();
@@ -162,7 +162,7 @@ test('exit with an unsent draft asks first', async ({ page }) => {
 });
 
 test('Esc with a draft asks before closing the composer', async ({ page }) => {
-  await clickOn(page, '.hero-sub');
+  await clickOn(page, '.hero-lead');
   await composer(page).getByLabel('Your name').fill('Ana');
   await composer(page).getByLabel('Comment').fill('Half written');
   await page.keyboard.press('Escape');
@@ -196,7 +196,7 @@ test('owner can resolve and delete; resolved hide by default', async ({ page }) 
 
 test('reviewers can delete only their own marks and cannot resolve', async ({ page }) => {
   await seed(page, { text: 'Someone else' });
-  await clickOn(page, '.hero-sub');
+  await clickOn(page, '.hero-lead');
   await post(page, 'Mine', { name: 'Ana' });
   const theirs = cards(page).filter({ hasText: 'Someone else' });
   const mine = cards(page).filter({ hasText: 'Mine' });
@@ -228,7 +228,7 @@ test("links don't navigate while placing", async ({ page }) => {
 });
 
 test('nothing remains after exit', async ({ page }) => {
-  await clickOn(page, '.hero-sub');
+  await clickOn(page, '.hero-lead');
   await post(page, 'Pin', { name: 'Ana' });
   await tool(page, 'Arrow').click();
   await drag(page, { x: 400, y: 760 }, { x: 560, y: 690 });

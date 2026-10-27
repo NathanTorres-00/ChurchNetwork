@@ -1,4 +1,4 @@
-// Builds the deployable site into dist/: the root HTML pages plus review/, with review/config.js
+// Builds the deployable site into dist/: the root HTML pages plus assets/ and review/, with review/config.js
 // pointing at the Convex deployment, and convex/limits.js (only that file), which review/ imports for the
 // limits it shares with the backend. Vercel runs it through `npx convex deploy --cmd ...`,
 // which sets CONVEX_URL for the deployment it just pushed to.
@@ -15,6 +15,7 @@ export function buildStatic({ root, out, convexUrl }) {
   for (const name of readdirSync(root)) {
     if (name.endsWith('.html')) cpSync(join(root, name), join(out, name));
   }
+  cpSync(join(root, 'assets'), join(out, 'assets'), { recursive: true });
   cpSync(join(root, 'review'), join(out, 'review'), { recursive: true });
   mkdirSync(join(out, 'convex'));
   cpSync(join(root, 'convex', 'limits.js'), join(out, 'convex', 'limits.js'));

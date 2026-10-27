@@ -38,7 +38,7 @@ test('tools sit in a bottom bar and the sidebar is a sheet', async ({ page }) =>
 });
 
 test('tap places a comment', async ({ page }) => {
-  await page.locator('.hero-sub').tap();
+  await page.locator('.hero-lead').tap();
   const composer = page.locator('.rv-composer');
   await expect(composer).toBeVisible();
   await expect(composer).toBeInViewport();

@@ -188,6 +188,7 @@
     --c-multiplying: #7A7A83;
     --h1-size: 64px;
     --solo-size: 92px;
+    --title-size: 72px;
     --h1-weight: 600;
     --h1-leading: 1.04;
     --h2-size: 22px;
@@ -221,6 +222,14 @@
   }
   .site-header .wrap { display: flex; align-items: center; justify-content: space-between; height: 76px; }
   .brand { display: inline-flex; align-items: center; gap: 12px; font-weight: 600; color: var(--heading); text-decoration: none; letter-spacing: -0.01em; }
+  /* The Rock Network logo (white on clear in Figma), used as a mask so it takes the heading color */
+  .logo {
+    --logo-h: 32px;
+    display: block; height: var(--logo-h); aspect-ratio: 960 / 202; background: currentColor;
+    -webkit-mask: url("assets/the-rock-network.png") center / contain no-repeat;
+            mask: url("assets/the-rock-network.png") center / contain no-repeat;
+  }
+  .site-footer .logo { --logo-h: 26px; }
   .glyph {
     --g: 9px; --gc: var(--c-disciples);
     display: inline-block; width: var(--g); height: var(--g); border-radius: 50%; background: var(--gc); flex: none;
@@ -231,6 +240,7 @@
   .site-nav a { text-decoration: none; color: var(--text); }
   .site-nav a:hover { color: var(--heading); }
   @media (max-width: 760px) { .site-nav { display: none; } }
+  @media (max-width: 1000px) { .site-nav { gap: 18px; } }   /* room for every link beside the logo */
   .header-end { display: flex; align-items: center; gap: 28px; }
   /* Opens comment mode (review/comment-mode.js), where overseers mark up the page */
   .comment-toggle {
@@ -357,6 +367,26 @@
     background: radial-gradient(ellipse 62% calc(var(--hero-view) * .58) at 50% calc(var(--hero-view) * var(--hero-top) / 100),
       rgba(255,255,255,var(--scrim)) 0%, rgba(255,255,255,calc(var(--scrim) * .75)) 45%, rgba(255,255,255,0) 100%);
   }
+  /* Title: "A New Testament Church Network" leads as the H1 with the changing headline at H2 size (Church Network),
+     or follows the headline as an H2 (Multiplying) */
+  .hero-lead, .hero-tagline { display: none; margin: 0; text-wrap: balance; color: var(--heading); font-weight: 600; }
+  .hero[data-title="network"] .hero-lead {
+    display: block; margin-bottom: 20px; max-width: 13em;
+    font-size: max(36px, min(var(--title-size), 11vw)); line-height: 1.04; letter-spacing: -0.03em;
+  }
+  .hero[data-title="multiplying"] .hero-tagline {
+    display: block; margin-top: 20px;
+    /* the size of .section-title, but always smaller than the headline above it (which shrinks to fit phones) */
+    --headline: max(24px, min(var(--h1-size), calc((100vw - 64px) / 10.6)));
+    font-size: min(clamp(32px, 4.2vw, 50px), calc(var(--headline) * .78)); line-height: 1.08; letter-spacing: -0.025em;
+  }
+  .hero[data-title="multiplying"]:is([data-layout="rotating"], [data-layout="typed"]) .hero-tagline {
+    --headline: max(26px, min(var(--solo-size), calc((100vw - 64px) / 10.6)));
+  }
+  .hero[data-title="network"][data-align="center"] .hero-lead { margin-inline: auto; }
+  .hero[data-title="network"] .hero-title,
+  .hero[data-title="network"] .solo { font-size: clamp(32px, 4.2vw, 50px); }      /* the size of .section-title */
+  .hero .hero-sub { display: none; }               /* the title says it now; delete this line to bring the statement back */
   @media (prefers-reduced-motion: reduce) { .slot { transition: none; } .cursor.blink { animation: none; } }
 
   /* Panel: layout switches */
@@ -393,7 +423,7 @@
 
   /* ---------- Sections ---------- */
   .section { padding: var(--section-space) 0; scroll-margin-top: 0; }
-  .section-tint { background: var(--surface); }
+  .section-tint { background: var(--surface); --section-bg: var(--surface); }
   .section-title {
     margin: 0; text-wrap: balance; color: var(--heading); font-weight: 500;
     font-size: clamp(32px, 4.2vw, 50px); line-height: 1.08; letter-spacing: -0.025em;
@@ -404,7 +434,7 @@
   .frame { border-radius: var(--radius); overflow: hidden; background: #E9E9EC; }
   .frame img { width: 100%; height: 100%; object-fit: cover; }
 
-  /* What is a Church Network? */
+  /* What is a New Testament Church Network? */
   .video { position: relative; aspect-ratio: 16 / 9; }
   .video::after { content: ''; position: absolute; inset: 0; background: rgba(31,31,35,.18); }
   .play {
@@ -481,22 +511,17 @@
     width: 92px; height: 27px; border-radius: 20px; background: #0E0E10;
   }
   .screen {
-    height: 100%; border-radius: 38px; overflow: hidden; background: #fff;
-    display: flex; flex-direction: column; padding: 18px 22px 22px; font-size: 13px; line-height: 1.45;
+    --app-bar: #005785;                       /* the app's header blue, so the status bar runs into it */
+    height: 100%; border-radius: 38px; overflow: hidden; background: #fff; display: flex; flex-direction: column;
   }
-  .screen .status { display: flex; justify-content: space-between; font-weight: 600; font-size: 13px; color: var(--heading); padding: 0 6px; }
-  .screen .status i { display: inline-block; width: 22px; height: 10px; border-radius: 3px; border: 1.5px solid var(--heading); }
-  .app-brand { display: flex; align-items: center; gap: 10px; margin-top: 34px; font-weight: 600; color: var(--heading); font-size: 14px; }
-  .app-brand .glyph { --g: 7px; }
-  .app-hero { margin: 22px 0 0; font-size: 27px; line-height: 1.12; font-weight: 600; letter-spacing: -0.025em; color: var(--heading); }
-  .app-hero span { color: var(--c-disciples); }
-  .app-sub { margin: 10px 0 0; color: var(--text); }
-  .app-cards { display: grid; gap: 8px; margin-top: 20px; }
-  .app-card { display: flex; align-items: center; gap: 12px; padding: 11px 12px; border-radius: 14px; background: var(--surface); }
-  .app-card .glyph { --g: 6px; box-shadow: 0 0 0 1.8px var(--surface), 0 0 0 3.4px var(--gc); }
-  .app-card b { display: block; color: var(--heading); font-weight: 500; font-size: 13px; }
-  .app-card small { color: #8A8A93; font-size: 12px; }
-  .app-cta { margin-top: auto; text-align: center; padding: 13px; border-radius: 999px; background: var(--heading); color: #fff; font-weight: 500; }
+  .screen .status {
+    flex: none; height: 46px; margin: 0; padding: 0 28px; display: flex; align-items: center; justify-content: space-between;
+    background: var(--app-bar); color: #fff; font-weight: 600; font-size: 13px;
+  }
+  .screen .status i { display: inline-block; width: 22px; height: 10px; border-radius: 3px; border: 1.5px solid #fff; }
+  /* A screenshot of the app's Learn page, from its header down */
+  .app-view { flex: 1; min-height: 0; }
+  .app-view img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: top; }
   .stores { display: flex; gap: 10px; }
   .store {
     display: grid; gap: 3px; padding: 10px 18px; border-radius: 14px; min-width: 140px;
@@ -507,8 +532,8 @@
   .store b { font-size: 17px; font-weight: 600; letter-spacing: -0.01em; }
   @media (max-width: 860px) { .tool { grid-template-columns: 1fr; } }
 
-  /* Find a hub: one wide row per hub. Hovering a row fills it with the hub's color, ring-dots ripple in beside
-     the name, and the cursor changes (see the hub cursor below). */
+  /* Find a hub and How we do it: one wide row per hub (or point). Hovering a row fills it with its color, ring-dots
+     ripple in beside the name, and the cursor changes (see the hub cursor below). */
   .hub-list { list-style: none; margin: 56px 0 0; padding: 0; border-top: 1px solid #DCDCE0; }
   .hub-list li:nth-child(1) { --hc: var(--c-disciples); }
   .hub-list li:nth-child(2) { --hc: var(--c-leaders); }
@@ -521,7 +546,7 @@
     color: inherit; text-decoration: none; transition: opacity .45s ease;
   }
   .hub-list:hover .hub-row:not(:hover) { opacity: .4; }     /* the hovered hub stands out */
-  .hub-row .glyph { --g: 13px; --gc: var(--hc); box-shadow: 0 0 0 calc(var(--g) * .3) var(--surface), 0 0 0 calc(var(--g) * .56) var(--gc); }
+  .hub-row .glyph { --g: 13px; --gc: var(--hc); box-shadow: 0 0 0 calc(var(--g) * .3) var(--section-bg, #fff), 0 0 0 calc(var(--g) * .56) var(--gc); }
   .hub-row h3 { margin: 0; font-size: clamp(30px, 4.2vw, 54px); line-height: 1.05; font-weight: 500; color: var(--heading); letter-spacing: -0.03em; }
   .hub-row p { margin: 10px 0 0; font-size: 17px; }
   .hub-row .go { font-size: 16px; font-weight: 500; color: var(--heading); text-decoration: underline; text-underline-offset: 5px; white-space: nowrap; }
@@ -734,11 +759,12 @@
 
 <header class="site-header">
   <div class="wrap">
-    <a class="brand" href="#top"><span class="glyph" aria-hidden="true"></span>Church Network</a>
+    <a class="brand" href="#top" aria-label="The Rock Network"><span class="logo" aria-hidden="true"></span></a>
     <div class="header-end">
       <nav class="site-nav" aria-label="Sections">
         <a href="#story">Our story</a>
         <a href="#what-we-do">What we do</a>
+        <a href="#how">How we do it</a>
         <a href="#app">App</a>
         <a href="#hubs">Find a hub</a>
       </nav>
@@ -774,7 +800,7 @@
 
 <main>
   <!-- 1. Hero: the multiplying globe with pins -->
-  <section class="hero" id="top" data-layout="typed" data-align="center">
+  <section class="hero" id="top" data-layout="typed" data-align="center" data-title="network">
     <div class="hero-art">
       <div class="stage" id="stage">
         <canvas id="canvas" role="img" aria-label="A camera flies low over a pale globe. Dots appear and multiply into networks across the world; photo pins rise above some of them."></canvas>
@@ -784,6 +810,7 @@
       <canvas class="pin-areas" id="pin-areas" aria-hidden="true"></canvas>
     </div>
     <div class="hero-copy" id="hero-copy">
+      <h1 class="hero-lead">A New Testament Church Network</h1>
       <h1 class="hero-title" aria-label="Multiplying disciples, leaders, churches, and movements">
         <span class="stacked" aria-hidden="true">
           <span class="line">Multiplying <span class="word w-disciples">Disciples</span></span>
@@ -800,18 +827,19 @@
         <button class="word-dot" type="button" style="--dc: var(--c-churches)" aria-label="Churches"><span></span></button>
         <button class="word-dot" type="button" style="--dc: var(--c-movements)" aria-label="Movements"><span></span></button>
       </div>
+      <h2 class="hero-tagline">A New Testament Church Network</h2>
       <p class="hero-sub">A network of disciples, leaders, churches, and movements.</p>
       <div class="hero-actions">
         <a class="button button-primary" href="#church-network">Learn more</a>
-        <a class="button button-secondary" href="#" data-placeholder>Visit</a>
+        <a class="button button-secondary" href="#" data-placeholder>Start a group</a>
       </div>
     </div>
   </section>
 
-  <!-- 2. What is a Church Network? -->
+  <!-- 2. What is a New Testament Church Network? -->
   <section class="section" id="church-network">
     <div class="wrap">
-      <p class="eyebrow">What is a Church Network?</p>
+      <p class="eyebrow">What is a New Testament Church Network?</p>
       <div class="frame video">
         <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1600&h=900&fit=crop&q=75&auto=format" alt="" loading="lazy">
         <button class="play" type="button" aria-label="Play video (placeholder)"></button>
@@ -829,7 +857,7 @@
           <div class="node"><span class="glyph" aria-hidden="true"></span></div>
           <p class="when">Where it began</p>
           <h3>One local church</h3>
-          <p>A few people in one local church committed to following Jesus together and helping others do the same.</p>
+          <p>A discipleship system for one local church designed to build solid lives.</p>
         </li>
         <li class="step">
           <div class="node"><span class="glyph" aria-hidden="true"></span></div>
@@ -847,7 +875,7 @@
           <div class="node"><span class="glyph" aria-hidden="true"></span></div>
           <p class="when">Today</p>
           <h3>A global movement</h3>
-          <p>Today the network sends disciples across continents, multiplying movements far beyond where it began.</p>
+          <p>Today the network connects disciple makers across continents multiplying movements far beyond where it began.</p>
         </li>
       </ol>
     </div>
@@ -861,7 +889,7 @@
       </div>
       <div>
         <h2 class="section-title">What we do</h2>
-        <p class="lead">We help ordinary people follow Jesus, lead others, and start new groups and churches, close to home and around the world.</p>
+        <p class="lead">We multiply disciples, leaders, churches, and movements.</p>
         <div class="stats">
           <div class="stat"><p class="num" style="color: var(--c-disciples)">5,000</p><p class="label">Disciples</p></div>
           <div class="stat"><p class="num" style="color: var(--c-churches)">500</p><p class="label">Groups</p></div>
@@ -871,8 +899,58 @@
     </div>
   </section>
 
-  <!-- 5. Testimony -->
-  <section class="section section-tint" id="testimony">
+  <!-- 5. How we do it -->
+  <section class="section section-tint" id="how">
+    <div class="wrap">
+      <h2 class="section-title">How we do it</h2>
+      <p class="lead">Four pieces working together to enable multiplication</p>
+      <ul class="hub-list" id="how-list">
+          <li>
+            <a class="hub-row" href="#" data-placeholder data-photo="1531206715517-5c0ba140b2b8">
+              <span class="glyph" aria-hidden="true"></span>
+              <span>
+                <h3>Process</h3>
+                <p>Simple steps that lead to big impact</p>
+              </span>
+              <span class="go">Learn more</span>
+            </a>
+          </li>
+          <li>
+            <a class="hub-row" href="#" data-placeholder data-photo="1543269865-cbf427effbad">
+              <span class="glyph" aria-hidden="true"></span>
+              <span>
+                <h3>Tools</h3>
+                <p>Everything you need, all in the palm of your hand</p>
+              </span>
+              <span class="go">Learn more</span>
+            </a>
+          </li>
+          <li>
+            <a class="hub-row" href="#" data-placeholder data-photo="1522202176988-66273c2fd55f">
+              <span class="glyph" aria-hidden="true"></span>
+              <span>
+                <h3>Training</h3>
+                <p>Moving from information to activation</p>
+              </span>
+              <span class="go">Learn more</span>
+            </a>
+          </li>
+          <li>
+            <a class="hub-row" href="#" data-placeholder data-photo="1506869640319-fe1a24fd76dc">
+              <span class="glyph" aria-hidden="true"></span>
+              <span>
+                <h3>Coaching</h3>
+                <p>Encouragement and support from others in the field</p>
+              </span>
+              <span class="go">Learn more</span>
+            </a>
+          </li>
+        </ul>
+    </div>
+  </section>
+
+  <!-- 6. Testimony -->
+  <section class="section" id="testimony">
     <div class="wrap testimony">
       <div class="frame">
         <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=900&h=1040&fit=crop&q=75&auto=format" alt="" loading="lazy">
@@ -884,28 +962,22 @@
     </div>
   </section>
 
-  <!-- 6. Our disciple-making tool -->
-  <section class="section" id="app">
+  <!-- 7. Our disciple-making tool -->
+  <section class="section section-tint" id="app">
     <div class="wrap">
       <h2 class="section-title">Our disciple-making tool</h2>
-      <p class="lead">The Jesus Disciple App keeps your daily reading, your group, and the people you're discipling in one place.</p>
+      <p class="lead">The Jesus Disciple App keeps your group moving together in the same direction.</p>
       <div class="tool">
         <div class="frame">
           <img src="https://images.unsplash.com/photo-1543269865-cbf427effbad?w=1400&h=1150&fit=crop&q=75&auto=format" alt="" loading="lazy">
         </div>
         <div class="device">
-          <div class="phone" role="img" aria-label="The Jesus Disciple App home screen">
-            <div class="screen" aria-hidden="true">
-              <div class="status"><span>9:41</span><i></i></div>
-              <div class="app-brand"><span class="glyph"></span>Jesus Disciple App</div>
-              <p class="app-hero">Follow Jesus.<br><span>Make disciples.</span></p>
-              <p class="app-sub">Grow in your faith and help others do the same.</p>
-              <div class="app-cards">
-                <div class="app-card"><span class="glyph"></span><span><b>Today's reading</b><small>John 15:1–17</small></span></div>
-                <div class="app-card"><span class="glyph" style="--gc: var(--c-leaders)"></span><span><b>Your group</b><small>Thursday, 7:00 pm</small></span></div>
-                <div class="app-card"><span class="glyph" style="--gc: var(--c-churches)"></span><span><b>Discipling</b><small>3 people</small></span></div>
+          <div class="phone">
+            <div class="screen">
+              <div class="status" aria-hidden="true"><span>9:41</span><i></i></div>
+              <div class="app-view">
+                <img src="assets/jesus-disciple-app.jpg" alt="The Jesus Disciple App's Learn page: The Vision, How to use Jesus Disciple, and Simple Studies" loading="lazy">
               </div>
-              <div class="app-cta">Get started</div>
             </div>
           </div>
           <div class="stores">
@@ -917,8 +989,8 @@
     </div>
   </section>
 
-  <!-- 7. Find a hub -->
-  <section class="section section-tint" id="hubs">
+  <!-- 8. Find a hub -->
+  <section class="section" id="hubs">
     <div class="wrap">
       <h2 class="section-title">Find a hub</h2>
       <p class="lead">Hubs are where our groups and churches gather locally. Find the one nearest you.</p>
@@ -970,7 +1042,7 @@
 
 <footer class="site-footer">
   <div class="wrap">
-    <a class="brand" href="#top"><span class="glyph" aria-hidden="true"></span>Church Network</a>
+    <a class="brand" href="#top" aria-label="The Rock Network"><span class="logo" aria-hidden="true"></span></a>
     <span>Sample page with placeholder content</span>
   </div>
 </footer>
@@ -1010,6 +1082,13 @@
         <button type="button" data-layout="stacked">Stacked</button>
         <button type="button" data-layout="rotating">Rotating</button>
         <button type="button" data-layout="typed">Typed</button>
+      </div>
+    </div>
+    <div class="picker-row">
+      <span>Title</span>
+      <div class="seg" role="group" aria-label="Title">
+        <button type="button" data-title="multiplying">Multiplying</button>
+        <button type="button" data-title="network">Church Network</button>
       </div>
     </div>
     <div class="picker-row">
@@ -1076,6 +1155,7 @@ const CONFIG = {
   // Hero layout
   heroLayout: 'typed',      // 'stacked', 'rotating' or 'typed'
   heroAlign: 'center',      // 'left' or 'center'
+  heroTitle: 'network',     // 'network' ("A New Testament Church Network" as the H1, the headline under it at H2 size) or 'multiplying' (flipped)
 
   // Headline
   colorDisciples: '#2F7D6D',
@@ -1086,13 +1166,13 @@ const CONFIG = {
   h1Size: 64,               // px (it scales down on small screens)
   h1Weight: 600,            // weight of the colored words
   h1Leading: 1.04,
-  h2Size: 22,               // px
   heroWidth: 760,           // px, width of the hero text block
   heroTop: 52,              // %, vertical position of the hero text
   scrim: 0.85,              // white fade behind the hero text
   heroHeight: 100,          // vh
   heroCurve: 5,             // vw, how far the hero's bottom edge dips at the center (0 = straight, capped at 120px)
   soloSize: 92,             // px, the one-line headline in Rotating and Typed
+  titleSize: 72,            // px, "A New Testament Church Network" with the Church Network title
   wordHold: 2.6,            // seconds each word stays in Rotating and Typed
   typeSpeed: 9,             // letters per second in Typed
   showWordDots: false,      // the four word dots under the headline in Rotating and Typed
@@ -1204,9 +1284,9 @@ const PAGE_CONTROLS = [
     { key: 'colorMultiplying', label: '"Multiplying"', type: 'color', css: '--c-multiplying' },
     // Sizes whichever layout is showing: Stacked keeps its own size, Rotating and Typed share the one-line size
     { key: 'h1Size', label: 'Headline size', type: 'range', min: 40, max: 140, step: 1, fmt: v => v + 'px', css: '--h1-size', unit: 'px', proxy: c => (c.heroLayout === 'stacked' ? 'h1Size' : 'soloSize') },
+    { key: 'titleSize', label: 'Title size', type: 'range', min: 40, max: 120, step: 1, fmt: v => v + 'px', css: '--title-size', unit: 'px' },
     { key: 'h1Weight', label: 'Colored word weight', type: 'range', min: 300, max: 700, step: 100, fmt: v => v, css: '--h1-weight' },
     { key: 'h1Leading', label: 'Line spacing', type: 'range', min: 0.9, max: 1.4, step: 0.01, fmt: v => v.toFixed(2), css: '--h1-leading' },
-    { key: 'h2Size', label: 'Statement size', type: 'range', min: 14, max: 36, step: 1, fmt: v => v + 'px', css: '--h2-size', unit: 'px' },
     { key: 'heroWidth', label: 'Text block width', type: 'range', min: 360, max: 1000, step: 10, fmt: v => v + 'px', css: '--hero-width', unit: 'px' },
     { key: 'heroTop', label: 'Text position', type: 'range', min: 30, max: 75, step: 1, fmt: v => v + '%', css: '--hero-top' },
     { key: 'scrim', label: 'Fade behind text', type: 'range', min: 0, max: 1, step: 0.01, fmt: pct, css: '--scrim' },
@@ -1882,6 +1962,7 @@ const CONTROLS = [
       }
     };
     runs(heroCopy.querySelector('.hero-sub'));
+    for (const el of heroCopy.querySelectorAll('.hero-lead, .hero-tagline')) runs(el);   // the title (no boxes while hidden)
     const solo = heroCopy.querySelector('.solo');
     if (headline !== 'none') {
       if (cfg.heroLayout === 'stacked') runs(heroCopy.querySelector('.stacked'));
@@ -2376,6 +2457,7 @@ const CONTROLS = [
   /* ---------- Hero headline: Stacked, Rotating or Typed ---------- */
   var headlineReady = false;                           // applyPage() runs before this section is set up
   const heroEl = document.querySelector('.hero');
+  const heroTitleEl = heroEl.querySelector('.hero-title');
   const slot = document.getElementById('slot');
   const cursorEl = document.getElementById('cursor');
   const wordDots = [...document.querySelectorAll('.word-dot')];
@@ -2499,6 +2581,9 @@ const CONTROLS = [
 
   function syncHeadline() {
     heroEl.dataset.align = cfg.heroAlign;
+    heroEl.dataset.title = cfg.heroTitle;
+    // Under the Church Network title, the changing headline reads as a second-level heading
+    if (cfg.heroTitle === 'network') heroTitleEl.setAttribute('aria-level', '2'); else heroTitleEl.removeAttribute('aria-level');
     heroEl.dataset.dots = cfg.showWordDots ? 'on' : 'off';
     if (mode !== cfg.heroLayout) {
       mode = heroEl.dataset.layout = cfg.heroLayout;
@@ -2512,6 +2597,7 @@ const CONTROLS = [
     noteFit();
     document.querySelectorAll('.layout-picker [data-layout]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.layout === cfg.heroLayout)));
     document.querySelectorAll('.layout-picker [data-align]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.align === cfg.heroAlign)));
+    document.querySelectorAll('.layout-picker [data-title]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.title === cfg.heroTitle)));
   }
 
   // Controls that only apply to some layouts say so, and dim when they don't apply right now
@@ -2519,6 +2605,7 @@ const CONTROLS = [
     h1Leading: ['stacked', 'Stacked'], heroWidth: ['stacked', 'Stacked'],
     wordHold: ['solo', 'Rotating and Typed'], showWordDots: ['solo', 'Rotating and Typed'],
     typeSpeed: ['typed', 'Typed'], globeFocus: ['left', 'Left-aligned text'],
+    h1Size: ['multiplying', 'Multiplying title'], titleSize: ['network', 'Church Network title'],
   };
   function markContextControls() {
     for (const [key, [when, note]] of Object.entries(ONLY)) {
@@ -2529,6 +2616,7 @@ const CONTROLS = [
       const applies = when === 'stacked' ? cfg.heroLayout === 'stacked'
         : when === 'solo' ? cfg.heroLayout !== 'stacked'
         : when === 'typed' ? cfg.heroLayout === 'typed'
+        : when === 'multiplying' || when === 'network' ? cfg.heroTitle === when
         : cfg.heroAlign === 'left';
       row.classList.toggle('is-off', !applies);
     }
@@ -2539,6 +2627,7 @@ const CONTROLS = [
     if (!el) return;
     syncInput('h1Size');                                   // show the size for the layout that's showing
     const stacked = cfg.heroLayout === 'stacked', want = cfg[stacked ? 'h1Size' : 'soloSize'];
+    if (cfg.heroTitle === 'network') { el.closest('.row').querySelector('output').textContent = `${want}px`; return; }   // fixed at H2 size there
     const shown = Math.round(parseFloat(getComputedStyle(document.querySelector(stacked ? '.hero-title' : '.solo')).fontSize));
     el.closest('.row').querySelector('output').textContent = shown < want - 0.5 ? `${want}px (fits at ${shown}px)` : `${want}px`;
   }
@@ -2549,6 +2638,7 @@ const CONTROLS = [
   }));
   document.querySelectorAll('.layout-picker [data-layout]').forEach(b => b.addEventListener('click', () => { cfg.heroLayout = b.dataset.layout; syncHeadline(); }));
   document.querySelectorAll('.layout-picker [data-align]').forEach(b => b.addEventListener('click', () => { cfg.heroAlign = b.dataset.align; syncHeadline(); }));
+  document.querySelectorAll('.layout-picker [data-title]').forEach(b => b.addEventListener('click', () => { cfg.heroTitle = b.dataset.title; syncHeadline(); }));
   window.addEventListener('resize', () => syncHeadline());
   document.fonts && document.fonts.ready.then(() => syncHeadline());   // re-measure once Geist has loaded
 
@@ -2585,8 +2675,8 @@ const CONTROLS = [
 })();
 </script>
 
-<!-- Hub cursor: a circle with an arrow follows the pointer over a hub, with that hub's photo pin above it (or, in
-     the Photo style, the hub's photo itself follows the pointer) -->
+<!-- Hub cursor: a circle with an arrow follows the pointer over a hub (or a How we do it point), with its photo pin
+     above it (or, in the Photo style, the photo itself follows the pointer) -->
 <div class="hub-cursor" id="hub-cursor" aria-hidden="true">
   <div class="photo"><img alt=""><img alt=""></div>
   <div class="ball">
@@ -2595,7 +2685,8 @@ const CONTROLS = [
 </div>
 <script>
 (() => {
-  const list = document.getElementById('hub-list');
+  const lists = [...document.querySelectorAll('.hub-list')];       // Find a hub and How we do it
+  const rows = [...document.querySelectorAll('.hub-list .hub-row')];
   const cursor = document.getElementById('hub-cursor');
   const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
   const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -2611,7 +2702,7 @@ const CONTROLS = [
 
   // Load each hub's photos up front (the pin's crop and the Photo cursor's) so neither ever opens empty
   const loaded = new Set();
-  list.querySelectorAll('.hub-row').forEach(row => {
+  rows.forEach(row => {
     const img = new Image();
     img.onload = () => loaded.add(row.dataset.photo);
     img.src = photoUrl(row.dataset.photo);
@@ -2637,14 +2728,14 @@ const CONTROLS = [
   // name and "Get directions" (none under 4)
   const DOT = 20, DOT_STEP = 47, DOT_ROWS = 4;
   const textRight = el => { const r = document.createRange(); r.selectNodeContents(el); return r.getBoundingClientRect().right; };
-  list.querySelectorAll('.hub-row').forEach(row => {
+  rows.forEach(row => {
     const dots = document.createElement('span');
     dots.className = 'hub-dots';
     dots.setAttribute('aria-hidden', 'true');
     row.appendChild(dots);
   });
   function fitDots() {
-    list.querySelectorAll('.hub-row').forEach(row => {
+    rows.forEach(row => {
       const dots = row.querySelector('.hub-dots'), go = row.querySelector('.go');
       const gap = parseFloat(getComputedStyle(row).columnGap) || 36;
       const goLeft = go.getBoundingClientRect().left, rowRight = row.getBoundingClientRect().right;
@@ -2657,7 +2748,8 @@ const CONTROLS = [
       if (dots.children.length !== cols * DOT_ROWS) dots.innerHTML = '<i></i>'.repeat(cols * DOT_ROWS);
     });
   }
-  new ResizeObserver(fitDots).observe(list);
+  const fitter = new ResizeObserver(fitDots);
+  lists.forEach(list => fitter.observe(list));
   document.fonts?.ready.then(fitDots);
 
   // The dots ripple out from (px, py): where the pointer came in, or the hub's dot for the keyboard
@@ -2707,15 +2799,17 @@ const CONTROLS = [
 
   if (finePointer) {
     document.documentElement.classList.add('has-hub-cursor');
-    list.addEventListener('pointermove', e => {
-      tx = e.clientX; ty = e.clientY;
-      if (!current || mode !== 'pointer') { x = tx; y = ty; }   // appear right under the pointer
-      mode = 'pointer';
-      const row = e.target.closest('.hub-row');
-      row ? show(row) : hide();
-      run();
-    });
-    list.addEventListener('pointerleave', hide);
+    for (const list of lists) {
+      list.addEventListener('pointermove', e => {
+        tx = e.clientX; ty = e.clientY;
+        if (!current || mode !== 'pointer') { x = tx; y = ty; }   // appear right under the pointer
+        mode = 'pointer';
+        const row = e.target.closest('.hub-row');
+        row ? show(row) : hide();
+        run();
+      });
+      list.addEventListener('pointerleave', hide);
+    }
     window.addEventListener('pointermove', e => { pointer.x = e.clientX; pointer.y = e.clientY; pointer.known = true; }, { passive: true });
     document.documentElement.addEventListener('pointerleave', () => { pointer.known = false; });
   }
@@ -2728,7 +2822,7 @@ const CONTROLS = [
     const el = document.elementFromPoint(pointer.x, pointer.y);
     const row = el && el.closest('.hub-row');
     tx = pointer.x; ty = pointer.y;
-    if (row && list.contains(row)) {
+    if (row && row.closest('.hub-list')) {
       if (!current) { x = tx; y = ty; }
       mode = 'pointer';
       show(row);
@@ -2742,17 +2836,19 @@ const CONTROLS = [
   }
 
   // Keyboard: the pin rises over the focused hub's dot, without the cursor circle
-  list.addEventListener('focusin', e => {
-    const row = e.target.closest('.hub-row');
-    if (!row || !row.matches(':focus-visible')) return;
-    mode = 'keyboard';
-    placeAtDot(row);
-    x = tx; y = ty;
-    show(row);
-    cursor.style.setProperty('--s', 0);
-    run();
-  });
-  list.addEventListener('focusout', e => { if (!list.contains(e.relatedTarget)) hide(); });
+  for (const list of lists) {
+    list.addEventListener('focusin', e => {
+      const row = e.target.closest('.hub-row');
+      if (!row || !row.matches(':focus-visible')) return;
+      mode = 'keyboard';
+      placeAtDot(row);
+      x = tx; y = ty;
+      show(row);
+      cursor.style.setProperty('--s', 0);
+      run();
+    });
+    list.addEventListener('focusout', e => { if (!list.contains(e.relatedTarget)) hide(); });
+  }
 })();
 </script>
 </body>

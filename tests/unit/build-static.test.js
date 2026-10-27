@@ -9,6 +9,7 @@ function fixture() {
   const put = (path, text = 'x') => { mkdirSync(join(root, path, '..'), { recursive: true }); writeFileSync(join(root, path), text); };
   put('hero.html', '<html>hero</html>');
   put('network-globe.html');
+  put('assets/logo.png');
   put('review/comment-mode.js', 'export {}');
   put('review/config.js', "export const CONVEX_URL = 'https://local.convex.cloud';");
   put('convex/marks.js');
@@ -24,6 +25,7 @@ describe('buildStatic', () => {
     buildStatic({ root, out, convexUrl: 'https://x.convex.cloud' });
     expect(readFileSync(join(out, 'hero.html'), 'utf8')).toBe('<html>hero</html>');
     expect(existsSync(join(out, 'network-globe.html'))).toBe(true);
+    expect(existsSync(join(out, 'assets/logo.png'))).toBe(true);
     expect(existsSync(join(out, 'review/comment-mode.js'))).toBe(true);
     const config = readFileSync(join(out, 'review/config.js'), 'utf8');
     expect(config).toContain('https://x.convex.cloud');

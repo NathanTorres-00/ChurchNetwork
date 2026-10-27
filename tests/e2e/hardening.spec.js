@@ -89,7 +89,7 @@ test.describe('posting', () => {
   });
 
   test('a post that answers late does not close a newer draft', async ({ page }) => {
-    await clickOn(page, '.hero-sub');
+    await clickOn(page, '.hero-lead');
     await composer(page).getByLabel('Your name').fill('Ana');
     await composer(page).getByLabel('Comment').fill('First, held');
     await page.evaluate(() => window.__reviewFake.holdNext());
@@ -104,7 +104,7 @@ test.describe('posting', () => {
   });
 
   test('an offline post says so and can be tried again', async ({ page }) => {
-    await clickOn(page, '.hero-sub');
+    await clickOn(page, '.hero-lead');
     await composer(page).getByLabel('Your name').fill('Ana');
     await composer(page).getByLabel('Comment').fill('Sent while offline');
     await page.evaluate(() => window.__reviewFake.failNext('TIMEOUT'));
@@ -134,7 +134,7 @@ test('posting recovers when the connection comes back', async ({ page }) => {
   await openPage(page);
   await enterCommentMode(page);
   await expect(page.locator('.rv-status')).toContainText("Can't reach");
-  await clickOn(page, '.hero-sub');
+  await clickOn(page, '.hero-lead');
   await composer(page).getByLabel('Your name').fill('Ana');
   await composer(page).getByLabel('Comment').fill('After reconnecting');
   await composer(page).getByRole('button', { name: 'Post comment' }).click();

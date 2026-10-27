@@ -140,17 +140,21 @@ All the globe parameters apply as well.
 
 `hero.html` is a sample church-network landing page with the Pins globe as its hero. Sections:
 
-1. **Hero:** the flying globe with pins behind a left-aligned headline ("Multiplying Disciples / Leaders /
-   Churches / Movements", each word in its own color), a one-line statement, and **Learn more** (scrolls to
-   section 2) and **Visit** (links nowhere for now).
-2. **What is a Church Network?:** rounded video box (placeholder image and play button; no video yet).
+1. **Hero:** the flying globe with pins behind the title "A New Testament Church Network", a headline
+   ("Multiplying Disciples / Leaders / Churches / Movements", each word in its own color), and **Learn more**
+   (scrolls to section 2) and **Start a group** (links nowhere for now). The one-line statement under them is hidden for
+   now (one CSS line in `hero.html` brings it back).
+2. **What is a New Testament Church Network?:** rounded video box (placeholder image and play button; no video yet).
 3. **How we got started:** a four-step timeline from one local church to a global movement. The milestone dots
    grow and step through the four headline colors.
 4. **What we do:** image plus stats (5,000 disciples, 500 groups, 5 subnetworks).
-5. **Testimony:** portrait and quote (placeholder name and words).
-6. **Our disciple-making tool:** group photo beside an iPhone mockup of the Jesus Disciple App, with App Store
-   and Google Play buttons (placeholders; swap in the official store badges before publishing).
-7. **Find a hub:** full-width rows for Anaheim, Anaheim West, jChurch and Iglesia Mi Ciudad (details to come).
+5. **How we do it:** four rows, **Process**, **Tools**, **Training** and **Coaching** (links are
+   placeholders), built and behaving exactly like the Find a hub rows below: the same hover fill, ring-dots and cursor.
+6. **Testimony:** portrait and quote (placeholder name and words).
+7. **Our disciple-making tool:** group photo beside an iPhone showing a screenshot of the Jesus Disciple App's
+   Learn page (`assets/jesus-disciple-app.jpg`), with App Store and Google Play buttons
+   (placeholders; swap in the official store badges before publishing).
+8. **Find a hub:** full-width rows for Anaheim, Anaheim West, jChurch and Iglesia Mi Ciudad (details to come).
    **Hidden by default**, along with its header link: turn it on with **Show Find a hub** in the Adjust panel's Page
    group (`showHubs` in CONFIG, or `?showHubs=1`). Each row is one link. Hovering a row fills it with that hub's color (the Figma "Hub Row=Hover"), turns its text
    white, and ripples in a grid of white ring-dots beside the name, out from where the pointer came in (as many of
@@ -165,7 +169,7 @@ All the globe parameters apply as well.
    Photos are placeholders, set per row with `data-photo`. Tabbing to a row fills it and raises its pin over the
    hub's dot. Touch screens keep the plain rows.
 
-All copy, names, stats and photos are placeholders to replace. Links marked `data-placeholder` (Visit, store
+All copy, names, stats and photos are placeholders to replace. Links marked `data-placeholder` (Start a group, store
 buttons, directions) go nowhere until you add real URLs.
 
 **Loading screen:** while the globe gets ready, one dot on a white screen divides five times (1, 2, 4, 8, 16, 32),
@@ -180,18 +184,23 @@ motion get a still network and a quick fade.
 - **Headline: Stacked** (the four "Multiplying ..." lines), **Rotating** ("Multiplying" stays while the colored
   word changes letter by letter, each new word rising into focus as the old one lifts away), or **Typed** (the
   word is deleted and retyped with a cursor in the word's color).
+- **Title: Church Network** ("A New Testament Church Network" is the H1, with the headline under it at
+  section-heading size) or **Multiplying** (flipped: the headline is the H1 at full size, with "A New Testament
+  Church Network" under it as an H2 at section-heading size). Works with all three headlines and both alignments;
+  **Title size** sets the Church Network H1 (`titleSize` in CONFIG), and **Headline size** the Multiplying one.
 - **Align: Left** or **Center** (works with all three). Stacked + Center is the centered version.
-- The page opens on **Typed + Center** by default.
+- The page opens on **Church Network + Typed + Center** by default.
 - **Headline size** sizes whichever layout is showing. Stacked keeps its own size and Rotating/Typed share the
   one-line size (`h1Size` and `soloSize` in CONFIG); switching layouts shows that layout's value.
 - Rotating and Typed show four small dots in the word colors under the headline: the current word, and a way to
   jump to any word (hide them with the **Show word dots** switch). Their sliders: how long each word stays, and typing
   speed.
-- `heroLayout` (`stacked`, `rotating`, `typed`) and `heroAlign` (`left`, `center`) are saved with Copy settings,
-  and can be set in the address, e.g. `hero.html?heroLayout=typed&heroAlign=center`.
+- `heroLayout` (`stacked`, `rotating`, `typed`), `heroTitle` (`multiplying`, `network`) and `heroAlign` (`left`,
+  `center`) are saved with Copy settings, and can be set in the address, e.g.
+  `hero.html?heroLayout=typed&heroTitle=network&heroAlign=center`.
 
 **Adjust panel:** the **Headline** group has a color picker for each of the four words (and for "Multiplying"),
-plus headline size, colored-word weight, line spacing, statement size, text block width and position, the white
+plus headline size, colored-word weight, line spacing, title size, text block width and position, the white
 fade behind the text, hero height, and the bottom curve (how far the hero's lower edge dips into the next section
 at the center; 0 makes it straight). The **Page** group has section spacing, corner radius, content width,
 body text size, smooth scrolling, whether Find a hub shows, and the hub cursor style. Changing a word's color updates it everywhere it appears (headline, timeline, stats, icons).

@@ -121,9 +121,9 @@ test('the loop follows its word to another width and scales with it', async ({ p
 test('an underline anchors to the text above it', async ({ page }) => {
   const result = await page.evaluate(async () => {
     const { anchorStroke } = await __sa.mod();
-    const sub = document.querySelector('.hero-sub');
+    const sub = document.querySelector('.hero-lead');
     __sa.show(sub);
-    const range = __sa.wordRange(sub, 'network');
+    const range = __sa.wordRange(sub, 'Testament');
     const r = range.getBoundingClientRect();
     const stroke = anchorStroke(__sa.line(r.left - 2, r.right + 2, r.bottom + 6), 'pen');
     return {
@@ -140,8 +140,7 @@ test('an underline anchors to the text above it', async ({ page }) => {
   expect(result.stroke.char.o).toBeLessThan(result.end);
 });
 
-// .hero-sub keeps the same two lines at 1440 and 390 (34ch at a fixed 22px fits the phone column), so its first
-// line never wraps. The app section's lead does: its first line at 1440 breaks across three at 390.
+// The app section's lead wraps differently by width: its first line at 1440 breaks across three at 390.
 test('a highlighter across a line follows the words when they wrap', async ({ page }) => {
   const drawn = await page.evaluate(async () => {
     const { anchorStroke } = await __sa.mod();
@@ -276,7 +275,7 @@ test('strokeShifted is true when what a loop surrounded has split apart', async 
 // follows the word, so the card mustn't say it was drawn on another screen.
 test('a loop around a word isn\'t badged as shifted when its text rewraps', async ({ page }) => {
   const drawn = {};
-  for (const [sel, word] of [['#story h2', 'started'], ['#app .lead', 'reading']]) {
+  for (const [sel, word] of [['#story h2', 'started'], ['#app .lead', 'moving']]) {
     drawn[sel] = await page.evaluate(async ([sel, word]) => {
       const { anchorStroke, resolveStroke, strokeShifted } = await __sa.mod();
       const el = document.querySelector(sel);

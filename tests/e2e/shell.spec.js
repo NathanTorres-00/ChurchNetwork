@@ -96,8 +96,8 @@ test('globe pauses and hub cursor is off in comment mode', async ({ page }) => {
   await enterCommentMode(page);
   await expect(page.locator('html')).toHaveAttribute('data-globe', 'paused');
   await tool(page, 'Comment').click();          // back to browsing so hovering is plain hovering
-  await page.locator('.hub-row').first().scrollIntoViewIfNeeded();
-  await page.locator('.hub-row h3').first().hover();
+  await page.locator('#hubs .hub-row').first().scrollIntoViewIfNeeded();
+  await page.locator('#hubs .hub-row h3').first().hover();
   await page.waitForTimeout(300);
   expect(await page.evaluate(() => document.getElementById('hub-cursor').style.getPropertyValue('--s') || '0')).toBe('0');
   await page.getByRole('button', { name: 'Leave comment mode' }).click();
