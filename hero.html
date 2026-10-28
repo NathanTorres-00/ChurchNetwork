@@ -1239,6 +1239,12 @@ const CONFIG = {
   dotColor: '#B6B6BB',
   newbornColor: '#9C9CA2',
   lineColor: '#BDBDC2',
+  dotColors: 'generations', // 'single' (Dot color) or 'generations': each generation takes the next headline color,
+                            // Disciples → Leaders → Churches → Movements, then back to Disciples
+  firstDotColor: 'movements', // the first dot with generation colors: 'movements' (so its first generation are
+                            // disciples and the fifth loops back to Disciples), 'disciples' or 'gray' (Dot color)
+  colorStrength: 1,         // how fully generation colors show (0 = Dot color)
+  colorThreads: false,      // threads take the color of the dot they lead to
 
   // Pins
   showPins: true,           // photo pins on hover and at random
@@ -1361,6 +1367,10 @@ const CONTROLS = [
     { key: 'dotColor', label: 'Dot color', type: 'color' },
     { key: 'newbornColor', label: 'New dot color', type: 'color' },
     { key: 'lineColor', label: 'Line color', type: 'color' },
+    { key: 'dotColors', label: 'Dot colors', type: 'select', options: [['generations', 'A headline color per generation'], ['single', 'One color']] },
+    { key: 'firstDotColor', label: 'First dot', type: 'select', options: [['movements', 'Movements (generation 1 is Disciples)'], ['disciples', 'Disciples'], ['gray', 'Dot color']] },
+    { key: 'colorStrength', label: 'Color strength', type: 'range', min: 0, max: 1, step: 0.01, fmt: pct },
+    { key: 'colorThreads', label: 'Color the threads', type: 'check' },
   ]},
   { group: 'Globe: pins', items: [
     { key: 'showPins', label: 'Show photo pins', type: 'check' },
@@ -1443,9 +1453,27 @@ const CONTROLS = [
     }
     return rgbCache.get(hex);
   }
+  // Colors are hex strings or [r, g, b]; blend gives [r, g, b], mix gives a CSS color
+  function blend(a, b, t) {
+    const A = typeof a === 'string' ? rgb(a) : a, B = typeof b === 'string' ? rgb(b) : b;
+    return [lerp(A[0], B[0], t), lerp(A[1], B[1], t), lerp(A[2], B[2], t)];
+  }
   function mix(a, b, t) {
-    const A = rgb(a), B = rgb(b);
-    return `rgb(${Math.round(lerp(A[0], B[0], t))},${Math.round(lerp(A[1], B[1], t))},${Math.round(lerp(A[2], B[2], t))})`;
+    const [r, g, bl] = blend(a, b, t);
+    return `rgb(${Math.round(r)},${Math.round(g)},${Math.round(bl)})`;
+  }
+
+  /* Generation colors: the headline colors in order, looping. With the first dot as Movements, its first
+     generation are disciples, the fourth are movements again and the fifth start over with disciples. */
+  const WORD_COLORS = ['colorDisciples', 'colorLeaders', 'colorChurches', 'colorMovements'];
+  function generationPalette() {
+    const off = cfg.firstDotColor === 'disciples' ? 0 : -1;
+    const pal = [];
+    for (let g = 0; g <= cfg.generations; g++) {
+      const word = cfg[WORD_COLORS[(((g + off) % 4) + 4) % 4]];
+      pal.push(g === 0 && cfg.firstDotColor === 'gray' ? rgb(cfg.dotColor) : blend(cfg.dotColor, word, cfg.colorStrength));
+    }
+    return { rgb: pal, css: pal.map(c => mix(c, c, 0)) };
   }
 
   /* ---------- One network (radial tree, same model as the flat view) ---------- */
@@ -1797,42 +1825,48 @@ const CONTROLS = [
     // 1. Threads, sampled along the bow and laid on the sphere (clipped at the horizon)
     // Kept light for busy settings: threads off screen are skipped, short ones get fewer samples, and
     // threads well inside the horizon are projected directly instead of going through the clipping path.
+    // With colored threads, each generation's threads are stroked on their own in that generation's color.
+    const pal = cfg.dotColors === 'generations' ? generationPalette() : null;
+    const threadGens = pal && cfg.colorThreads ? Array.from({ length: G }, (_, i) => i + 1) : [0];
     const safeRad = horizonRad - 2.5 * DEG, offX = W + 40, offY = H + 40;
-    lctx.beginPath();
-    for (const site of live) {
-      const inv = site.local.invert;
-      for (const n of site.nodes) {
-        const s = n.st;
-        if (!n.gen || !s.vis) continue;
-        const ps = site.nodes[n.parent].st, a = s.frame, b = ps.frame;
-        if (!a && !b) continue;                                          // both ends beyond the horizon
-        if (a && b) {
-          const ax = a[4], ay = a[5], bx = b[4], by = b[5];
-          if ((ax < -40 && bx < -40) || (ax > offX && bx > offX) || (ay > offY && by > offY) || (ay < -40 && by < -40)) continue;
-          const len = Math.hypot(ax - bx, ay - by);
-          if (len < 1.5) continue;                                       // too small to see
-          const m = Math.max(2, Math.min(14, Math.ceil(len / 9)));
-          if (s.dist < safeRad && ps.dist < safeRad) {
-            for (let i = 0; i <= m; i++) {
-              const u = s.move * i / m;
-              const q = proj(inv([bez(s.x0, s.cx, s.tx, u), bez(s.y0, s.cy, s.ty, u)]));
-              i ? lctx.lineTo(q[0], q[1]) : lctx.moveTo(q[0], q[1]);
-            }
-            continue;
-          }
-        }
-        const m = Math.max(3, Math.ceil(14 * s.move));
-        const coords = [];
-        for (let i = 0; i <= m; i++) {
-          const u = s.move * i / m;
-          coords.push(inv([bez(s.x0, s.cx, s.tx, u), bez(s.y0, s.cy, s.ty, u)]));
-        }
-        lpath({ type: 'LineString', coordinates: coords });
-      }
-    }
     lctx.lineCap = 'round'; lctx.lineJoin = 'round';
-    lctx.lineWidth = cfg.lineWidth; lctx.strokeStyle = cfg.lineColor;
-    lctx.stroke();
+    lctx.lineWidth = cfg.lineWidth;
+    for (const gen of threadGens) {
+      lctx.beginPath();
+      for (const site of live) {
+        const inv = site.local.invert;
+        for (const n of site.nodes) {
+          const s = n.st;
+          if (!n.gen || !s.vis || (gen && n.gen !== gen)) continue;
+          const ps = site.nodes[n.parent].st, a = s.frame, b = ps.frame;
+          if (!a && !b) continue;                                          // both ends beyond the horizon
+          if (a && b) {
+            const ax = a[4], ay = a[5], bx = b[4], by = b[5];
+            if ((ax < -40 && bx < -40) || (ax > offX && bx > offX) || (ay > offY && by > offY) || (ay < -40 && by < -40)) continue;
+            const len = Math.hypot(ax - bx, ay - by);
+            if (len < 1.5) continue;                                       // too small to see
+            const m = Math.max(2, Math.min(14, Math.ceil(len / 9)));
+            if (s.dist < safeRad && ps.dist < safeRad) {
+              for (let i = 0; i <= m; i++) {
+                const u = s.move * i / m;
+                const q = proj(inv([bez(s.x0, s.cx, s.tx, u), bez(s.y0, s.cy, s.ty, u)]));
+                i ? lctx.lineTo(q[0], q[1]) : lctx.moveTo(q[0], q[1]);
+              }
+              continue;
+            }
+          }
+          const m = Math.max(3, Math.ceil(14 * s.move));
+          const coords = [];
+          for (let i = 0; i <= m; i++) {
+            const u = s.move * i / m;
+            coords.push(inv([bez(s.x0, s.cx, s.tx, u), bez(s.y0, s.cy, s.ty, u)]));
+          }
+          lpath({ type: 'LineString', coordinates: coords });
+        }
+      }
+      lctx.strokeStyle = gen ? pal.css[gen] : cfg.lineColor;
+      lctx.stroke();
+    }
 
     // Dots are drawn in each one's local surface frame (degrees east/north → screen),
     // so they flatten into ellipses toward the horizon like circles painted on the ground
@@ -1856,11 +1890,19 @@ const CONTROLS = [
     // 3. Dots and rings
     for (const site of live) {
       for (let i = site.nodes.length - 1; i >= 0; i--) {
-        const s = site.nodes[i].st;
+        const n = site.nodes[i], s = n.st;
         if (!s.vis || !s.frame || s.rd <= 0 || s.px < 0.4) continue;
-        // A pinned dot deepens toward the new-dot color while its pin is up
-        const tint = Math.max(s.newborn, pinned.get(site.nodes[i]) || 0);
-        lctx.fillStyle = tint > 0 ? mix(cfg.dotColor, cfg.newbornColor, tint) : cfg.dotColor;
+        const pin = pinned.get(n) || 0;
+        if (pal) {
+          // A new dot buds out in its parent's color and settles into its own; a pinned dot deepens
+          const own = pin > 0 ? blend(pal.rgb[n.gen], '#1F1F23', 0.3 * pin) : pal.rgb[n.gen];
+          const from = n.gen ? pal.rgb[n.gen - 1] : cfg.newbornColor;
+          lctx.fillStyle = s.newborn > 0 || pin > 0 ? mix(own, from, s.newborn) : pal.css[n.gen];
+        } else {
+          // A pinned dot deepens toward the new-dot color while its pin is up
+          const tint = Math.max(s.newborn, pin);
+          lctx.fillStyle = tint > 0 ? mix(cfg.dotColor, cfg.newbornColor, tint) : cfg.dotColor;
+        }
         lctx.globalAlpha = 1;
         onSurface(s.frame);
         lctx.beginPath();
@@ -2402,6 +2444,7 @@ const CONTROLS = [
         el.addEventListener('input', () => {
           cfg[c.proxy ? c.proxy(cfg) : c.key] = el.type === 'checkbox' ? el.checked : el.type === 'range' ? +el.value : el.value;
           syncInput(c.key);
+          if (c.key === 'dotColors') markContextControls();
           if (c.css || c.page) { applyPage(); return; }
           if (c.sites) buildSites();
           else if (c.trees) sites.forEach(makeTree);
@@ -2606,6 +2649,8 @@ const CONTROLS = [
     wordHold: ['solo', 'Rotating and Typed'], showWordDots: ['solo', 'Rotating and Typed'],
     typeSpeed: ['typed', 'Typed'], globeFocus: ['left', 'Left-aligned text'],
     h1Size: ['multiplying', 'Multiplying title'], titleSize: ['network', 'Church Network title'],
+    newbornColor: ['single', 'One color'], firstDotColor: ['generations', 'Headline colors'],
+    colorStrength: ['generations', 'Headline colors'], colorThreads: ['generations', 'Headline colors'],
   };
   function markContextControls() {
     for (const [key, [when, note]] of Object.entries(ONLY)) {
@@ -2617,6 +2662,7 @@ const CONTROLS = [
         : when === 'solo' ? cfg.heroLayout !== 'stacked'
         : when === 'typed' ? cfg.heroLayout === 'typed'
         : when === 'multiplying' || when === 'network' ? cfg.heroTitle === when
+        : when === 'single' || when === 'generations' ? cfg.dotColors === when
         : cfg.heroAlign === 'left';
       row.classList.toggle('is-off', !applies);
     }

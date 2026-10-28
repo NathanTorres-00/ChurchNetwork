@@ -204,7 +204,17 @@ plus headline size, colored-word weight, line spacing, title size, text block wi
 fade behind the text, hero height, and the bottom curve (how far the hero's lower edge dips into the next section
 at the center; 0 makes it straight). The **Page** group has section spacing, corner radius, content width,
 body text size, smooth scrolling, whether Find a hub shows, and the hub cursor style. Changing a word's color updates it everywhere it appears (headline, timeline, stats, icons).
-The **Globe:** groups are the same controls as the Pins page.
+The **Globe:** groups are the same controls as the Pins page, plus the generation colors below.
+
+**Generation colors:** in the hero, each generation of a network takes the next headline color, so the dots read
+as the headline: the first dot is Movements, its first generation are Disciples, then Leaders, Churches and
+Movements, and the fifth generation loops back to Disciples (movements make disciples, and the cycle continues). A
+new dot buds out in its parent's color and settles into its own. **Globe: dots** in the Adjust panel has the options:
+**Dot colors** (a headline color per generation, or one color, the gray look), **First dot** (Movements, Disciples,
+which starts the cycle there, or the gray dot color), **Color strength** (toward the dot color at lower values) and
+**Color the threads** (each thread in the color of the dot it leads to; off by default). In CONFIG: `dotColors`
+(`generations` or `single`), `firstDotColor` (`movements`, `disciples`, `gray`), `colorStrength` and `colorThreads`.
+The colors follow the Headline group's color pickers.
 
 In the hero, random pins keep clear of the actual text (each headline and statement line, and the buttons) and
 gather in the open globe beside it. With left-aligned text, the flight centers in the open space beside the text
@@ -223,7 +233,7 @@ text on top; the default). The statement, buttons and header are always kept cle
 Behind headline leaves room for random pins; the four words are close in length, so Current word rarely frees space.
 
 **Panel notes:** controls that only apply to some layouts say so next to their label (Stacked, Rotating and Typed,
-Typed, Left-aligned text) and dim when they don't apply, so you can still set them ahead of time. Headline sizes
+Typed, Left-aligned text, One color, Headline colors) and dim when they don't apply, so you can still set them ahead of time. Headline sizes
 grow until the longest line would reach the window's edges; past that, the readout says so, e.g. "120px (fits at
 115px)". Random pins also stay clear of the header's logo and links, and of the longest word Typed or Rotating can
 show. On very busy globe settings, the farthest networks (in the horizon fade) are left out to keep it smooth.
