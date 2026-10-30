@@ -55,8 +55,13 @@ All of these are in the `CONFIG` block and the Adjust panel. Any of them can als
 The repo deploys to Vercel as a static site. `vercel.json` serves `hero.html` at the site's root and turns on
 clean URLs (`/hero`, `/network-globe`, `/network-globe-pins`, `/network-multiply`; the `.html` addresses redirect
 to them). Its build command, `npx convex deploy --cmd 'node scripts/build-static.js'`, pushes the comment mode
-backend to Convex and then copies the pages, `review/` and `convex/limits.js` (the shared limits; nothing else from `convex/`) into `dist/`, which Vercel serves (see
-[Comment mode](#comment-mode)).
+backend to Convex and then copies the pages, `assets/`, `review/`, `versions/` and `convex/limits.js` (the shared limits; nothing else from `convex/`) into `dist/`, which Vercel serves (see
+[Comment mode](#comment-mode)). It also writes `dist/versions.json`, the list of builds for the
+[Versions panel](#versions-panel).
+
+Vercel Authentication is off for the project, so every build's own address (e.g.
+`churchnetwork-a79hy0ryt-nathan-torres-projects.vercel.app`) opens for anyone with the link, branch previews included.
+That's what lets the Versions panel show old builds.
 
 ---
 
@@ -242,6 +247,40 @@ show. On very busy globe settings, the farthest networks (in the horizon fade) a
 jsDelivr). The Page group has a **Smooth scrolling** switch and a **Scroll glide** slider. In-page links like
 **Learn more** glide to their section. Lenis stays off for visitors who prefer reduced motion, and the Adjust panel
 scrolls on its own.
+
+---
+
+# Versions panel
+
+The hero has a **Versions** pill at the bottom left, mirroring Adjust at the bottom right. It opens a panel from the
+left listing every build of `main`, newest first, each with its date and time (in the viewer's time zone) and a
+plain summary of what changed. Clicking an earlier build shows that build, live (globe and all), beside the panel,
+under a dark bar naming it with **Back to current**; the panel stays open so you can step from build to build. The
+live page's globe holds still while it's covered. **Back to current**, the **Current** row, **Close** or **Esc**
+return to the live page. On phones the panel covers the screen and a build opens full screen, with **Versions** in
+its bar to pick another. A build shown in the panel never shows its own Versions pill.
+
+**Where the list comes from:** Vercel keeps every build at its own address. At build time,
+`scripts/versions.js` asks the Vercel API for the project's READY production builds (one row per commit, newest
+redeploy wins), adds the build being made from Vercel's build environment, and `build-static.js` writes them to
+`dist/versions.json`. The API needs a token in the `VERCEL_VERSIONS_TOKEN` environment variable on the Vercel
+project (it's used only at build time and never shipped). Without it, or if the API doesn't answer, the build still
+succeeds and the panel shows just the current build and "Version history isn't available right now". Run locally,
+the panel always says that, since only the build writes the list. Vercel's Deployment Retention (Project → Settings
+→ Security) must keep production builds forever, or old rows stop opening.
+
+**Summaries:** each row's summary is, in order of preference:
+1. its entry in `versions.json` at the repo root (`[{ "sha": "<full commit SHA>", "summary": "..." }]`), used for
+   past builds and to correct a summary later;
+2. a `Version: <summary>` line in the commit message of the push's last commit. Put it **right after the subject
+   line**: Vercel keeps only about the first 300 characters of a message;
+3. the commit's subject line.
+
+Every push to `main` should end with a commit carrying a `Version:` line written for overseers, e.g.
+`Version: New Rock Network logo and How we do it section`.
+
+**Comment mode in an old build** uses that build's own code against today's comment backend, so marks made there
+land in the live review.
 
 ---
 
