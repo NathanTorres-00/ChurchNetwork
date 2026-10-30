@@ -12,6 +12,7 @@
 <script src="https://cdn.jsdelivr.net/npm/d3-geo-projection@4.0.0/dist/d3-geo-projection.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lenis@1.3.26/dist/lenis.css">
+<link rel="stylesheet" href="versions/versions.css">
 <script src="https://cdn.jsdelivr.net/npm/lenis@1.3.26/dist/lenis.min.js"></script>
 <style>
   :root {
@@ -2385,6 +2386,14 @@ const CONTROLS = [
     playingBeforeReview = null;
     markGlobe();
   });
+  // So does an earlier build shown over the page from the Versions panel
+  let playingBeforeVersions = null;
+  document.addEventListener('versions:view', () => { playingBeforeVersions = playing; setPlaying(false); markGlobe(); });
+  document.addEventListener('versions:current', () => {
+    if (playingBeforeVersions !== null) setPlaying(playingBeforeVersions);
+    playingBeforeVersions = null;
+    markGlobe();
+  });
   function restart() {
     t = 0; clock = 0; flightLon = START_LON; flightClock = 0; cruise = 1;
     pins.forEach(p => { p.closing = true; });
@@ -2896,6 +2905,11 @@ const CONTROLS = [
     list.addEventListener('focusout', e => { if (!list.contains(e.relatedTarget)) hide(); });
   }
 })();
+</script>
+<script type="module">
+  // Every earlier build of the site, from the pill at the bottom left (versions/versions-panel.js)
+  import { initVersions } from './versions/versions-panel.js';
+  initVersions();
 </script>
 </body>
 </html>

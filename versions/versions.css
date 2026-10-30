@@ -1,0 +1,82 @@
+/* The Versions panel (versions/versions-panel.js): the pill at the bottom left mirrors Adjust at the bottom
+   right, the panel slides in from the left the way the Adjust panel does from the right, and the stage shows
+   an earlier build beside it. Above the page and below the loading screen (50) and comment mode (55+). */
+
+.versions-pill {
+  position: fixed; left: 16px; bottom: 16px; z-index: 40;
+  display: inline-flex; align-items: center; gap: 8px;
+  font: 500 13px/1 var(--font); color: var(--ink);
+  padding: 9px 14px 9px 11px; border-radius: 999px;
+  background: var(--panel-bg); border: 1px solid var(--hair); cursor: pointer;
+  transition: opacity .4s ease, transform .6s cubic-bezier(.65, 0, .35, 1);
+}
+.versions-pill:hover { background: #F7F7F8; }
+.versions-pill[aria-expanded="true"] { opacity: 0; pointer-events: none; transform: translateY(6px); }
+.versions-glyph {
+  width: 8px; height: 8px; border-radius: 50%; background: var(--thumb); margin: 0 3px;
+  box-shadow: 0 0 0 2px var(--panel-bg), 0 0 0 3.5px var(--thumb);   /* the same dot and ring as Adjust */
+}
+
+.versions-panel {
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 45;
+  width: var(--panel-w); max-width: 100%; box-sizing: border-box;
+  background: var(--panel-bg); border-right: 1px solid var(--hair);
+  overflow-y: auto; overscroll-behavior: contain;
+  padding: 18px 16px 28px;
+  font-family: var(--font); color: var(--ink);
+  transform: translateX(-100%); visibility: hidden;
+  transition: transform .7s cubic-bezier(.65, 0, .35, 1), visibility 0s linear .7s;
+}
+.versions-panel.is-open { transform: none; visibility: visible; transition: transform .7s cubic-bezier(.65, 0, .35, 1); }
+
+.versions-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 0 4px; }
+.versions-title { font-size: 15px; font-weight: 500; margin: 0; letter-spacing: -0.005em; }
+.versions-close {
+  font: 400 13px/1 var(--font); color: var(--ink-soft); background: none; border: 0; padding: 6px 4px; cursor: pointer;
+}
+.versions-close:hover { color: var(--ink); }
+.versions-status { font-size: 12px; color: var(--ink-soft); margin: 4px 4px 14px; font-variant-numeric: tabular-nums; }
+
+.versions-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.versions-row {
+  display: grid; gap: 3px; width: 100%; text-align: left; cursor: pointer;
+  padding: 9px 10px; border: 0; border-radius: 10px; background: none;
+  font: inherit; color: var(--ink);
+}
+.versions-row:hover { background: #F4F4F6; }
+.versions-row:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px; }
+.versions-date {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; color: var(--ink-soft); font-variant-numeric: tabular-nums;
+}
+.versions-summary { font-size: 13.5px; line-height: 1.35; }
+.versions-tag {
+  font-size: 10.5px; line-height: 1; padding: 3px 7px; border-radius: 999px;
+  background: #E6E6E9; color: var(--ink);
+}
+.versions-row.is-viewing { background: #3F3F46; }
+.versions-row.is-viewing .versions-date,
+.versions-row.is-viewing .versions-summary { color: #fff; }
+.versions-row.is-viewing .versions-tag { background: #fff; color: #3F3F46; }
+
+.versions-stage {
+  position: fixed; top: 0; bottom: 0; left: var(--panel-w); right: 0; z-index: 44;
+  display: flex; flex-direction: column; background: #fff;
+}
+.versions-stage[hidden] { display: none; }
+.versions-bar {
+  flex: none; display: flex; align-items: center; gap: 10px; height: 44px; padding: 0 10px 0 16px;
+  background: #3F3F46; color: #fff; font: 400 13px/1 var(--font);
+}
+.versions-bar b { font-weight: 500; }
+.versions-label { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.versions-back, .versions-reopen {
+  flex: none; font: 500 12.5px/1 var(--font); border-radius: 999px; padding: 8px 13px; cursor: pointer;
+}
+.versions-back { background: #fff; color: #3F3F46; border: 0; }
+.versions-reopen { display: none; background: none; color: #fff; border: 1px solid rgba(255,255,255,.35); }
+.versions-frame { flex: 1; width: 100%; border: 0; display: block; }
+
+@media (prefers-reduced-motion: reduce) {
+  .versions-panel, .versions-panel.is-open, .versions-pill { transition: none; }
+}
