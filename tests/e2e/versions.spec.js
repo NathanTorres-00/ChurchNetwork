@@ -94,3 +94,47 @@ test('framed builds hide the pill', async ({ page }) => {
   await openPage(page, '/hero.html?framed=versions');
   await expect(page.locator('#versions-toggle')).toHaveCount(0);
 });
+
+test.describe('phone', () => {
+  test.use({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+
+  test.beforeEach(async ({ page }) => {
+    await serveList(page);
+    await openPage(page);
+    await page.locator('#versions-toggle').tap();
+    await expect(panel(page)).toHaveClass(/is-open/);
+    await expect(rows(page)).toHaveCount(3);
+  });
+
+  test('phone: tapping a version shows it full screen', async ({ page }) => {
+    await rows(page).nth(1).tap();
+    await expect(panel(page)).not.toHaveClass(/is-open/);
+    await expect(stage(page)).toBeVisible();
+    const box = await stage(page).boundingBox();
+    expect(box.x).toBe(0);
+    expect(box.width).toBe(390);
+    await expect(page.locator('.versions-reopen')).toBeVisible();
+  });
+
+  test('phone: Versions in the bar reopens the panel', async ({ page }) => {
+    await rows(page).nth(1).tap();
+    await expect(panel(page)).not.toHaveClass(/is-open/);
+    await page.locator('.versions-reopen').tap();
+    await expect(panel(page)).toHaveClass(/is-open/);
+    await expect(stage(page)).toBeVisible();
+  });
+
+  test('phone: pill clears Adjust and the hero buttons', async ({ page }) => {
+    await page.locator('.versions-close').tap();
+    await expect(panel(page)).not.toHaveClass(/is-open/);
+    await expect(page.locator('#versions-toggle')).toBeVisible();
+    const pill = await page.locator('#versions-toggle').boundingBox();
+    const others = page.locator('#adjust, .hero .button-primary, .hero .button-secondary');
+    const count = await others.count();
+    expect(count).toBeGreaterThan(0);
+    for (let i = 0; i < count; i++) {
+      const box = await others.nth(i).boundingBox();
+      if (box) expect(intersects(pill, box)).toBe(false);
+    }
+  });
+});
