@@ -266,8 +266,10 @@ redeploy wins), adds the build being made from Vercel's build environment, and `
 `dist/versions.json`. The API needs a token in the `VERCEL_VERSIONS_TOKEN` environment variable on the Vercel
 project (it's used only at build time and never shipped). Without it, or if the API doesn't answer, the build still
 succeeds and the panel shows just the current build and "Version history isn't available right now". Run locally,
-the panel always says that, since only the build writes the list. Vercel's Deployment Retention (Project → Settings
-→ Security) must keep production builds forever, or old rows stop opening.
+the panel always says that, since only the build writes the list. **History covers about the last 30 days:**
+the project is on Vercel's Hobby plan, which deletes production builds 30 days after they're made (Deployment
+Retention, Project → Settings → Security), and deleted builds drop out of the list at the next build. Moving the
+project to Pro allows unlimited retention, with no code changes.
 
 **Summaries:** each row's summary is, in order of preference:
 1. its entry in `versions.json` at the repo root (`[{ "sha": "<full commit SHA>", "summary": "..." }]`), used for

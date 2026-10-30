@@ -55,9 +55,8 @@ from where they started. It is a record, not an undo button.
 - **Vercel Authentication is off** for the project (done 2026-10-30, Nathan's call). Every build address is
   viewable by anyone with the link; verified with the Oct 28 build. This also makes branch preview addresses
   public.
-- **Retention:** Vercel's deployment retention for the project must be set so production builds are never
-  deleted. This is a dashboard setting (Project → Settings → Security → Deployment Retention); Nathan sets it or
-  the builder confirms it with him.
+- **Retention:** Vercel's Hobby plan deletes production builds after 30 days and won't allow longer (checked
+  2026-10-30). Nathan chose to ship with a rolling 30-day history; moving to Pro would allow unlimited retention.
 - **Summaries are written per push.** Whoever pushes writes one plain summary line for the build. For the 12
   existing builds, the builder writes the summaries (drafts below, from the mockups) for Nathan to check. A build
   with no summary falls back to its commit's first line.
