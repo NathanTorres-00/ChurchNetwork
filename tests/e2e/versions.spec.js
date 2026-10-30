@@ -30,6 +30,8 @@ test.describe('desktop', () => {
 
   test('pill opens and closes the panel', async ({ page }) => {
     await page.locator('#versions-toggle').click();
+    // screen readers hear the status change from loading to the count
+    await expect(page.locator('.versions-status')).toHaveAttribute('role', 'status');
     await expect(panel(page)).toHaveClass(/is-open/);
     await expect(page.locator('.versions-status')).toHaveText(/^3 builds since Oct 1[56]$/);
     await expect(rows(page)).toHaveCount(3);
@@ -124,6 +126,13 @@ test('missing list shows the note', async ({ page }) => {
   expect(errors).toEqual([]);
 });
 
+test('?controls=0 hides the pill along with Adjust', async ({ page }) => {
+  await serveList(page);
+  await openPage(page, '/hero.html?controls=0');
+  await expect(page.locator('#adjust')).toHaveCount(0);
+  await expect(page.locator('#versions-toggle')).toHaveCount(0);
+});
+
 test('framed builds hide the pill', async ({ page }) => {
   await serveList(page);
   await openPage(page, '/hero.html?framed=versions');
@@ -149,6 +158,8 @@ test.describe('phone', () => {
     expect(box.x).toBe(0);
     expect(box.width).toBe(390);
     await expect(page.locator('.versions-reopen')).toBeVisible();
+    // the tapped row is hidden with the panel, so focus moves to the bar rather than dropping to the page
+    await expect(page.locator('.versions-back')).toBeFocused();
   });
 
   test('phone: Versions in the bar reopens the panel', async ({ page }) => {

@@ -60,6 +60,16 @@ describe('fetchDeployments', () => {
     expect(calls.every(c => c.auth === 'Bearer t')).toBe(true);
   });
 
+  test('fetchDeployments gives up on a request that hangs', async () => {
+    const signals = [];
+    const fetch = async (url, init) => {
+      signals.push(init.signal);
+      return { ok: true, json: async () => ({ deployments: [], pagination: { next: null } }) };
+    };
+    await fetchDeployments({ token: 't', fetch });
+    expect(signals[0]).toBeInstanceOf(AbortSignal);
+  });
+
   test('fetchDeployments rejects without a token or on a non-OK response', async () => {
     await expect(fetchDeployments({ token: '', fetch: async () => ({ ok: true }) })).rejects.toThrow();
     await expect(fetchDeployments({ token: 't', fetch: async () => ({ ok: false, status: 403 }) })).rejects.toThrow(/403/);
@@ -73,5 +83,12 @@ describe('readNotes', () => {
     writeFileSync(path, JSON.stringify([{ sha: 'a', summary: 'One' }, { sha: 'b', summary: 'Two', path: '/hero.html' }]));
     expect(readNotes(path)).toEqual({ a: { summary: 'One' }, b: { summary: 'Two', path: '/hero.html' } });
     expect(readNotes(join(dir, 'missing.json'))).toEqual({});
+  });
+
+  test('a typo in the notes file leaves summaries to the commits instead of failing the build', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'cn-notes-'));
+    const path = join(dir, 'versions.json');
+    writeFileSync(path, '[{ "sha": "a", "summary": "One" },]');
+    expect(readNotes(path)).toEqual({});
   });
 });

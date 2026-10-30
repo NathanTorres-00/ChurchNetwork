@@ -258,7 +258,8 @@ plain summary of what changed. Clicking an earlier build shows that build, live 
 under a dark bar naming it with **Back to current**; the panel stays open so you can step from build to build. The
 live page's globe holds still while it's covered. **Back to current**, the **Current** row, **Close** or **Esc**
 return to the live page. On phones the panel covers the screen and a build opens full screen, with **Versions** in
-its bar to pick another. A build shown in the panel never shows its own Versions pill.
+its bar to pick another. A build shown in the panel never shows its own Versions pill, and embeds that hide the
+Adjust panel (`SHOW_CONTROLS = false` or `?controls=0`) hide the pill too.
 
 **Where the list comes from:** Vercel keeps every build at its own address. At build time,
 `scripts/versions.js` asks the Vercel API for the project's READY production builds (one row per commit, newest

@@ -46,7 +46,10 @@ export async function fetchDeployments({ token, fetch = globalThis.fetch }) {
   const all = [];
   let until = null;
   do {
-    const res = await fetch(until ? `${base}&until=${until}` : base, { headers: { Authorization: `Bearer ${token}` } });
+    const res = await fetch(until ? `${base}&until=${until}` : base, {
+      headers: { Authorization: `Bearer ${token}` },
+      signal: AbortSignal.timeout(15_000),   // a hung API shouldn't hold up the build
+    });
     if (!res.ok) throw new Error(`Vercel API answered ${res.status}`);
     const body = await res.json();
     all.push(...body.deployments);
@@ -57,5 +60,11 @@ export async function fetchDeployments({ token, fetch = globalThis.fetch }) {
 
 export function readNotes(path) {
   if (!existsSync(path)) return {};
-  return Object.fromEntries(JSON.parse(readFileSync(path, 'utf8')).map(({ sha, ...note }) => [sha, note]));
+  try {
+    return Object.fromEntries(JSON.parse(readFileSync(path, 'utf8')).map(({ sha, ...note }) => [sha, note]));
+  } catch (err) {
+    // a typo in a hand-edited file shouldn't stop the site deploying; rows fall back to their commits
+    console.log('versions.json could not be read, so summaries come from commits:', err.message);
+    return {};
+  }
 }

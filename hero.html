@@ -2911,9 +2911,10 @@ const CONTROLS = [
 })();
 </script>
 <script type="module">
-  // Every earlier build of the site, from the pill at the bottom left (versions/versions-panel.js)
+  // Every earlier build of the site, from the pill at the bottom left (versions/versions-panel.js). Embeds that
+  // hide the Adjust panel (SHOW_CONTROLS = false, or ?controls=0) hide this too.
   import { initVersions } from './versions/versions-panel.js';
-  initVersions();
+  if (SHOW_CONTROLS && new URLSearchParams(location.search).get('controls') !== '0') initVersions();
 </script>
 </body>
 </html>

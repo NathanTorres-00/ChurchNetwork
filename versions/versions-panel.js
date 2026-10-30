@@ -44,6 +44,7 @@ export function initVersions({ listUrl = '/versions.json' } = {}) {
   close.type = 'button';
   head.append(el('p', 'versions-title', 'Versions'), close);
   const status = el('p', 'versions-status', 'Loading versions');
+  status.setAttribute('role', 'status');
   const list = el('ol', 'versions-list');
   panel.append(head, status, list);
 
@@ -100,7 +101,10 @@ export function initVersions({ listUrl = '/versions.json' } = {}) {
     url.searchParams.set('framed', 'versions');
     frame.src = url.href;
     stage.hidden = false;
-    if (phone.matches) setOpen(false);
+    if (phone.matches) {
+      setOpen(false);
+      back.focus({ preventScroll: true });   // the row just went away with the panel
+    }
     if (!wasViewing) document.dispatchEvent(new CustomEvent('versions:view'));
   }
 
