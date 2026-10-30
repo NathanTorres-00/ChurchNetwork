@@ -1,7 +1,8 @@
 // The Versions panel: a pill at the bottom left opens a list of every build of the site (newest first), and
 // clicking an earlier build shows it, live, in a frame beside the panel. The list is /versions.json, written by
 // scripts/build-static.js. Showing a build dispatches `versions:view` on document; going back dispatches
-// `versions:current`, so the hero can hold its globe still while it's covered.
+// `versions:current`, so the hero can hold its globe still while it's covered. Comment mode puts the live page
+// back and hides all of this until it closes.
 
 const NOTE_UNAVAILABLE = "Version history isn't available right now";
 
@@ -18,7 +19,14 @@ const el = (tag, cls, text) => {
 
 export function initVersions({ listUrl = '/versions.json' } = {}) {
   const framed = window.self !== window.top || new URLSearchParams(location.search).get('framed') === 'versions';
-  if (framed) return;
+  if (framed) {
+    // Keys pressed inside the frame never reach the page around it, so pass Esc up to the panel
+    window.__versionsFramed = true;
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && window.parent !== window) window.parent.postMessage({ type: 'versions:escape' }, '*');
+    });
+    return;
+  }
 
   const pill = el('button', 'versions-pill');
   pill.id = 'versions-toggle';
@@ -88,7 +96,9 @@ export function initVersions({ listUrl = '/versions.json' } = {}) {
     row.classList.add('is-viewing');
     row.querySelector('.versions-date').append(el('span', 'versions-tag versions-tag-viewing', 'Viewing'));
     label.replaceChildren('Viewing the ', el('b', null, formatDate(version.createdAt)), ' version');
-    frame.src = `${version.href}?framed=versions`;
+    const url = new URL(version.href);
+    url.searchParams.set('framed', 'versions');
+    frame.src = url.href;
     stage.hidden = false;
     if (phone.matches) setOpen(false);
     if (!wasViewing) document.dispatchEvent(new CustomEvent('versions:view'));
@@ -137,4 +147,11 @@ export function initVersions({ listUrl = '/versions.json' } = {}) {
     setOpen(false);
     pill.focus({ preventScroll: true });
   });
+  window.addEventListener('message', e => {
+    if (e.source !== frame.contentWindow || e.data?.type !== 'versions:escape') return;
+    showCurrent();
+    setOpen(false);
+    pill.focus({ preventScroll: true });
+  });
+  document.addEventListener('review:enter', () => { showCurrent(); setOpen(false); });
 }

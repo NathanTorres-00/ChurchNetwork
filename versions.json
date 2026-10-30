@@ -10,5 +10,5 @@
   { "sha": "5775eab179cc1fe41bf282b9cbd02f6bafd04a74", "summary": "Smoother fold-back on the loading screen" },
   { "sha": "1525f6bea2b6509b8caa7856d2c4a7825404a92e", "summary": "Loading screen: a network grows and folds back as the page opens" },
   { "sha": "661f6f742742c3a45fb650d3385058127f96a9b9", "summary": "Hero page opens at the site's main address" },
-  { "sha": "fa669724f960cdf618bdb9e5cb2e2a87d8f9400f", "summary": "First build: the hero page, flat network, globe and pins" }
+  { "sha": "fa669724f960cdf618bdb9e5cb2e2a87d8f9400f", "summary": "First build: the hero page, flat network, globe and pins", "path": "/hero.html" }
 ]

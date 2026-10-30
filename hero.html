@@ -2377,23 +2377,27 @@ const CONTROLS = [
     playing = on;
     if (showControls) document.getElementById('play').textContent = on ? 'Pause globe' : 'Play globe';
   }
-  // Comment mode holds the globe still so reviewers mark up a steady frame, then puts it back as it was
-  let playingBeforeReview = null;
+  // Comment mode holds the globe still so reviewers mark up a steady frame, and so does an earlier build shown
+  // over the page from the Versions panel. Once nothing holds it, it's put back as it was before the first hold.
+  const holds = new Set();
+  let playingBeforeHold = null;
   const markGlobe = () => { document.documentElement.dataset.globe = playing ? 'playing' : 'paused'; };
-  document.addEventListener('review:enter', () => { playingBeforeReview = playing; setPlaying(false); markGlobe(); });
-  document.addEventListener('review:exit', () => {
-    if (playingBeforeReview !== null) setPlaying(playingBeforeReview);
-    playingBeforeReview = null;
+  function hold(reason) {
+    if (!holds.size) playingBeforeHold = playing;
+    holds.add(reason);
+    setPlaying(false);
     markGlobe();
-  });
-  // So does an earlier build shown over the page from the Versions panel
-  let playingBeforeVersions = null;
-  document.addEventListener('versions:view', () => { playingBeforeVersions = playing; setPlaying(false); markGlobe(); });
-  document.addEventListener('versions:current', () => {
-    if (playingBeforeVersions !== null) setPlaying(playingBeforeVersions);
-    playingBeforeVersions = null;
+  }
+  function release(reason) {
+    if (!holds.delete(reason)) return;
+    if (!holds.size && playingBeforeHold !== null) setPlaying(playingBeforeHold);
+    if (!holds.size) playingBeforeHold = null;
     markGlobe();
-  });
+  }
+  document.addEventListener('review:enter', () => hold('review'));
+  document.addEventListener('review:exit', () => release('review'));
+  document.addEventListener('versions:view', () => hold('versions'));
+  document.addEventListener('versions:current', () => release('versions'));
   function restart() {
     t = 0; clock = 0; flightLon = START_LON; flightClock = 0; cruise = 1;
     pins.forEach(p => { p.closing = true; });

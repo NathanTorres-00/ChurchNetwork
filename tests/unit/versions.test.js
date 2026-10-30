@@ -9,7 +9,7 @@ const dep = (sha, created, message = `Subject ${sha}\n\nBody`) =>
 
 describe('summaryOf', () => {
   test('summary prefers the notes file, then a Version line, then the subject', () => {
-    expect(summaryOf('Fix it\n\nVersion: New logo\n\nMore', { a: 'From notes' }, 'a')).toBe('From notes');
+    expect(summaryOf('Fix it\n\nVersion: New logo\n\nMore', { a: { summary: 'From notes' } }, 'a')).toBe('From notes');
     expect(summaryOf('Fix it\n\nVersion: New logo\n\nMore', {}, 'a')).toBe('New logo');
     expect(summaryOf('Fix it\n\nBody', {}, 'a')).toBe('Fix it');
   });
@@ -30,6 +30,13 @@ describe('buildVersionList', () => {
     expect(list).toHaveLength(2);
     expect(list.filter(v => v.current)).toHaveLength(1);
   });
+});
+
+test('a build without a root page opens at the path its notes entry gives', () => {
+  const notes = { a: { summary: 'First build', path: '/hero.html' } };
+  const list = buildVersionList({ deployments: [dep('a', 1), dep('b', 2)], current: null, notes });
+  expect(list[1]).toMatchObject({ href: 'https://cn-a.vercel.app/hero.html', summary: 'First build' });
+  expect(list[0].href).toBe('https://cn-b.vercel.app/');
 });
 
 describe('fetchDeployments', () => {
@@ -63,8 +70,8 @@ describe('readNotes', () => {
   test('readNotes maps sha to summary and tolerates a missing file', () => {
     const dir = mkdtempSync(join(tmpdir(), 'cn-notes-'));
     const path = join(dir, 'versions.json');
-    writeFileSync(path, JSON.stringify([{ sha: 'a', summary: 'One' }, { sha: 'b', summary: 'Two' }]));
-    expect(readNotes(path)).toEqual({ a: 'One', b: 'Two' });
+    writeFileSync(path, JSON.stringify([{ sha: 'a', summary: 'One' }, { sha: 'b', summary: 'Two', path: '/hero.html' }]));
+    expect(readNotes(path)).toEqual({ a: { summary: 'One' }, b: { summary: 'Two', path: '/hero.html' } });
     expect(readNotes(join(dir, 'missing.json'))).toEqual({});
   });
 });

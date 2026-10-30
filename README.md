@@ -271,13 +271,17 @@ the panel always says that, since only the build writes the list. Vercel's Deplo
 
 **Summaries:** each row's summary is, in order of preference:
 1. its entry in `versions.json` at the repo root (`[{ "sha": "<full commit SHA>", "summary": "..." }]`), used for
-   past builds and to correct a summary later;
+   past builds and to correct a summary later. An entry can also give a `path` for a build whose root isn't the
+   hero (the first build, from before `/` served it, has `"path": "/hero.html"`);
 2. a `Version: <summary>` line in the commit message of the push's last commit. Put it **right after the subject
    line**: Vercel keeps only about the first 300 characters of a message;
 3. the commit's subject line.
 
 Every push to `main` should end with a commit carrying a `Version:` line written for overseers, e.g.
 `Version: New Rock Network logo and How we do it section`.
+
+Opening comment mode puts the live page back and hides Versions until comment mode closes. Esc pressed inside a
+shown build reaches the panel for builds from this one on; in older builds, use **Back to current**.
 
 **Comment mode in an old build** uses that build's own code against today's comment backend, so marks made there
 land in the live review.

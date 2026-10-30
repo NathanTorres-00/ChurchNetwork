@@ -78,6 +78,41 @@ test.describe('desktop', () => {
   });
 });
 
+test('comment mode puts the live page back and hides Versions', async ({ page }) => {
+  await serveList(page);
+  await openPage(page);
+  await page.locator('#versions-toggle').click();
+  await rows(page).nth(1).click();
+  await expect(stage(page)).toBeVisible();
+  // the stage covers the header, so this is the keyboard's way in (or anything else that opens comment mode)
+  await page.locator('#comment-toggle').dispatchEvent('click');
+  await expect(page.locator('.rv-toolbar')).toBeVisible();
+  await expect(stage(page)).toBeHidden();
+  await expect(panel(page)).toBeHidden();
+  await expect(page.locator('#versions-toggle')).toBeHidden();
+  // leaving comment mode lets the globe fly again: the two pauses don't trip over each other
+  await expect(page.locator('html')).not.toHaveClass(/rv-gliding/, { timeout: 10_000 });
+  await page.getByRole('button', { name: 'Leave comment mode' }).click();
+  await expect(page.locator('html')).not.toHaveClass(/review-open/, { timeout: 8000 });
+  await expect(page.locator('html')).toHaveAttribute('data-globe', 'playing');
+  await expect(page.locator('#versions-toggle')).toBeVisible();
+});
+
+test('Esc pressed inside a newer framed build returns to current', async ({ page }) => {
+  const framedHero = { ...FIXTURE, versions: FIXTURE.versions.map((v, i) => (i === 1 ? { ...v, href: 'http://127.0.0.1:8792/hero.html' } : v)) };
+  await serveList(page, r => r.fulfill({ json: framedHero }));
+  await openPage(page);
+  await page.locator('#versions-toggle').click();
+  await rows(page).nth(1).click();
+  await expect(stage(page)).toBeVisible();
+  const inner = page.frameLocator('.versions-frame');
+  await expect(inner.locator('body')).toBeVisible();
+  await page.waitForFunction(() => document.querySelector('.versions-frame').contentWindow.__versionsFramed === true);
+  await inner.locator('body').press('Escape');
+  await expect(stage(page)).toBeHidden();
+  await expect(panel(page)).not.toHaveClass(/is-open/);
+});
+
 test('missing list shows the note', async ({ page }) => {
   const errors = [];
   page.on('pageerror', e => errors.push(e.message));

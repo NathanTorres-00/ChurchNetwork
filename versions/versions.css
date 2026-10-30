@@ -85,6 +85,11 @@
   .versions-reopen { display: inline-block; }
 }
 
+/* Comment mode has its own chrome and marks the live page, so Versions steps aside until it closes */
+html.review-open .versions-pill,
+html.review-open .versions-panel,
+html.review-open .versions-stage { display: none; }
+
 @media (prefers-reduced-motion: reduce) {
   .versions-panel, .versions-panel.is-open, .versions-pill { transition: none; }
 }
