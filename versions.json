@@ -1,0 +1,14 @@
+[
+  { "sha": "0681ff291a4184cc96ccae01265b12a51acdfbe3", "summary": "Globe dots take the headline colors, one per generation" },
+  { "sha": "495082a6103e16e4ba3244bf06d623fea9741d17", "summary": "Rock Network logo, \"A New Testament Church Network\" title, How we do it section, new copy" },
+  { "sha": "3dd524e46dadccf56bbc613b271fc71334f9ca15", "summary": "Eraser and size sliders for the Marker" },
+  { "sha": "4d8ca0488b965ce491282c44cb961a7ca3f65ada", "summary": "Marker drawing tool in Comment mode" },
+  { "sha": "a2196d2cc70b5b6ce84301ce0690814a181f1e69", "summary": "Find a hub rows fill on hover; section hidden for now" },
+  { "sha": "2e6cdaab9a1ca55f73898fa42cfdfac1b89e655e", "summary": "Smoother switch into Comment mode" },
+  { "sha": "3fda74349694aa6388cd496f1410a2ca5d2daa3c", "summary": "Comment mode: reviewers can comment, record voice memos, and draw arrows and highlight boxes on the page" },
+  { "sha": "749ad32b3562ae299e18fd9b1fdde9bdddfd5c7c", "summary": "Curved bottom edge on the hero" },
+  { "sha": "5775eab179cc1fe41bf282b9cbd02f6bafd04a74", "summary": "Smoother fold-back on the loading screen" },
+  { "sha": "1525f6bea2b6509b8caa7856d2c4a7825404a92e", "summary": "Loading screen: a network grows and folds back as the page opens" },
+  { "sha": "661f6f742742c3a45fb650d3385058127f96a9b9", "summary": "Hero page opens at the site's main address" },
+  { "sha": "fa669724f960cdf618bdb9e5cb2e2a87d8f9400f", "summary": "First build: the hero page, flat network, globe and pins" }
+]

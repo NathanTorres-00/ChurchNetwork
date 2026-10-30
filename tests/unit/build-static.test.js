@@ -16,6 +16,8 @@ function fixture() {
   put('convex/limits.js', 'export const MAX_TEXT = 2000;');
   put('node_modules/convex/index.js');
   put('docs/notes.md');
+  put('versions/versions-panel.js', 'export {}');
+  put('versions.json', '[{"sha":"a","summary":"S"}]');
   return { root, out: join(root, 'dist') };
 }
 
@@ -40,5 +42,20 @@ describe('buildStatic', () => {
   test('build fails without a Convex URL', () => {
     const { root, out } = fixture();
     expect(() => buildStatic({ root, out, convexUrl: '' })).toThrow();
+  });
+
+  test('build copies versions/ and writes the list', () => {
+    const { root, out } = fixture();
+    const entry = { sha: 'a', href: 'https://x/', createdAt: 1, summary: 'S', current: true };
+    buildStatic({ root, out, convexUrl: 'https://x.convex.cloud', versions: [entry], versionsAvailable: true });
+    expect(existsSync(join(out, 'versions/versions-panel.js'))).toBe(true);
+    expect(JSON.parse(readFileSync(join(out, 'versions.json'), 'utf8'))).toEqual({ versions: [entry], available: true });
+  });
+
+  test('build writes an unavailable list by default', () => {
+    const { root, out } = fixture();
+    buildStatic({ root, out, convexUrl: 'https://x.convex.cloud' });
+    // the repo's versions.json (summary notes) never ships as the list
+    expect(JSON.parse(readFileSync(join(out, 'versions.json'), 'utf8'))).toEqual({ versions: [], available: false });
   });
 });
