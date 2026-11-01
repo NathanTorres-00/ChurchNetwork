@@ -81,7 +81,7 @@ export function ago(ts, now = Date.now()) {
 }
 
 export function createWorkspace({
-  onExit, onShare, beforeToolChange, onToolChange, onSelectCard, onResolve, onDelete, onShowResolved, onSizeChange,
+  onExit, onShare, beforeToolChange, onToolChange, onSelectCard, onResolve, onDelete, onShowResolved, onSizeChange, onCopyForAgent,
 } = {}) {
   let tool = 'comment';
   let statusTimer = 0;
@@ -193,6 +193,8 @@ export function createWorkspace({
   const empty = h('p', { class: 'rv-empty' });
   const showResolvedBox = h('input', { type: 'checkbox', onchange: e => onShowResolved?.(e.target.checked) });
   const showResolvedText = h('span', { text: 'Show resolved' });
+  // At the foot of the thread, once it's been read: every open mark as one task list for a coding agent
+  const copyForAgent = h('button', { class: 'rv-copy-agent', type: 'button', text: 'Copy for agent', onclick: () => onCopyForAgent?.() });
   const composerSlot = h('div', { class: 'rv-composer-slot' });
   const sidebar = h('aside', { class: 'rv-sidebar', 'aria-label': 'Review activity', 'data-review-ui': true, 'data-lenis-prevent': true }, [
     h('div', { class: 'rv-sidebar-head' }, [h('h2', { text: 'Review activity' }), hint]),
@@ -200,7 +202,7 @@ export function createWorkspace({
     composerSlot,
     h('section', { class: 'rv-thread', 'aria-label': 'Thread' }, [
       h('div', { class: 'rv-thread-head' }, [h('h3', { text: 'Thread' }), h('label', { class: 'rv-show-resolved' }, [showResolvedBox, showResolvedText])]),
-      empty, cards,
+      empty, cards, copyForAgent,
     ]),
   ]);
   const tab = h('button', {
@@ -306,6 +308,8 @@ export function createWorkspace({
     empty.textContent = marks.length ? 'Everything here is resolved.' : 'Nothing here yet. Pick a tool on the left and click the page.';
     empty.hidden = shown.length > 0;
     cards.replaceChildren(...shown.map(card));
+    copyForAgent.disabled = !open.length;
+    copyForAgent.title = open.length ? `Copy the ${open.length} open ${open.length === 1 ? 'item' : 'items'} to paste into a chat with a coding agent` : 'Nothing open to copy';
   }
 
   function setMarks(marks, opts = {}) {

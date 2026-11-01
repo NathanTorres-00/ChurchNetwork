@@ -238,3 +238,27 @@ test('nothing remains after exit', async ({ page }) => {
   await expect(page.locator('.rv-marks, .rv-pin, .rv-arrow, .rv-highlight, .rv-drawing')).toHaveCount(0);
   await expect(page.locator('[data-review-ui]')).toHaveCount(0);
 });
+
+test('Copy for agent, at the foot of the thread, copies every open mark as one task list', async ({ page, context }) => {
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+  const button = page.locator('.rv-thread').getByRole('button', { name: 'Copy for agent' });
+  await expect(button).toBeDisabled();
+
+  await seed(page, { text: 'Tighten this section' });
+  await seed(page, { kind: 'arrow', text: 'Move this up', at: undefined, from: { path: '#story', fx: 0.1, fy: 0.1, vw: 1440 }, to: { path: '.hero-title', fx: 0.5, fy: 0.5, vw: 1440 } });
+  const done = await seed(page, { text: 'Already fixed' });
+  await page.evaluate(id => window.__reviewFake.setResolved(id, true, 'test-owner'), done);
+
+  await expect(button).toBeEnabled();
+  // it comes after the last card
+  expect(await page.evaluate(() => document.querySelector('.rv-cards').nextElementSibling?.className)).toBe('rv-copy-agent');
+  await button.click();
+  await expect(page.locator('.rv-toolbar')).toContainText('Copied 2 items for an agent');
+  const copied = await page.evaluate(() => navigator.clipboard.readText());
+  expect(copied).toContain('source file: `hero.html`');
+  expect(copied).toContain('## 1. Comment from Bo\n\n> Tighten this section');
+  expect(copied).toContain('- Points at: "');
+  expect(copied).toContain('## 2. Arrow from Bo\n\n> Move this up');
+  expect(copied).toMatch(/- To: ".+" \(`\.hero-title`\)/);
+  expect(copied).not.toContain('Already fixed');
+});

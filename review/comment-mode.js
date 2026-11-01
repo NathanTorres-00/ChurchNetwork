@@ -1,6 +1,7 @@
 // Comment mode: turns the page into a review workspace where anyone can leave comments, voice memos, arrows
 // and drawings. hero.html loads this module only when someone clicks Comment or opens a ?comment link.
 import { MAX_POINTS, MAX_STROKES } from '../convex/limits.js';
+import { agentBrief } from './agent-brief.js';
 import { rubOut } from './eraser.js';
 import { captureOwnerKey, getDeviceId, getName, getOwnerKey, setName } from './identity.js';
 import { inkWidth } from './ink.js';
@@ -108,6 +109,7 @@ async function open({ page = 'home' } = {}) {
       if (s.selectedId === id) s.selectedId = null;
     }),
     onShowResolved: on => { s.showResolved = on; update(); },
+    onCopyForAgent: () => copyForAgent(s),
     // an arrow not yet posted takes the new width at once
     onSizeChange: (tool, w) => { if (tool === 'arrow' && s.draft?.kind === 'arrow') { s.draft = withWidth(s.draft, w); update(); } },
   });
@@ -362,6 +364,21 @@ async function close() {
     relayout();
   });
   return true;
+}
+
+// The source file each comment mode page is built from, so the agent knows where to look
+const SOURCE = { home: 'hero.html' };
+
+async function copyForAgent(s) {
+  const open = s.marks.filter(m => !m.resolved);
+  if (!open.length) return;
+  const brief = agentBrief(open, { title: 'Church Network — Home', url: location.origin + location.pathname, file: SOURCE[s.page] ?? s.page });
+  try {
+    await navigator.clipboard.writeText(brief);
+    s.workspace.setStatus(`Copied ${open.length} ${open.length === 1 ? 'item' : 'items'} for an agent`, 2400);
+  } catch {
+    s.workspace.setStatus("Couldn't copy. Allow clipboard access for this site, then try again.", 5000);
+  }
 }
 
 async function share() {

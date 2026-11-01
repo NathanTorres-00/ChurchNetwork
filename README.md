@@ -319,6 +319,10 @@ posted. Outside comment mode none of it shows, and nothing for it loads until th
   any window width; if that part of the page is removed, the card says **Moved**.
 - Reviewers type their name once per device. They can delete their own marks.
 - **Share review** copies a link that opens straight into comment mode (`/?comment`).
+- **Copy for agent**, at the foot of the thread, copies every open mark as one Markdown task list to paste into a
+  chat with a coding agent (`review/agent-brief.js`). Each item has the reviewer's words, the text near the mark
+  and the CSS path of its element, the words a highlight covers, and the window width it was made at. Voice memos
+  go in as their title and length only.
 - **Esc** backs out one step: cancels a stroke being drawn, closes the composer, then the tool, then comment
   mode. Leaving with something unsent asks first. While a drawing is posting, new strokes are turned away with a
   short message.

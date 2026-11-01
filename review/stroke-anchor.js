@@ -73,6 +73,17 @@ function nodeAt(pos) {
   return node && pos.o <= node.length ? node : null;
 }
 
+// The words a stretch of text ({ start, end } places) covers now, or null when it can't be found
+export function textOf(text) {
+  const start = text && nodeAt(text.start);
+  const end = start && nodeAt(text.end);
+  if (!end) return null;
+  const range = document.createRange();
+  range.setStart(start, text.start.o);
+  range.setEnd(end, text.end.o);
+  return range.toString();
+}
+
 // Whether a stroke's points (pts) run wider than they are tall: the axis its surrounded points were recorded along
 const isWide = pts => { const b = bounds(fromFlat(pts, { x: 0, y: 0 })); return b.w >= b.h; };
 
