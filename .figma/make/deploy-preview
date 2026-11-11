@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+node scripts/build-static.js
+[[ -d "dist" ]] || {
+  echo "Expected build output at dist" >&2
+  exit 1
+}
+cp "dist/hero.html" "dist/index.html"
+figma make deploy-preview --build-dir "dist"
