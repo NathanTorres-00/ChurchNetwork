@@ -293,6 +293,12 @@ const CONFIG = {
   maxPins: 3,               // most random pins open at once
   pinColor: '#D9D9D9',
 
+  // Sending
+  sendOut: true,            // grown networks send dots out to start new networks
+  sendCount: 3,             // most outer dots a grown network sends out (it sends this many or one fewer)
+  sendDistance: 3,          // how far a sent dot travels, in outer-thread lengths
+  sendDuration: 2.4,        // seconds a sent dot takes to land
+
   // Background
   backdrop: true,           // breathing dot field behind the globe
   backdropSpacing: 22,      // pixels between dots
@@ -377,6 +383,12 @@ const CONTROLS = [
     { key: 'pinDuration', label: 'Random pin stays open', type: 'range', min: 1.5, max: 15, step: 0.5, fmt: v => v.toFixed(1) + 's' },
     { key: 'maxPins', label: 'Most random pins at once', type: 'range', min: 1, max: 8, step: 1, fmt: v => v },
     { key: 'pinColor', label: 'Pin color', type: 'color' },
+  ]},
+  { group: 'Sending', items: [
+    { key: 'sendOut', label: 'Grown networks send out new ones', type: 'check' },
+    { key: 'sendCount', label: 'Dots sent out (up to)', type: 'range', min: 1, max: 6, step: 1, fmt: v => v },
+    { key: 'sendDistance', label: 'Send distance', type: 'range', min: 1, max: 6, step: 0.1, fmt: v => '×' + v.toFixed(1) },
+    { key: 'sendDuration', label: 'Travel time', type: 'range', min: 0.8, max: 6, step: 0.1, fmt: v => v.toFixed(1) + 's' },
   ]},
   { group: 'Background', items: [
     { key: 'backdrop', label: 'Breathing dot background', type: 'check' },
@@ -503,6 +515,8 @@ const CONTROLS = [
   }
   function makeTree(site) {
     site.nodes = buildTree(site.seed);
+    site.launches = [];       // dots this network has sent out (they refer to its nodes)
+    site.sent = false;
     setLocalProjection(site);
   }
 
@@ -540,6 +554,65 @@ const CONTROLS = [
     site.out = 0;
     site.seed = (Math.random() * 1e9) | 0;   // a fresh shape each time it comes around
     makeTree(site);
+  }
+
+  /* ---------- Sending: a grown network sends a few outer dots far outward, each starting a new network ----------
+     A sent dot buds from an outer dot, travels `sendDistance` outer-thread lengths straight out from the
+     network's center with a thread behind it, and becomes the first dot of a new network where it lands.
+     New networks grow and send in turn. They never land on top of another network, and the cap keeps the
+     globe from filling past what reads well; networks that leave the view are removed as they pass. */
+  const SENT_CAP = 80;
+  const ROOT_IN = 1.1;                                 // how long a first dot takes to appear (see draw)
+  // Degrees kept clear around a new network: the same room the fixed networks are given
+  const sendClearance = () => Math.max(cfg.siteSpacing, cfg.networkSize * 1.5);
+
+  function sendOut(site) {
+    site.sent = true;
+    const G = cfg.generations;
+    const dist = cfg.sendDistance * BRANCH * Math.pow(cfg.lengthDecay, G - 1);
+    const clear = sendClearance();
+    let want = Math.max(1, cfg.sendCount - (Math.random() < 0.5 ? 1 : 0));
+    let room = SENT_CAP - sites.filter(s => s.spawned).length;
+    const outer = site.nodes.filter(n => n.gen === G);
+    for (let i = outer.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [outer[i], outer[j]] = [outer[j], outer[i]];
+    }
+    const taken = [];
+    for (const n of outer) {
+      if (want <= 0 || room <= 0) break;
+      const a = Math.atan2(n.y, n.x);
+      const tx = n.x + Math.cos(a) * dist, ty = n.y + Math.sin(a) * dist;
+      const ll = site.local.invert([tx, ty]);
+      if (!ll || Math.abs(ll[1]) > 75) continue;
+      const near = o => d3.geoDistance(o, ll) / DEG < clear;
+      // Clear of every growing network (the sender aside) and of dots already on their way elsewhere
+      if (taken.some(near) || sites.some(o => (o !== site && o.state === 'active' && near(o.ll))
+        || o.launches.some(L => !L.child && near(L.ll)))) continue;
+      taken.push(ll);
+      site.launches.push({
+        from: n, tx, ty, ll, st: {}, child: null,
+        bow: (Math.random() < 0.5 ? -1 : 1) * (0.5 + Math.random() * 0.5),
+        t0: t + Math.random() * 0.8,
+      });
+      want--; room--;
+    }
+  }
+
+  function land(launch) {
+    const child = {
+      ll: launch.ll, seed: (Math.random() * 1e9) | 0, angle: Math.random() * 360,
+      // Started as if its first dot were already in, so the landing dot carries straight on as it
+      state: 'active', start: t - ROOT_IN, out: 0, nodes: null, spawned: true,
+    };
+    makeTree(child);
+    // The new network takes over nearby fixed spots: they stay empty while it's there
+    const clear = sendClearance();
+    for (const s of sites) {
+      if (s.state === 'dormant' && d3.geoDistance(s.ll, child.ll) / DEG < clear) s.claimed = child;
+    }
+    sites.push(child);
+    launch.child = child;
   }
 
   /* ---------- Canvas + projection ---------- */
@@ -662,6 +735,8 @@ const CONTROLS = [
     const CA = Math.acos(1 / altitude()) / DEG;
     const netR = cfg.networkSize * 1.15;
     const band = view.horizonY + (H - view.horizonY) * cfg.revealLine;
+    const T = siteTiming();
+    let removed = false;
     for (const s of sites) {
       const d = d3.geoDistance(s.ll, flight.center) / DEG;
       const p = proj(s.ll);
@@ -671,6 +746,8 @@ const CONTROLS = [
       s.drawable = d < CA + netR && p && p[1] > -H;
 
       if (s.state === 'dormant') {
+        if (s.claimed && !s.claimed.gone) continue;
+        s.claimed = null;
         if (onScreen && p[1] > band) {
           s.state = 'active';
           s.start = !playing && reduceMotion ? -1e3
@@ -681,7 +758,19 @@ const CONTROLS = [
       }
       // `out` is time with no dot of this network on screen; draw() zeroes it while any dot is visible
       if (playing && t > s.start) s.out += dt;
-      if (cfg.resetWhenPassed && s.out > 2.5) resetSite(s);
+      if (cfg.resetWhenPassed && s.out > 2.5) {
+        // Sent-out networks have no fixed spot to come back to, so they're removed as they pass
+        if (s.spawned) { s.gone = removed = true; continue; }
+        resetSite(s);
+        continue;
+      }
+      if (!playing) continue;
+      if (cfg.sendOut && !s.sent && t - s.start > T.growEnd + T.rest) sendOut(s);
+      for (const L of s.launches) if (!L.child && t - L.t0 >= cfg.sendDuration) land(L);
+    }
+    if (removed) {
+      sites = sites.filter(s => !s.gone);
+      for (const s of sites) s.launches = s.launches.filter(L => !(L.child && L.child.gone));
     }
   }
 
@@ -803,6 +892,34 @@ const CONTROLS = [
       live.push(site);
     }
 
+    // Sent dots in flight, and the threads that follow them out (a thread stays once its dot has landed)
+    const flying = [], sendThreads = [];
+    for (const site of live) {
+      const inv = site.local.invert;
+      for (const L of site.launches) {
+        const fs = L.from.st;
+        if (!fs.vis || t < L.t0) continue;
+        const p = clamp((t - L.t0) / cfg.sendDuration), e = E(p);
+        const dx = L.tx - fs.x, dy = L.ty - fs.y, kb = cfg.curvature * L.bow;
+        L.x0 = fs.x; L.y0 = fs.y;
+        L.cx = (fs.x + L.tx) / 2 - dy * kb; L.cy = (fs.y + L.ty) / 2 + dx * kb;
+        L.move = e;
+        sendThreads.push({ L, inv });
+        if (L.child) continue;                          // landed: the new network draws the dot
+        const s = L.st;
+        s.vis = true;
+        s.x = bez(L.x0, L.cx, L.tx, e); s.y = bez(L.y0, L.cy, L.ty, e);
+        s.ll = inv([s.x, s.y]);
+        s.rd = lerp(L.from.r, cfg.dotSize, e) * k;      // swells from an outer dot to a first dot
+        s.ring = E(clamp((p - 0.6) / 0.4)) * E(clamp((ROOT_IN - 0.5) / 0.9));
+        s.frame = d3.geoDistance(s.ll, flight.center) < horizonRad ? surfaceFrame(s.ll) : null;
+        if (!s.frame) continue;
+        flying.push(s);
+        const f = s.frame;
+        if (f[4] > -60 && f[4] < W + 60 && f[5] > -60 && f[5] < H + 60) site.out = 0;
+      }
+    }
+
     // 1. Threads, sampled along the bow and laid on the sphere (clipped at the horizon)
     lctx.beginPath();
     for (const site of live) {
@@ -819,6 +936,15 @@ const CONTROLS = [
         lpath({ type: 'LineString', coordinates: coords });
       }
     }
+    for (const { L, inv } of sendThreads) {
+      const m = Math.max(4, Math.ceil(36 * L.move));
+      const coords = [];
+      for (let i = 0; i <= m; i++) {
+        const u = L.move * i / m;
+        coords.push(inv([bez(L.x0, L.cx, L.tx, u), bez(L.y0, L.cy, L.ty, u)]));
+      }
+      lpath({ type: 'LineString', coordinates: coords });
+    }
     lctx.lineCap = 'round'; lctx.lineJoin = 'round';
     lctx.lineWidth = cfg.lineWidth; lctx.strokeStyle = cfg.lineColor;
     lctx.stroke();
@@ -830,8 +956,9 @@ const CONTROLS = [
     // 2. Clear a halo around every dot so threads stop short of the ring
     lctx.globalCompositeOperation = 'destination-out';
     lctx.beginPath();
-    for (const site of live) for (const n of site.nodes) {
-      const s = n.st;
+    const haloDots = [];
+    for (const site of live) for (const n of site.nodes) haloDots.push(n.st);
+    for (const s of haloDots.concat(flying)) {
       if (!s.vis || !s.frame) continue;
       const halo = s.rd * (1 + cfg.ringGap + (cfg.ring ? cfg.ringWidth * s.ring : 0)) * 1.04;
       onSurface(s.frame);
@@ -843,31 +970,35 @@ const CONTROLS = [
     lctx.globalCompositeOperation = 'source-over';
 
     // 3. Dots and rings
+    const paintDot = (s, color) => {
+      lctx.fillStyle = color;
+      lctx.globalAlpha = 1;
+      onSurface(s.frame);
+      lctx.beginPath();
+      lctx.arc(0, 0, s.rd, 0, TAU);
+      lctx.fill();
+      if (cfg.ring && s.ring > 0) {
+        const wR = s.rd * cfg.ringWidth * s.ring;
+        const mid = lerp(s.rd, s.rd * (1 + cfg.ringGap) + (s.rd * cfg.ringWidth) / 2, s.ring);
+        const ro = mid + wR / 2, ri = Math.max(0, mid - wR / 2);
+        lctx.globalAlpha = s.ring;
+        lctx.beginPath();
+        lctx.arc(0, 0, ro, 0, TAU);
+        lctx.moveTo(ri, 0);
+        lctx.arc(0, 0, ri, 0, TAU);
+        lctx.fill('evenodd');
+      }
+    };
     for (const site of live) {
       for (let i = site.nodes.length - 1; i >= 0; i--) {
         const s = site.nodes[i].st;
         if (!s.vis || !s.frame || s.rd <= 0) continue;
         // A pinned dot deepens toward the new-dot color while its pin is up
         const tint = Math.max(s.newborn, pinned.get(site.nodes[i]) || 0);
-        lctx.fillStyle = tint > 0 ? mix(cfg.dotColor, cfg.newbornColor, tint) : cfg.dotColor;
-        lctx.globalAlpha = 1;
-        onSurface(s.frame);
-        lctx.beginPath();
-        lctx.arc(0, 0, s.rd, 0, TAU);
-        lctx.fill();
-        if (cfg.ring && s.ring > 0) {
-          const wR = s.rd * cfg.ringWidth * s.ring;
-          const mid = lerp(s.rd, s.rd * (1 + cfg.ringGap) + (s.rd * cfg.ringWidth) / 2, s.ring);
-          const ro = mid + wR / 2, ri = Math.max(0, mid - wR / 2);
-          lctx.globalAlpha = s.ring;
-          lctx.beginPath();
-          lctx.arc(0, 0, ro, 0, TAU);
-          lctx.moveTo(ri, 0);
-          lctx.arc(0, 0, ri, 0, TAU);
-          lctx.fill('evenodd');
-        }
+        paintDot(s, tint > 0 ? mix(cfg.dotColor, cfg.newbornColor, tint) : cfg.dotColor);
       }
     }
+    for (const s of flying) if (s.rd > 0) paintDot(s, cfg.newbornColor);
     lctx.globalAlpha = 1;
     lctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 

@@ -137,6 +137,21 @@ network and position. Swap the IDs (or change `photoUrl`) to use real photos.
 | `maxPins` | Most random pins open at once. Random pins favor dots near the middle of the view, keep clear of other pins, never repeat a photo already showing, and don't open while the globe is paused for a hover. With a high rate, this cap and the need for a good spot can mean fewer pins than the rate asks for. |
 | `pinColor` | Pin frame color. |
 
+**Sending** (the Adjust panel's Sending group): once a network reaches its last generation, it sends 2 or 3 of
+its outer dots far outward, three times the length of an outer thread by default. Each one buds from its outer
+dot in the new-dot color and travels straight out from the network's center with a long thread behind it,
+swelling as it goes. Where it lands it becomes the first dot of a new network the same size as the one that sent it.
+The thread stays connected, and the new network grows, then sends out dots of its own. The networks already placed on
+the globe stay; a new network only lands where no other network is growing, takes over the fixed spots around
+it, and is removed after it passes out of view (up to 80 at once). Sent networks have photo pins like any other.
+
+| Parameter | What it does |
+|-----------|--------------|
+| `sendOut` | Grown networks send out new ones (on by default; `?sendOut=0` turns it off). |
+| `sendCount` | Most dots a grown network sends out; it sends this many or one fewer, where there's room. |
+| `sendDistance` | How far a sent dot travels, in outer-thread lengths (3 by default). |
+| `sendDuration` | Seconds a sent dot takes to land. |
+
 **Background** (the Adjust panel's Background group): a breathing dot field behind the globe that sets it apart from
 the page. The dots swell and fade in slow waves rippling out from the horizon, and drift more slowly than the ground
 as the camera flies, so the globe reads as sitting in front of them. The horizon fade clears them softly around the
