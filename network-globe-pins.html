@@ -292,6 +292,14 @@ const CONFIG = {
   pinDuration: 5,           // seconds a random pin stays open
   maxPins: 3,               // most random pins open at once
   pinColor: '#D9D9D9',
+
+  // Background
+  backdrop: true,           // breathing dot field behind the globe
+  backdropSpacing: 22,      // pixels between dots
+  backdropDotSize: 1.3,     // dot radius in pixels
+  backdropBreath: 0.65,     // how strongly the dots swell and fade in waves
+  backdropDepth: 0.35,      // how much the field drifts with the flight (parallax)
+  backdropColor: '#C4C4CA',
 };
 
 // Placeholder photos (Unsplash). Each dot gets one, chosen by its network and position.
@@ -369,6 +377,14 @@ const CONTROLS = [
     { key: 'pinDuration', label: 'Random pin stays open', type: 'range', min: 1.5, max: 15, step: 0.5, fmt: v => v.toFixed(1) + 's' },
     { key: 'maxPins', label: 'Most random pins at once', type: 'range', min: 1, max: 8, step: 1, fmt: v => v },
     { key: 'pinColor', label: 'Pin color', type: 'color' },
+  ]},
+  { group: 'Background', items: [
+    { key: 'backdrop', label: 'Breathing dot background', type: 'check' },
+    { key: 'backdropSpacing', label: 'Dot spacing', type: 'range', min: 10, max: 48, step: 1, fmt: v => v + 'px' },
+    { key: 'backdropDotSize', label: 'Dot size', type: 'range', min: 0.5, max: 3, step: 0.1, fmt: v => v.toFixed(1) + 'px' },
+    { key: 'backdropBreath', label: 'Breathing', type: 'range', min: 0, max: 1, step: 0.01, fmt: pct },
+    { key: 'backdropDepth', label: 'Parallax drift', type: 'range', min: 0, max: 1, step: 0.01, fmt: pct },
+    { key: 'backdropColor', label: 'Dot color', type: 'color' },
   ]},
 ];
 
@@ -673,6 +689,34 @@ const CONTROLS = [
   let shownStatus = '';
   const statusEl = showControls ? document.getElementById('status') : null;
 
+  // Breathing dot field behind the globe. It drifts more slowly than the ground (parallax) and swells
+  // in slow waves rippling out from the horizon, so the globe reads as sitting in front of it.
+  // Dots are batched into a few brightness levels so each frame is a handful of fills.
+  const BACKDROP_LEVELS = 10;
+  function drawBackdrop(W, H) {
+    const s = Math.max(8, cfg.backdropSpacing), r0 = cfg.backdropDotSize, B = cfg.backdropBreath;
+    const px = flightLon * 6 * cfg.backdropDepth, py = flight.lat * 3 * cfg.backdropDepth;
+    const ox = ((-px % s) + s) % s, oy = ((py % s) + s) % s;
+    const cx = (W - view.insetR) / 2, cy = view.horizonY;
+    const reach = Math.hypot(Math.max(cx, W - cx), Math.max(cy, H - cy)) || 1;
+    const paths = Array.from({ length: BACKDROP_LEVELS }, () => new Path2D());
+    for (let y = oy - s; y < H + s; y += s) {
+      for (let x = ox - s; x < W + s; x += s) {
+        const d = Math.hypot(x - cx, y - cy);
+        const wave = 0.5 + 0.5 * Math.sin(clock * 0.8 - d * 0.011)
+          * (0.75 + 0.25 * Math.sin(clock * 0.31 + x * 0.004 - y * 0.003));
+        // Brighter near the globe, quieter toward the corners
+        const level = (1 - B + B * wave) * (1 - 0.5 * Math.min(1, d / reach));
+        const r = r0 * (0.6 + 0.6 * level);
+        const p = paths[Math.min(BACKDROP_LEVELS - 1, Math.round(level * (BACKDROP_LEVELS - 1)))];
+        p.moveTo(x + r, y); p.arc(x, y, r, 0, TAU);
+      }
+    }
+    ctx.fillStyle = cfg.backdropColor;
+    paths.forEach((p, i) => { ctx.globalAlpha = 0.15 + 0.85 * i / (BACKDROP_LEVELS - 1); ctx.fill(p); });
+    ctx.globalAlpha = 1;
+  }
+
   function draw() {
     const W = view.w, H = view.h, dpr = view.dpr;
     const E = EASE[cfg.easing] || EASE.sine;
@@ -685,6 +729,7 @@ const CONTROLS = [
 
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, W, H);
+    if (cfg.backdrop) drawBackdrop(W, H);
 
     // Globe
     ctx.beginPath(); path(SPHERE);

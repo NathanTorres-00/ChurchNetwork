@@ -137,6 +137,19 @@ network and position. Swap the IDs (or change `photoUrl`) to use real photos.
 | `maxPins` | Most random pins open at once. Random pins favor dots near the middle of the view, keep clear of other pins, never repeat a photo already showing, and don't open while the globe is paused for a hover. With a high rate, this cap and the need for a good spot can mean fewer pins than the rate asks for. |
 | `pinColor` | Pin frame color. |
 
+**Background** (the Adjust panel's Background group): a breathing dot field behind the globe that sets it apart from
+the page. The dots swell and fade in slow waves rippling out from the horizon, and drift more slowly than the ground
+as the camera flies, so the globe reads as sitting in front of them. The horizon fade clears them softly around the
+globe's edge. It holds still when paused or with "reduce motion" on.
+
+| Parameter | What it does |
+|-----------|--------------|
+| `backdrop` | Show the dot field (on by default; `?backdrop=0` turns it off). |
+| `backdropSpacing`, `backdropDotSize` | Pixels between dots, and dot radius. |
+| `backdropBreath` | How strongly the dots swell and fade (0 = still). |
+| `backdropDepth` | How much the field drifts with the flight (parallax; 0 = fixed). |
+| `backdropColor` | Dot color. |
+
 All the globe parameters apply as well.
 
 ---
