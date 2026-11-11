@@ -2,4 +2,17 @@
 set -euo pipefail
 
 npm run dev:config
-exec python3 -m http.server "$PORT" --bind 0.0.0.0
+
+serve_dir="/tmp/figma-make-static"
+rm -rf "$serve_dir"
+mkdir -p "$serve_dir"
+
+for page in ./*.html; do
+  ln -s "$PWD/${page#./}" "$serve_dir/${page#./}"
+done
+for path in assets review versions convex; do
+  ln -s "$PWD/$path" "$serve_dir/$path"
+done
+ln -s "$PWD/hero.html" "$serve_dir/index.html"
+
+exec python3 -m http.server "$PORT" --bind 0.0.0.0 --directory "$serve_dir"
