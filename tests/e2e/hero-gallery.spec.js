@@ -16,10 +16,17 @@ async function chooseArt(page, art) {
   await page.locator(`.layout-picker [data-art="${art}"]`).click();
 }
 
-test('pins is the default art', async ({ page }) => {
+test('the gallery is the default art', async ({ page }) => {
+  await openPage(page);
+  await expect(page.locator('.hero')).toHaveAttribute('data-art', 'gallery');
+  await expect.poll(() => galleryState(page)).toEqual({ playing: true, running: true });
+  await expect(page.locator('#canvas')).toBeHidden();
+});
+
+test('the pins globe never loads the gallery engine', async ({ page }) => {
   const engine = [];
   page.on('request', r => { if (r.url().endsWith('/assets/network-gallery.js')) engine.push(r.url()); });
-  await openPage(page);
+  await openPage(page, '/hero.html?heroArt=pins');
   await expect(page.locator('.hero')).toHaveAttribute('data-art', 'pins');
   await page.waitForTimeout(3000);
   expect(engine).toEqual([]);
@@ -28,7 +35,7 @@ test('pins is the default art', async ({ page }) => {
 
 test('switching art to Gallery and back works without errors', async ({ page }) => {
   const errors = watchErrors(page);
-  await openPage(page);
+  await openPage(page, '/hero.html?heroArt=pins');
   await chooseArt(page, 'gallery');
   await expect(page.locator('.hero')).toHaveAttribute('data-art', 'gallery');
   await expect(page.locator('#gallery-canvas')).toBeVisible();
@@ -49,7 +56,7 @@ test('switching art to Gallery and back works without errors', async ({ page }) 
 });
 
 test('switching art quickly leaves one art running', async ({ page }) => {
-  await openPage(page);
+  await openPage(page, '/hero.html?heroArt=pins');
   await page.locator('#adjust').click();
   await page.evaluate(() => {
     const b = a => document.querySelector(`.layout-picker [data-art="${a}"]`);
@@ -88,15 +95,15 @@ test('comment mode holds the gallery still', async ({ page }) => {
   await expect(page.locator('html')).toHaveAttribute('data-globe', 'paused');
 });
 
-test('reset returns to the pins globe', async ({ page }) => {
+test('reset returns to the default art, the gallery', async ({ page }) => {
   const errors = watchErrors(page);
   await openPage(page);
-  await chooseArt(page, 'gallery');
-  await expect.poll(() => galleryState(page)).toEqual({ playing: true, running: true });
-  await page.locator('#reset').click();
-  await expect(page.locator('.hero')).toHaveAttribute('data-art', 'pins');
+  await chooseArt(page, 'pins');
   await expect(page.locator('#canvas')).toBeVisible();
-  expect((await galleryState(page)).running).toBe(false);
+  await page.locator('#reset').click();
+  await expect(page.locator('.hero')).toHaveAttribute('data-art', 'gallery');
+  await expect(page.locator('#canvas')).toBeHidden();
+  await expect.poll(() => galleryState(page)).toEqual({ playing: true, running: true });
   expect(errors).toEqual([]);
 });
 
