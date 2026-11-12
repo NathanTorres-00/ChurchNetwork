@@ -246,3 +246,23 @@ test.describe('on a phone', () => {
     expect(open).toEqual([]);
   });
 });
+
+test('reduced motion shows a still gallery', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await openPage(page, '/hero.html?heroArt=gallery');
+  await expect.poll(() => page.evaluate(() => !!window.__heroGallery?.running)).toBe(true);
+  await page.waitForTimeout(5000);
+  expect((await galleryState(page)).playing).toBe(false);
+  expect((await page.evaluate(() => window.__heroGallery.debug().open)).filter(o => o.kind === 'auto')).toEqual([]);
+  // hovering a dot away from the copy still opens it
+  const spot = await page.evaluate(() => {
+    const q = window.__heroQuiet(), g = document.getElementById('gallery-canvas').getBoundingClientRect();
+    const d = window.__heroGallery.debug().dots
+      .filter(d => d.r > 12 && d.y > 120 && d.y < g.height - 120 && d.x > 40 && d.x < g.width - 40)
+      .find(d => ((d.x - q.cx) / (q.rx + d.r)) ** 2 + ((d.y - q.cy) / (q.ry + d.r)) ** 2 > 1.2);
+    return d && { x: d.x + g.left, y: d.y + g.top };
+  });
+  expect(spot).toBeTruthy();
+  await page.mouse.move(spot.x, spot.y);
+  await expect.poll(async () => (await page.evaluate(() => window.__heroGallery.debug().open)).some(o => o.kind === 'hover')).toBe(true);
+});

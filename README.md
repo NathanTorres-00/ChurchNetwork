@@ -182,7 +182,7 @@ turning into view, which is what carries the sense of how big the network is.
 - **Hover.** A hovered dot opens larger (`hoverSize`) and stays open as long as the cursor is on it. New automatic
   openings pause meanwhile (`pauseAutoOnHover`), and the globe eases to a stop so the dot stays under the cursor
   (`slowOnHover`). On touch screens a tap opens a dot for a few seconds.
-- **Photos.** Placeholder Unsplash landscapes for now (`PHOTOS` near the top of the file). Swap in photos of the
+- **Photos.** Placeholder Unsplash landscapes for now (`PHOTO_IDS` in `assets/network-gallery.js`). Swap in photos of the
   network's house churches and campuses when they're ready; any image works, cropped to a circle.
 - **Built with** Canvas 2D and d3's satellite projection (`d3.geoSatellite`), so the grid bends with real
   perspective. The **Adjust** panel works like the other pages: Camera (spin, zoom, camera distance, tilt), Globe
@@ -208,6 +208,9 @@ turning into view, which is what carries the sense of how big the network is.
   - `lineStyle`: `arc` (bow set by `arch`), `straight`, `s` (S-curve) or `grid` (traces the grid through the empty
     crossing between two diagonal dots). Sent-out lines have their own bow, `sentArch`.
   - Photo openings and hover work the same in both modes, on dots that have fully grown in.
+- **Shared engine.** The drawing and motion live in `assets/network-gallery.js` (an ES module), which the hero also
+  uses for its Gallery art. The page keeps its own CONFIG, panel and keys; the panel's controls come from the
+  module's `GALLERY_CONTROLS`.
 
 ---
 
@@ -219,6 +222,31 @@ turning into view, which is what carries the sense of how big the network is.
    ("Multiplying Disciples / Leaders / Churches / Movements", each word in its own color), and **Learn more**
    (scrolls to section 2) and **Start a group** (links nowhere for now). The one-line statement under them is hidden for
    now (one CSS line in `hero.html` brings it back).
+
+   **Art: Pins globe or Gallery.** The Adjust panel's **Hero layout** section has an **Art** row: **Pins globe** (the
+   default, `heroArt: 'pins'`) or **Gallery** (`heroArt: 'gallery'`, or `?heroArt=gallery`), the close-up gallery
+   globe from the Gallery tab. Only the chosen art runs; the panel shows its settings ("Globe: …" or "Gallery: …"),
+   and **Pause globe** / **Restart globe** act on it. The Gallery's engine loads the first time it's chosen, so the
+   Pins hero loads exactly as before. Its settings are the Gallery tab's, prefixed `gallery` (`gallerySpin`,
+   `galleryZoom`, …), calmer by default (at most 2 photos open, one every 3.5 s, growth starting **In view**), and
+   **Copy settings** includes them. In Gallery mode:
+   - **Quiet centre.** An ellipse round the copy (sized to the widest headline word, plus `galleryQuietPadX` /
+     `galleryQuietPadY`) where dots shrink to specks (`galleryQuietDotScale`) and network lines fade out
+     (`galleryQuietLineAlpha`) across a soft edge (`galleryQuietSoftness`). It replaces the white fade. No photo
+     opens in it, or drifts into it, and hovering or tapping the copy never opens one. **Show quiet centre
+     outline** (`galleryShowQuiet`) draws it while tuning.
+   - **Photos around the heading** (`galleryHalo`): automatic photos open in a ring `galleryHaloWidth` px wide just
+     outside the quiet centre, below the header and above the hero's straight bottom edge (so the curve never
+     clips one). Because the ground travels right to left, most open on the left and drift away from the copy.
+   - **Lines take the headline colour** (`galleryWordColor`): a network line that's drawing out takes the colour of
+     the word in the headline, then eases back to the line colour over `galleryColorSettle` seconds. It shows only
+     while networks are growing. The headline announces each word with a `heroword` event on `document`
+     (`{ index, color, phase: 'typing' | 'shown' | 'deleting' }`).
+   - **First photo** waits until the first word has been typed (or rotated in); with Stacked it opens 2 s after the
+     page opens.
+   - **Phones** (≤ 640 px): photos open only above and below the copy, or not at all
+     (`galleryPhoneOpenings: 'off'`). A touch that moves is a scroll, not a tap.
+   - **Reduced motion:** a still view; hovering still opens dots.
 2. **What is a New Testament Church Network?:** rounded video box (placeholder image and play button; no video yet).
 3. **How we got started:** a four-step timeline from one local church to a global movement. The milestone dots
    grow and step through the four headline colors.
