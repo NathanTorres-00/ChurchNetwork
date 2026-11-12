@@ -1343,7 +1343,7 @@ const CONFIG = {
   galleryHoverSize: 2.9,           // a hovered dot's size, relative to its dot
   galleryPauseAutoOnHover: true,   // no new automatic openings while a dot is hovered
   gallerySlowOnHover: true,        // the globe eases to a stop while a dot is hovered, so it stays under the cursor
-  galleryEdgeRoom: 98,             // automatic openings stay at least this many pixels inside the view
+  galleryEdgeRoom: 40,             // automatic openings stay at least this many pixels inside the view
 
   // Gallery: quiet centre around the copy
   galleryQuietPadX: 40,             // px added left and right of the copy before the ellipse is drawn round it
@@ -2676,7 +2676,50 @@ function heroGalleryGroups(GALLERY_CONTROLS) {
     const open = panel && panel.classList.contains('is-open');
     return { r: open && !mobileMq.matches ? panel.offsetWidth : 0, b: open && mobileMq.matches ? panel.offsetHeight : 0 };
   }
-  function measureQuiet() {}                       // the quiet centre (filled in below)
+  /* The quiet centre: an ellipse round the copy (the headline sized to its widest word, the buttons, the word dots),
+     drawn through the corners of the copy's box grown by galleryQuietPad*. Re-measured at most twice a second as it's
+     used, and at once when the layout changes, so it follows resizes, the loading screen and the typed slot's glide. */
+  let quietCache = null, quietAt = -1e9, copyRects = [];
+  function measureQuiet() {
+    quietAt = performance.now();
+    if (cfg.heroArt !== 'gallery') { quietCache = null; copyRects = []; return; }
+    const cr = heroCopy.getBoundingClientRect(), g = galleryCanvas.getBoundingClientRect();
+    copyRects = heroTextRects('strict');
+    const inCopy = copyRects.filter(b => {
+      const x = (b.left + b.right) / 2, y = (b.top + b.bottom) / 2;
+      return x >= cr.left && x <= cr.right && y >= cr.top && y <= cr.bottom;
+    });
+    if (!inCopy.length) { quietCache = null; return; }
+    const L = Math.min(...inCopy.map(b => b.left)), R = Math.max(...inCopy.map(b => b.right));
+    const T = Math.min(...inCopy.map(b => b.top)), B = Math.max(...inCopy.map(b => b.bottom));
+    // The padded box's proportions, scaled just enough to hold every line: the padding shows above, below and beside
+    // the copy, and the corners of the text sit on the ellipse (an ellipse through the padded box's corners is far
+    // wider than the text and leaves photos no room)
+    const px = cfg.galleryQuietPadX, py = cfg.galleryQuietPadY;
+    const cx = (L + R) / 2, cy = (T + B) / 2, hw = (R - L) / 2 + px, hh = (B - T) / 2 + py;
+    let k = 1;
+    for (const b of inCopy) for (const x of [b.left, b.right]) for (const y of [b.top, b.bottom]) k = Math.max(k, Math.hypot((x - cx) / hw, (y - cy) / hh));
+    quietCache = { cx: cx - g.left, cy: cy - g.top, rx: k * hw, ry: k * hh };
+  }
+  const quietEllipse = () => { if (performance.now() - quietAt > 500) measureQuiet(); return quietCache; };
+  window.__heroQuiet = quietEllipse;
+
+  // Hovering or tapping the copy (or the header) never opens a dot
+  function overCopy(x, y) {
+    const g = galleryCanvas.getBoundingClientRect(), px = x + g.left, py = y + g.top;
+    return copyRects.some(b => px >= b.left && px <= b.right && py >= b.top && py <= b.bottom);
+  }
+
+  /* The first photo waits for the first headline word to finish (its 'shown' after the loading screen opens);
+     Stacked never announces a word, so it opens 2 s after the page opens. 6 s is only a safety net for Typed and
+     Rotating. Nothing opens behind the loading screen. */
+  let firstShown = false, openedAt = document.documentElement.classList.contains('is-loading') ? null : performance.now();
+  window.addEventListener('page:revealed', () => { openedAt = performance.now(); }, { once: true });
+  const autoGate = () => firstShown || (openedAt != null && performance.now() - openedAt > (cfg.heroLayout === 'stacked' ? 2000 : 6000));
+  document.addEventListener('heroword', e => {
+    if (e.detail.phase === 'shown' && !document.documentElement.classList.contains('is-loading')) firstShown = true;
+    if (gallery) gallery.setWordColor(e.detail.color);
+  });
 
   function ensureGallery() {
     if (!galleryLoading) galleryLoading = import('./assets/network-gallery.js').then(m => {
@@ -2686,6 +2729,15 @@ function heroGalleryGroups(GALLERY_CONTROLS) {
         cfg: m.prefixedConfig(cfg, 'gallery'),
         photos: m.PHOTO_IDS.map(m.photoUrl),
         insets: panelInsets,
+        quiet: quietEllipse,
+        viewTop: () => {                               // below the header's logo and links
+          const hd = document.querySelector('.site-header');
+          return hd ? hd.getBoundingClientRect().bottom - galleryCanvas.getBoundingClientRect().top : 0;
+        },
+        viewBottom: () => heroEl.offsetHeight,        // the straight edge; the curve below it would clip a photo
+        hoverBlocked: overCopy,
+        autoGate,
+        tapSlop: 8,
       });
       gallery.setPlaying(playing);
       window.__heroGallery = gallery;
@@ -2719,6 +2771,7 @@ function heroGalleryGroups(GALLERY_CONTROLS) {
     if (heroOnScreen) g.start();
     requestAnimationFrame(() => {
       galleryCanvas.classList.add('is-ready');
+      window.dispatchEvent(new Event('globe:populated'));   // the loading screen can open (the Pins globe would say so itself)
       (document.fonts ? document.fonts.ready : Promise.resolve()).then(() => g.loadPhotos());   // after the heading's first paint
     });
   }
@@ -2767,6 +2820,7 @@ function heroGalleryGroups(GALLERY_CONTROLS) {
     slot.insertBefore(el, cursorEl);
     slot.style.width = el.getBoundingClientRect().width + 'px';
     wordIndex = i; markWord();
+    emitWord('shown');
   }
   function rotateLoop() {
     rotateAt = performance.now() + cfg.wordHold * 1000;
@@ -2811,6 +2865,11 @@ function heroGalleryGroups(GALLERY_CONTROLS) {
     if (phase === 'pausing') return left + full / cfg.typeSpeed + cfg.wordHold + full * del + pause;
     return (full - len) / cfg.typeSpeed + cfg.wordHold + full * del + pause;   // typing
   }
+  // Tells the page (the Gallery's line colour) which word the headline is on: 'typing', 'shown' or 'deleting'
+  function emitWord(phase) {
+    const color = getComputedStyle(document.documentElement).getPropertyValue(WORDS[wordIndex].color).trim();
+    document.dispatchEvent(new CustomEvent('heroword', { detail: { index: wordIndex, color, phase } }));
+  }
   function deleteStep() {
     const s = typedEl.textContent;
     if (!s) {
@@ -2820,13 +2879,15 @@ function heroGalleryGroups(GALLERY_CONTROLS) {
     }
     phase = 'deleting';
     setTyped(s.slice(0, -1));
+    emitWord('deleting');
     headTimer = setTimeout(deleteStep, 1000 / (cfg.typeSpeed * 2.2));
   }
   function typeStep() {
     const full = WORDS[wordIndex].text, s = typedEl.textContent;
-    if (s.length >= full.length) return holdThen(deleteStep, cfg.wordHold * 1000, 'holding');
+    if (s.length >= full.length) { emitWord('shown'); return holdThen(deleteStep, cfg.wordHold * 1000, 'holding'); }
     phase = 'typing';
     setTyped(full.slice(0, s.length + 1));
+    emitWord('typing');
     headTimer = setTimeout(typeStep, (1000 / cfg.typeSpeed) * (0.65 + Math.random() * 0.7));   // a human rhythm
   }
   function typedShow(i) {
@@ -2834,6 +2895,7 @@ function heroGalleryGroups(GALLERY_CONTROLS) {
     wordIndex = i; markWord();
     setTyped(WORDS[i].text);
     fitSlot();
+    emitWord('shown');
     if (reduceMotion) { phase = 'holding'; phaseEnds = performance.now() + cfg.wordHold * 1000; headTimer = setTimeout(() => typedShow((i + 1) % WORDS.length), cfg.wordHold * 1000); return; }
     holdThen(deleteStep, cfg.wordHold * 1000, 'holding');
   }
@@ -2865,6 +2927,7 @@ function heroGalleryGroups(GALLERY_CONTROLS) {
     }
     markContextControls();
     noteFit();
+    measureQuiet();
     document.querySelectorAll('.layout-picker [data-layout]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.layout === cfg.heroLayout)));
     document.querySelectorAll('.layout-picker [data-align]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.align === cfg.heroAlign)));
     document.querySelectorAll('.layout-picker [data-title]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.title === cfg.heroTitle)));

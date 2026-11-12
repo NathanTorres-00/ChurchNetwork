@@ -134,11 +134,12 @@ export function mixHex(a, b, t) {
      insets()          px the Adjust panel covers on the right (r) and bottom (b)
      onStatus(text)    a one-line status for the panel
      quiet()           the quiet-centre ellipse { cx, cy, rx, ry } in canvas px, or null
+     viewTop()         px from the canvas top where the view starts for openings (below a header)
      viewBottom()      px from the canvas top that count as the bottom of the view for openings
      hoverBlocked(x,y) true where hovering or tapping must not open a dot (canvas px)
      autoGate()        automatic openings wait while this is false
      tapSlop           px a touch may move and still count as a tap (opens on lift); unset, a touch opens on press */
-export function createGallery({ canvas, stage, cfg, photos, insets, onStatus, quiet, viewBottom, hoverBlocked, autoGate, tapSlop }) {
+export function createGallery({ canvas, stage, cfg, photos, insets, onStatus, quiet, viewTop, viewBottom, hoverBlocked, autoGate, tapSlop }) {
   const TAU = Math.PI * 2, DEG = Math.PI / 180;
 
   const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
@@ -531,11 +532,30 @@ export function createGallery({ canvas, stage, cfg, photos, insets, onStatus, qu
     const phone = Q && mobileMq.matches;
     if (phone && cfg.phoneOpenings === 'off') return false;
     const busy = dots.filter(isOpen);
+    // With a quiet centre, a photo must stay clear of it for its whole life, not just where it opens: the globe keeps
+    // turning, so look where each dot will be once the opening has run its course too
+    let ahead = null;
+    if (Q) {
+      const life = cfg.openTime + cfg.openFor;  // until it starts to close (the backstop below covers the rest)
+      proj.rotate([-(cfg.startLon + lon + cfg.spin * life), -cfg.latitude, cfg.roll]);
+      ahead = new Map();
+      for (const d of dots) {
+        if (!d.vis) continue;
+        const p = proj(d.ll);
+        if (p && Number.isFinite(p[0])) ahead.set(d, p);
+      }
+      place();
+    }
+    const top = viewTop ? Math.max(0, viewTop()) : 0;
+    const inside = (x, y, R) => x - R >= m && x + R <= W - m && y - R >= top + m && y + R <= H - m;
     const fits = d => {
       const R = d.r * cfg.autoSize;
-      if (d.x - R < m || d.x + R > W - m || d.y - R < m || d.y + R > H - m) return false;
-      // Never on the hero's copy: clear of the quiet centre, in the ring around it, above or below it on phones
+      if (!inside(d.x, d.y, R)) return false;
+      // Never on the hero's copy: clear of the quiet centre (now and later), in the ring around it, above or below it on phones
       if (Q) {
+        const f = ahead.get(d);
+        if (!f || !clearOfQuiet(f[0], f[1], R, Q)) return false;   // drifting off the screen edge is fine
+        if (phone && !aboveOrBelow(f[1], R, Q)) return false;
         if (!clearOfQuiet(d.x, d.y, R, Q)) return false;
         if (phone ? !aboveOrBelow(d.y, R, Q) : cfg.halo && !inHalo(d.x, d.y, R, Q, cfg.haloWidth)) return false;
       }
@@ -564,6 +584,8 @@ export function createGallery({ canvas, stage, cfg, photos, insets, onStatus, qu
     for (const d of dots) {
       if (d.goal === 1 && d.until !== Infinity && t >= d.until) close(d);
       if (d.goal === 1 && !d.vis) close(d);     // turned out of view
+      // Backstop: an automatic photo never drifts onto the hero's copy (it closes as it reaches the quiet centre)
+      if (Q && d.goal === 1 && d.kind === 'auto' && !clearOfQuiet(d.x, d.y, d.r * d.size, Q)) close(d);
       if (d.goal === 0 && d.amt === 0 && d.size === 1) { d.kind = null; continue; }
       d.amt = clamp(d.amt + (d.goal ? speed : -speed));
       const target = d.goal ? (d.kind === 'auto' ? cfg.autoSize : cfg.hoverSize) : 1;
@@ -701,7 +723,9 @@ export function createGallery({ canvas, stage, cfg, photos, insets, onStatus, qu
       if (p <= 0 || !a.geo || !b.geo) return;
       let alpha = 1;
       if (Q) {
-        const f = quietFactor((a.x + b.x) / 2, (a.y + b.y) / 2, Q, cfg.quietSoftness ?? 0.35);
+        // as quiet as the quietest of its ends and middle, so a line crossing under the copy fades too
+        const soft = cfg.quietSoftness ?? 0.35;
+        const f = Math.min(quietFactor(a.x, a.y, Q, soft), quietFactor(b.x, b.y, Q, soft), quietFactor((a.x + b.x) / 2, (a.y + b.y) / 2, Q, soft));
         alpha = lerp(cfg.quietLineAlpha ?? 1, 1, f);
         if (alpha <= 0.01) return;
         alpha = Math.ceil(alpha * 8) / 8;
