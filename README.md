@@ -11,6 +11,7 @@ shape.
   dependencies except the Geist webfont).
 - **`network-globe.html`**: the globe riff (see [Network Globe](#network-globe) below).
 - **`network-globe-pins.html`**: the globe with photo pins on hover (see [Network Pins](#network-pins) below).
+- **`network-gallery.html`**: a close-up of the globe as a gallery, its dots opening into photos (see [Network Gallery](#network-gallery) below).
 - **`hero.html`**: a sample landing page with the Pins globe as its hero (see [Hero](#hero-sample-webpage) below).
 
 ## Embedding in Wix
@@ -53,7 +54,7 @@ All of these are in the `CONFIG` block and the Adjust panel. Any of them can als
 ## Deploying (Vercel)
 
 The repo deploys to Vercel as a static site. `vercel.json` serves `hero.html` at the site's root and turns on
-clean URLs (`/hero`, `/network-globe`, `/network-globe-pins`, `/network-multiply`; the `.html` addresses redirect
+clean URLs (`/hero`, `/network-globe`, `/network-globe-pins`, `/network-gallery`, `/network-multiply`; the `.html` addresses redirect
 to them). Its build command, `npx convex deploy --cmd 'node scripts/build-static.js'`, pushes the comment mode
 backend to Convex and then copies the pages, `assets/`, `review/`, `versions/` and `convex/limits.js` (the shared limits; nothing else from `convex/`) into `dist/`, which Vercel serves (see
 [Comment mode](#comment-mode)). It also writes `dist/versions.json`, the list of builds for the
@@ -166,6 +167,47 @@ globe's edge. It holds still when paused or with "reduce motion" on.
 | `backdropColor` | Dot color. |
 
 All the globe parameters apply as well.
+
+# Network Gallery
+
+`network-gallery.html` turns the globe into a gallery. The camera sits so close that the rim and horizon stay out
+of view: what you see is one section of a slowly turning globe, with networks of pale dots forming as new ground
+turns into view (or, with **Lines** set to Grid, a hand-drawn grid with dots at its crossings). New dots keep
+turning into view, which is what carries the sense of how big the network is.
+
+- **Automatic openings.** Every few seconds (`autoEvery`, with `autoJitter` randomness) a dot somewhere in view
+  swells open (`autoSize`) to show a photo, stays open for `openFor` seconds, then closes. Openings are staggered,
+  never overlap one another, and only pick dots with room to open fully on screen (`edgeRoom`). With the
+  defaults, 4–5 dots open in the first ten seconds.
+- **Hover.** A hovered dot opens larger (`hoverSize`) and stays open as long as the cursor is on it. New automatic
+  openings pause meanwhile (`pauseAutoOnHover`), and the globe eases to a stop so the dot stays under the cursor
+  (`slowOnHover`). On touch screens a tap opens a dot for a few seconds.
+- **Photos.** Placeholder Unsplash landscapes for now (`PHOTOS` near the top of the file). Swap in photos of the
+  network's house churches and campuses when they're ready; any image works, cropped to a circle.
+- **Built with** Canvas 2D and d3's satellite projection (`d3.geoSatellite`), so the grid bends with real
+  perspective. The **Adjust** panel works like the other pages: Camera (spin, zoom, camera distance, tilt), Globe
+  position (move sideways or up and down, latitude, roll, starting longitude), Grid, Dots and Openings. **Copy
+  settings** gives you a CONFIG block to paste into the file, any setting can go in the address
+  (`?spin=5&zoom=1.4`), and `?controls=0` hides the panel. **Shuffle dots** reseeds which crossings carry a dot.
+- **Dot layout** (`layout`): `random` puts dots on a random share of the grid crossings (`dotShare`);
+  `checker` puts one on every other crossing, like a checkerboard.
+- **Networks** (`connect: 'networks'`, the default; in the panel's **Network** group). Instead of the plain grid, dots are
+  joined parent to child, generation by generation, on the checkerboard. A network starts at one dot; each dot
+  takes up to two children on the diagonal crossings further out, for `generations` rounds (default 5). Then up to
+  `sendCount` last-generation dots each skip one spacing and start a new network there (that line is dashed by
+  default, `sentStyle`), which grows and sends in turn. The plain grid stays faintly behind (`gridStrength`). Network lines have their own width,
+  `netLineWidth`, separate from the grid's `lineWidth`.
+  - `growth`: `grown` shows every network complete; `growing` grows each one as it turns into view: lines draw out
+    a generation at a time (`genTime`, `genPause`), dots pop in as their line arrives, and a sent-out line has to
+    land before the new network starts. Networks that leave the view reset and grow again next time round.
+  - `growStart` (growing only) sets where growth happens, relative to a reveal line `revealLine` (a share of the
+    view in from the edge the ground comes in at, worked out from the spin and roll): `wave` pops each dot in as it
+    crosses the line and draws a line once both its dots are in; `inview` waits until a network's first dot
+    crosses the line (or its dots reach the middle), then grows it generation by generation; `edge` starts a
+    network as soon as any of its dots reaches the edge. Dots and networks that leave clear themselves out of sight.
+  - `lineStyle`: `arc` (bow set by `arch`), `straight`, `s` (S-curve) or `grid` (traces the grid through the empty
+    crossing between two diagonal dots). Sent-out lines have their own bow, `sentArch`.
+  - Photo openings and hover work the same in both modes, on dots that have fully grown in.
 
 ---
 
