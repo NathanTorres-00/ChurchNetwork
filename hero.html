@@ -269,8 +269,14 @@
                   radial-gradient(ellipse 75% var(--arc) at 50% calc(100% - var(--arc)), #000 99.6%, transparent);
   }
   .hero .stage, .hero .pins { position: absolute; inset: 0; }
+  #gallery-canvas.is-pointing { cursor: pointer; }
   .hero .stage { z-index: 0; }
   .hero .pins { z-index: 2; }
+  /* Art: the Gallery replaces the Pins globe, its pins and the fade (its quiet centre does the fade's job) */
+  .hero .gallery-stage { display: none; z-index: 0; }
+  .hero[data-art="gallery"] .gallery-stage { display: block; }
+  .hero[data-art="gallery"] #stage, .hero[data-art="gallery"] .pins,
+  .hero[data-art="gallery"] .pin-areas, .hero[data-art="gallery"] .hero-scrim { display: none !important; }
   .hero .pin-areas { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 4; pointer-events: none; display: none; opacity: 1; }
   .hero-scrim {
     position: absolute; inset: 0; z-index: 1; pointer-events: none;
@@ -806,6 +812,9 @@
       <div class="stage" id="stage">
         <canvas id="canvas" role="img" aria-label="A camera flies low over a pale globe. Dots appear and multiply into networks across the world; photo pins rise above some of them."></canvas>
       </div>
+      <div class="stage gallery-stage" id="gallery-stage">
+        <canvas id="gallery-canvas" role="img" aria-label="A close-up of a pale globe turning; networks of dots grow across it and some open into photos of places in the network."></canvas>
+      </div>
       <div class="hero-scrim" aria-hidden="true"></div>
       <div class="pins" id="pins"></div>
       <canvas class="pin-areas" id="pin-areas" aria-hidden="true"></canvas>
@@ -1078,6 +1087,13 @@
   <section class="layout-picker" aria-label="Hero layout">
     <h2>Hero layout</h2>
     <div class="picker-row">
+      <span>Art</span>
+      <div class="seg" role="group" aria-label="Art">
+        <button type="button" data-art="pins">Pins globe</button>
+        <button type="button" data-art="gallery">Gallery</button>
+      </div>
+    </div>
+    <div class="picker-row">
       <span>Headline</span>
       <div class="seg" role="group" aria-label="Headline">
         <button type="button" data-layout="stacked">Stacked</button>
@@ -1265,6 +1281,82 @@ const CONFIG = {
   lowerFavor: 1,            // strength of the favored area below the statement (0 = off)
   lowerSpread: 0.2,         // height of the favored area below the statement
   pinColor: '#D9D9D9',
+
+  // Hero art: 'pins' (the Pins globe) or 'gallery' (the close-up gallery globe from the Gallery tab)
+  heroArt: 'pins',
+
+  /* The Gallery as hero art: the Gallery tab's settings, each prefixed `gallery` */
+  // Gallery: Camera
+  gallerySpin: 3.9,                // degrees the globe turns per second
+  galleryZoom: 0.95,               // 1 = the globe's rim just touches the corners; higher crops in closer
+  galleryDistance: 2.2,            // camera distance in globe radii: lower bends the grid more (fisheye)
+  galleryTilt: 10,                 // camera looks this many degrees off straight down
+
+  // Gallery: Globe position
+  galleryOffsetX: 0,               // shifts the globe sideways, as a share of the view width (%)
+  galleryOffsetY: 0,               // shifts the globe up or down, as a share of the view height (%)
+  galleryLatitude: 24,             // the latitude facing the camera
+  galleryRoll: -16,                // turns the whole view; sets the direction the dots travel across the screen
+  galleryStartLon: 0,              // the longitude facing the camera at the start
+
+  // Gallery: Grid
+  galleryGridStep: 5.5,            // degrees between grid lines
+  galleryWobble: 0.55,             // how far the lines wander from straight (hand-drawn feel)
+  galleryWobbleScale: 1,           // how quickly the wander changes along a line
+  galleryLineWidth: 0,             // grid line width in pixels
+  galleryLineColor: '#141414',
+  galleryGlobeColor: '#FFFFFF',    // fill of the globe, seen only when the rim is in view
+  galleryBgColor: '#FFFFFF',
+
+  // Gallery: Dots
+  galleryLayout: 'random',         // 'random': dots at a random share of crossings; 'checker': every other crossing
+  galleryDotShare: 0.26,           // share of grid crossings that carry a dot
+  galleryDotSize: 0.3,             // dot radius as a share of the grid spacing
+  gallerySizeVariety: 0.12,        // random variation in dot size
+  galleryDotColor: '#EAEAEA',
+  gallerySeed: 7,
+
+  // Gallery: Network
+  galleryConnect: 'networks',      // 'grid': the plain grid; 'networks': dots joined parent to child, generation by generation
+  galleryGrowth: 'growing',        // 'grown': every network already complete; 'growing': networks grow as they turn into view
+  galleryGenerations: 5,           // rounds of children from a network's first dot
+  gallerySendCount: 2,             // most last-generation dots a network sends out, each skipping a spacing to start a new network
+  galleryLineStyle: 'arc',         // 'arc', 'straight', 's' (S-curve) or 'grid' (along the grid, through the empty crossing)
+  galleryNetLineWidth: 0.5,        // network line width in pixels (the grid has its own, lineWidth)
+  galleryArch: 0.58,               // how far arched and S lines bow, as a share of their length
+  gallerySentStyle: 'solid',       // 'dashed' or 'solid': the lines to a newly started network
+  gallerySentArch: 0.35,           // bow of the sent-out lines
+  galleryGrowStart: 'inview',      // 'edge', 'wave' or 'inview'; hero: In view fills both sides evenly behind centred text
+  galleryRevealLine: 0.05,         // share of the view in from the incoming edge where growth starts
+  galleryGenTime: 0.9,             // seconds one generation's lines take to draw out (growing)
+  galleryGenPause: 0.35,           // seconds between generations (growing)
+  galleryGridStrength: 0.18,       // the plain grid behind the networks (0 = hidden)
+
+  // Gallery: Openings
+  galleryAutoEvery: 3.5,           // seconds between automatic openings (hero: calmer than the Gallery tab)
+  galleryAutoJitter: 0.4,          // randomness in that timing (0 = a steady beat)
+  galleryFirstOpen: 0.6,           // seconds before the first opening
+  galleryOpenFor: 2.5,             // seconds an automatic opening stays fully open
+  galleryOpenTime: 0.7,            // seconds a dot takes to open or close
+  galleryMaxOpen: 2,               // most automatic openings at once (hero: calmer than the Gallery tab)
+  galleryAutoSize: 2.1,            // an automatic opening's size, relative to its dot
+  galleryHoverSize: 2.9,           // a hovered dot's size, relative to its dot
+  galleryPauseAutoOnHover: true,   // no new automatic openings while a dot is hovered
+  gallerySlowOnHover: true,        // the globe eases to a stop while a dot is hovered, so it stays under the cursor
+  galleryEdgeRoom: 98,             // automatic openings stay at least this many pixels inside the view
+
+  // Gallery: quiet centre around the copy
+  galleryQuietPadX: 40,             // px added left and right of the copy before the ellipse is drawn round it
+  galleryQuietPadY: 32,             // px added above and below the copy
+  galleryQuietDotScale: 0.15,       // dot size deep inside the quiet centre (share of normal)
+  galleryQuietLineAlpha: 0,         // network line strength deep inside the quiet centre
+  galleryQuietSoftness: 0.35,       // width of the soft edge, as a share of the ellipse's radius
+  galleryShowQuiet: false,          // draw the quiet centre's outline while tuning
+  galleryHalo: true,                // automatic photos open in a ring just outside the quiet centre
+  galleryHaloWidth: 260,            // px width of that ring
+  galleryWordColor: true,           // a line drawing out takes the colour of the headline word
+  galleryColorSettle: 2.5,          // seconds a finished line takes to ease back to the line colour
+  galleryPhoneOpenings: 'around',   // phones: 'around' (above and below the text) or 'off'
 };
 
 // Placeholder photos (Unsplash). Each dot gets one, chosen by its network and position.
@@ -1318,7 +1410,7 @@ const PAGE_CONTROLS = [
 
 const CONTROLS = [
   ...PAGE_CONTROLS,
-  { group: 'Globe: flight', items: [
+  { group: 'Globe: flight', art: 'pins', items: [
     { key: 'speed', label: 'Speed', type: 'range', min: 0, max: 8, step: 0.1, fmt: v => v.toFixed(1) + '°/s' },
     { key: 'tilt', label: 'Look toward horizon', type: 'range', min: 0, max: 45, step: 1, fmt: v => v + '°' },
     { key: 'zoom', label: 'Zoom', type: 'range', min: 1, max: 8, step: 0.05, fmt: v => v.toFixed(2) + '×' },
@@ -1327,7 +1419,7 @@ const CONTROLS = [
     { key: 'bank', label: 'Follow the turns', type: 'range', min: 0, max: 1, step: 0.05, fmt: pct },
     { key: 'globeFocus', label: 'Flight center', type: 'range', min: 0.5, max: 0.85, step: 0.01, fmt: pct },
   ]},
-  { group: 'Globe: surface', items: [
+  { group: 'Globe: surface', art: 'pins', items: [
     { key: 'landOnly', label: 'Networks on land only', type: 'check', sites: true },
     { key: 'siteSpacing', label: 'Space between networks', type: 'range', min: 4, max: 25, step: 0.5, fmt: v => v + '°', sites: true },
     { key: 'networkSize', label: 'Network size', type: 'range', min: 1, max: 10, step: 0.1, fmt: v => v.toFixed(1) + '°', trees: true },
@@ -1340,25 +1432,25 @@ const CONTROLS = [
     { key: 'landColor', label: 'Land color', type: 'color' },
     { key: 'gridColor', label: 'Grid color', type: 'color' },
   ]},
-  { group: 'Globe: growth', items: [
+  { group: 'Globe: growth', art: 'pins', items: [
     { key: 'generations', label: 'Generations', type: 'range', min: 1, max: 6, step: 1, fmt: v => v, trees: true },
     { key: 'divisionDuration', label: 'Division time', type: 'range', min: 0.4, max: 4, step: 0.1, fmt: v => v.toFixed(1) + 's' },
     { key: 'restDuration', label: 'Pause between generations', type: 'range', min: 0, max: 3, step: 0.1, fmt: v => v.toFixed(1) + 's' },
     { key: 'revealLine', label: 'Reveal distance', type: 'range', min: 0, max: 0.8, step: 0.01, fmt: pct },
     { key: 'resetWhenPassed', label: 'Regrow on the next turn', type: 'check' },
   ]},
-  { group: 'Globe: shape', items: [
+  { group: 'Globe: shape', art: 'pins', items: [
     { key: 'spread', label: 'Pair spread', type: 'range', min: 0.3, max: 1, step: 0.01, fmt: pct, trees: true },
     { key: 'lengthDecay', label: 'Length per generation', type: 'range', min: 0.6, max: 1.25, step: 0.01, fmt: v => '×' + v.toFixed(2), trees: true },
     { key: 'jitter', label: 'Organic variation', type: 'range', min: 0, max: 1, step: 0.01, fmt: pct, trees: true },
     { key: 'curvature', label: 'Thread bow', type: 'range', min: 0, max: 0.5, step: 0.01, fmt: pct },
   ]},
-  { group: 'Globe: motion', items: [
+  { group: 'Globe: motion', art: 'pins', items: [
     { key: 'easing', label: 'Easing', type: 'select', options: [['sine', 'Sine'], ['cubic', 'Cubic'], ['quint', 'Quint']] },
     { key: 'drift', label: 'Drift', type: 'range', min: 0, max: 2, step: 0.05, fmt: v => v.toFixed(2) },
     { key: 'swell', label: 'Swell on divide', type: 'range', min: 0, max: 0.3, step: 0.01, fmt: pct },
   ]},
-  { group: 'Globe: dots', items: [
+  { group: 'Globe: dots', art: 'pins', items: [
     { key: 'dotSize', label: 'Dot size', type: 'range', min: 4, max: 30, step: 0.5, fmt: v => v, trees: true },
     { key: 'sizeDecay', label: 'Size per generation', type: 'range', min: 0.6, max: 1, step: 0.01, fmt: v => '×' + v.toFixed(2), trees: true },
     { key: 'uprightDots', label: 'Dots stand upright', type: 'range', min: 0, max: 1, step: 0.01, fmt: pct },
@@ -1374,7 +1466,7 @@ const CONTROLS = [
     { key: 'colorStrength', label: 'Color strength', type: 'range', min: 0, max: 1, step: 0.01, fmt: pct },
     { key: 'colorThreads', label: 'Color the threads', type: 'check' },
   ]},
-  { group: 'Globe: pins', items: [
+  { group: 'Globe: pins', art: 'pins', items: [
     { key: 'showPins', label: 'Show photo pins', type: 'check' },
     { key: 'pinSize', label: 'Pin size', type: 'range', min: 120, max: 360, step: 4, fmt: v => v + 'px' },
     { key: 'pauseOnHover', label: 'Pause the globe while a pin is open', type: 'check' },
@@ -1383,7 +1475,7 @@ const CONTROLS = [
     { key: 'maxPins', label: 'Most random pins at once', type: 'range', min: 1, max: 8, step: 1, fmt: v => v },
     { key: 'pinColor', label: 'Pin color', type: 'color' },
   ]},
-  { group: 'Globe: pin areas', items: [
+  { group: 'Globe: pin areas', art: 'pins', items: [
     { key: 'showPinAreas', label: 'Show pin areas', type: 'check' },
     { key: 'pinTextMode', label: 'Pins near the headline', type: 'select', options: [['strict', 'Strict'], ['word', 'Current word'], ['behind', 'Behind headline']] },
     { key: 'pinTextPad', label: 'Text keep-out padding', type: 'range', min: 0, max: 80, step: 2, fmt: v => v + 'px' },
@@ -1395,6 +1487,38 @@ const CONTROLS = [
     { key: 'lowerSpread', label: 'Below-statement area height', type: 'range', min: 0.05, max: 0.5, step: 0.01, fmt: pct },
   ]},
 ];
+
+/* The Gallery's panel groups, made from the Gallery tab's own controls (GALLERY_CONTROLS) once its engine loads:
+   keys prefixed `gallery`, the Grid group left out (grid lines are off; grid strength sits under Network), plus the
+   hero's own settings. */
+const galleryKey = k => 'gallery' + k[0].toUpperCase() + k.slice(1);
+const HERO_GALLERY_EXTRAS = {
+  Network: [
+    { key: 'wordColor', label: 'Lines take the headline colour', type: 'check' },
+    { key: 'colorSettle', label: 'Colour settles back over', type: 'range', min: 0.5, max: 6, step: 0.1, fmt: v => v.toFixed(1) + 's' },
+  ],
+  Openings: [
+    { key: 'halo', label: 'Photos open around the heading', type: 'check' },
+    { key: 'haloWidth', label: 'Ring width around the heading', type: 'range', min: 60, max: 500, step: 10, fmt: v => v + 'px' },
+    { key: 'phoneOpenings', label: 'Openings on phones', type: 'select', options: [['around', 'Above and below the text'], ['off', 'Off']] },
+  ],
+};
+const HERO_QUIET_CONTROLS = [
+  { key: 'quietPadX', label: 'Side padding', type: 'range', min: 0, max: 300, step: 4, fmt: v => v + 'px', quiet: true },
+  { key: 'quietPadY', label: 'Top and bottom padding', type: 'range', min: 0, max: 200, step: 4, fmt: v => v + 'px', quiet: true },
+  { key: 'quietDotScale', label: 'Dot size inside', type: 'range', min: 0, max: 1, step: 0.01, fmt: pct },
+  { key: 'quietLineAlpha', label: 'Lines inside', type: 'range', min: 0, max: 1, step: 0.01, fmt: pct },
+  { key: 'quietSoftness', label: 'Soft edge', type: 'range', min: 0.05, max: 1, step: 0.01, fmt: pct },
+  { key: 'showQuiet', label: 'Show quiet centre outline', type: 'check' },
+];
+function heroGalleryGroups(GALLERY_CONTROLS) {
+  const groups = GALLERY_CONTROLS.filter(g => g.group !== 'Grid').map(g => ({
+    group: 'Gallery: ' + g.group.toLowerCase(),
+    items: [...g.items, ...(HERO_GALLERY_EXTRAS[g.group] || [])],
+  }));
+  groups.push({ group: 'Gallery: quiet centre', items: HERO_QUIET_CONTROLS });
+  return groups.map(g => ({ ...g, art: 'gallery', items: g.items.map(c => ({ ...c, key: galleryKey(c.key), gallery: true })) }));
+}
 
 (() => {
   'use strict';
@@ -2347,10 +2471,24 @@ const CONTROLS = [
   const panel = showControls ? document.getElementById('panel') : null;
   let last = performance.now();
 
+  let gallery = null, galleryLoading = null;     // the Gallery art, once chosen (see Hero art below)
   let heroOnScreen = true;
-  new IntersectionObserver(([e]) => { heroOnScreen = e.isIntersecting; }).observe(stage);
+  new IntersectionObserver(([e]) => {
+    heroOnScreen = e.isIntersecting;
+    // The Gallery rests while scrolled past too (a hidden tab needs nothing: the browser stops animation frames)
+    if (gallery && cfg.heroArt === 'gallery') heroOnScreen ? gallery.start() : gallery.stop();
+  }).observe(document.querySelector('.hero'));
+
+  let pinsLooping = false;                 // the Pins globe's frame loop is scheduled
+  function startPins() {
+    if (pinsLooping) return;
+    pinsLooping = true;
+    resize();                              // its canvas was hidden (0 x 0) while the Gallery showed
+    requestAnimationFrame(now => { last = now; canvas.classList.add('is-ready'); frame(now); });
+  }
 
   function frame(now) {
+    if (cfg.heroArt !== 'pins') { pinsLooping = false; return; }   // the Gallery is showing; this loop stops
     const dt = Math.min(0.1, (now - last) / 1000);
     last = now;
     if (!heroOnScreen) { requestAnimationFrame(frame); return; }   // rest while scrolled past
@@ -2376,6 +2514,7 @@ const CONTROLS = [
 
   function setPlaying(on) {
     playing = on;
+    if (gallery) gallery.setPlaying(on);
     if (showControls) document.getElementById('play').textContent = on ? 'Pause globe' : 'Play globe';
   }
   // Comment mode holds the globe still so reviewers mark up a steady frame, and so does an earlier build shown
@@ -2400,6 +2539,7 @@ const CONTROLS = [
   document.addEventListener('versions:view', () => hold('versions'));
   document.addEventListener('versions:current', () => release('versions'));
   function restart() {
+    if (cfg.heroArt === 'gallery') { if (gallery) gallery.restart(); setPlaying(true); return; }
     t = 0; clock = 0; flightLon = START_LON; flightClock = 0; cruise = 1;
     pins.forEach(p => { p.closing = true; });
     buildSites();
@@ -2419,11 +2559,12 @@ const CONTROLS = [
     }
   }
 
-  function buildPanel() {
-    const host = document.getElementById('groups');
-    for (const group of CONTROLS) {
+  function addGroup(group) {
+    {
+      const host = document.getElementById('groups');
       const sec = document.createElement('section');
       sec.className = 'group';
+      sec.dataset.art = group.art || '';
       sec.innerHTML = `<h2>${group.group}</h2>`;
       for (const c of group.items) {
         const row = document.createElement('div');
@@ -2460,6 +2601,14 @@ const CONTROLS = [
           syncInput(c.key);
           if (c.key === 'dotColors') markContextControls();
           if (c.css || c.page) { applyPage(); return; }
+          if (c.gallery) {
+            if (c.quiet) measureQuiet();
+            if (!gallery) return;
+            if (c.rebuild) gallery.rebuild();
+            else if (c.regrow) gallery.regrow();
+            gallery.refit();
+            return;
+          }
           if (c.sites) buildSites();
           else if (c.trees) sites.forEach(makeTree);
           refit();
@@ -2469,6 +2618,10 @@ const CONTROLS = [
       }
       host.appendChild(sec);
     }
+  }
+
+  function buildPanel() {
+    CONTROLS.forEach(addGroup);
 
     const adjust = document.getElementById('adjust');
     const setOpen = open => {
@@ -2501,7 +2654,10 @@ const CONTROLS = [
     document.getElementById('reset').addEventListener('click', () => {
       Object.assign(cfg, DEFAULTS);
       Object.keys(inputs).forEach(syncInput);
-      applyPage(); refit(); restart();
+      applyPage(); refit();
+      if (gallery) gallery.rebuild();
+      setArt(cfg.heroArt);
+      restart();
     });
   }
 
@@ -2510,6 +2666,63 @@ const CONTROLS = [
     const a = e.target.closest && e.target.closest('a[data-placeholder]');
     if (a) e.preventDefault();
   });
+
+  /* ---------- Hero art: the Pins globe or the Gallery ----------
+     Only the chosen art runs. The Gallery's engine (assets/network-gallery.js, shared with the Gallery tab) loads
+     the first time it's chosen, so the Pins hero loads exactly as before. */
+  const galleryStage = document.getElementById('gallery-stage');
+  const galleryCanvas = document.getElementById('gallery-canvas');
+  function panelInsets() {
+    const open = panel && panel.classList.contains('is-open');
+    return { r: open && !mobileMq.matches ? panel.offsetWidth : 0, b: open && mobileMq.matches ? panel.offsetHeight : 0 };
+  }
+  function measureQuiet() {}                       // the quiet centre (filled in below)
+
+  function ensureGallery() {
+    if (!galleryLoading) galleryLoading = import('./assets/network-gallery.js').then(m => {
+      gallery = m.createGallery({
+        canvas: galleryCanvas,
+        stage: galleryStage,
+        cfg: m.prefixedConfig(cfg, 'gallery'),
+        photos: m.PHOTO_IDS.map(m.photoUrl),
+        insets: panelInsets,
+      });
+      gallery.setPlaying(playing);
+      window.__heroGallery = gallery;
+      if (showControls) {
+        heroGalleryGroups(m.GALLERY_CONTROLS).forEach(addGroup);
+        syncArt();
+      }
+      return gallery;
+    });
+    return galleryLoading;
+  }
+
+  function syncArt() {
+    heroEl.dataset.art = cfg.heroArt;
+    document.querySelectorAll('#groups section.group').forEach(sec => { sec.hidden = !!sec.dataset.art && sec.dataset.art !== cfg.heroArt; });
+    document.querySelectorAll('.layout-picker [data-art]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.art === cfg.heroArt)));
+  }
+
+  async function setArt(art) {
+    cfg.heroArt = art === 'gallery' ? 'gallery' : 'pins';
+    syncArt();
+    if (cfg.heroArt === 'pins') {
+      if (gallery) gallery.stop();
+      startPins();
+      return;
+    }
+    const g = await ensureGallery();
+    if (cfg.heroArt !== 'gallery') return;           // switched back while the engine was loading
+    g.setPlaying(playing);
+    measureQuiet();
+    if (heroOnScreen) g.start();
+    requestAnimationFrame(() => {
+      galleryCanvas.classList.add('is-ready');
+      (document.fonts ? document.fonts.ready : Promise.resolve()).then(() => g.loadPhotos());   // after the heading's first paint
+    });
+  }
+  document.querySelectorAll('.layout-picker [data-art]').forEach(b => b.addEventListener('click', () => setArt(b.dataset.art)));
 
   /* ---------- Hero headline: Stacked, Rotating or Typed ---------- */
   var headlineReady = false;                           // applyPage() runs before this section is set up
@@ -2719,7 +2932,7 @@ const CONTROLS = [
 
   /* ---------- Start ---------- */
   if (showControls) { buildPanel(); syncHeadline(); }
-  else ['adjust', 'panel', 'switch'].forEach(id => document.getElementById(id).remove());
+  else ['adjust', 'panel', 'switch'].forEach(id => document.getElementById(id)?.remove());   // the switch sits inside the panel
 
   resize();
   if (reduceMotion) setPlaying(false);  // a still view; whatever is in sight shows fully grown
@@ -2731,7 +2944,7 @@ const CONTROLS = [
     .catch(() => {})
     .finally(() => { t = 0; buildSites(); });
 
-  requestAnimationFrame(now => { last = now; canvas.classList.add('is-ready'); frame(now); });
+  setArt(cfg.heroArt);
 })();
 </script>
 
