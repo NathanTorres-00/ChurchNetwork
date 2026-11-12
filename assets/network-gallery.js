@@ -78,9 +78,67 @@ export const GALLERY_CONTROLS = [
   ]},
 ];
 
-/* createGallery({ canvas, stage, cfg, photos, insets?, onStatus? }) draws into `canvas`, sized to `stage`.
-   `cfg` is read live every frame (the keys of the Gallery tab's CONFIG). Nothing loads until loadPhotos(). */
-export function createGallery({ canvas, stage, cfg, photos, insets, onStatus }) {
+/* ---------- Helpers (pure) ---------- */
+
+// Settings stored under a prefix (the hero keeps `gallerySpin` beside the Pins globe's own `spin`), read without it
+export function prefixedConfig(cfg, prefix) {
+  const full = k => prefix + k[0].toUpperCase() + k.slice(1);
+  return new Proxy(cfg, {
+    get: (o, k) => typeof k === 'string' ? o[full(k)] : undefined,
+    set: (o, k, v) => { o[full(k)] = v; return true; },
+    has: (o, k) => typeof k === 'string' && full(k) in o,
+    ownKeys: o => Object.keys(o).filter(k => k.startsWith(prefix) && k.length > prefix.length)
+      .map(k => k[prefix.length].toLowerCase() + k.slice(prefix.length + 1)),
+    getOwnPropertyDescriptor: (o, k) => {
+      const d = typeof k === 'string' ? Object.getOwnPropertyDescriptor(o, full(k)) : undefined;
+      return d && { ...d, configurable: true };
+    },
+  });
+}
+
+/* The quiet centre: an ellipse q = { cx, cy, rx, ry } (canvas px) around the hero's copy where the gallery recedes.
+   quietFactor is 0 deep inside, 1 outside, easing across a soft band `softness` (share of the radius) wide. */
+export function quietFactor(x, y, q, softness) {
+  if (!q) return 1;
+  const e = Math.hypot((x - q.cx) / q.rx, (y - q.cy) / q.ry), inner = 1 - softness;
+  if (e <= inner) return 0;
+  if (e >= 1) return 1;
+  const u = (e - inner) / (1 - inner);
+  return u * u * (3 - 2 * u);
+}
+// A circle of radius R at (x, y) stays clear of the ellipse (the ellipse grown by R holds every touching circle)
+export function clearOfQuiet(x, y, R, q) {
+  if (!q) return true;
+  return ((x - q.cx) / (q.rx + R)) ** 2 + ((y - q.cy) / (q.ry + R)) ** 2 >= 1;
+}
+// Clear of the ellipse but within `width` px of it
+export function inHalo(x, y, R, q, width) {
+  if (!q) return true;
+  return clearOfQuiet(x, y, R, q) && ((x - q.cx) / (q.rx + R + width)) ** 2 + ((y - q.cy) / (q.ry + R + width)) ** 2 <= 1;
+}
+// Wholly above or wholly below the ellipse (phones, where the copy fills the width)
+export function aboveOrBelow(y, R, q) {
+  return y + R <= q.cy - q.ry || y - R >= q.cy + q.ry;
+}
+
+const hexRgb = h => { const n = parseInt(h.replace('#', '').slice(0, 6), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; };
+// a at t = 0, b at t = 1
+export function mixHex(a, b, t) {
+  const A = hexRgb(a), B = hexRgb(b);
+  return '#' + A.map((v, i) => Math.round(v + (B[i] - v) * t).toString(16).padStart(2, '0')).join('');
+}
+
+/* createGallery({ canvas, stage, cfg, photos, ... }) draws into `canvas`, sized to `stage`.
+   `cfg` is read live every frame (the keys of the Gallery tab's CONFIG). Nothing loads until loadPhotos().
+   Optional, for the hero (left out, the gallery behaves as on the Gallery tab):
+     insets()          px the Adjust panel covers on the right (r) and bottom (b)
+     onStatus(text)    a one-line status for the panel
+     quiet()           the quiet-centre ellipse { cx, cy, rx, ry } in canvas px, or null
+     viewBottom()      px from the canvas top that count as the bottom of the view for openings
+     hoverBlocked(x,y) true where hovering or tapping must not open a dot (canvas px)
+     autoGate()        automatic openings wait while this is false
+     tapSlop           px a touch may move and still count as a tap (opens on lift); unset, a touch opens on press */
+export function createGallery({ canvas, stage, cfg, photos, insets, onStatus, quiet, viewBottom, hoverBlocked, autoGate, tapSlop }) {
   const TAU = Math.PI * 2, DEG = Math.PI / 180;
 
   const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
@@ -98,6 +156,7 @@ export function createGallery({ canvas, stage, cfg, photos, insets, onStatus }) 
 
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const mobileMq = window.matchMedia('(max-width: 640px)');
+  let Q = null;                              // this frame's quiet-centre ellipse (hero only)
 
   /* ---------- Photos (created by loadPhotos) ---------- */
   const images = photos.map(() => null);
@@ -366,6 +425,7 @@ export function createGallery({ canvas, stage, cfg, photos, insets, onStatus }) 
       d.shown = d.node ? dotP(d.node) : 1;
       const s = d.shown;
       d.r = d.r0 * (s < 1 ? 1 + 2.70158 * Math.pow(s - 1, 3) + 1.70158 * Math.pow(s - 1, 2) : 1);   // ease out, slight overshoot
+      if (Q) d.r *= lerp(cfg.quietDotScale ?? 1, 1, quietFactor(d.x, d.y, Q, cfg.quietSoftness ?? 0.35));
       d.vis = d.geo && s > 0.01;
     }
   }
@@ -466,11 +526,19 @@ export function createGallery({ canvas, stage, cfg, photos, insets, onStatus }) 
   function close(d) { d.goal = 0; }
 
   function tryAutoOpen() {
-    const W = view.w - view.insetR, H = view.h - view.insetB, m = cfg.edgeRoom;
+    const W = view.w - view.insetR, m = cfg.edgeRoom;
+    const H = viewBottom ? Math.min(view.h - view.insetB, viewBottom()) : view.h - view.insetB;
+    const phone = Q && mobileMq.matches;
+    if (phone && cfg.phoneOpenings === 'off') return false;
     const busy = dots.filter(isOpen);
     const fits = d => {
       const R = d.r * cfg.autoSize;
       if (d.x - R < m || d.x + R > W - m || d.y - R < m || d.y + R > H - m) return false;
+      // Never on the hero's copy: clear of the quiet centre, in the ring around it, above or below it on phones
+      if (Q) {
+        if (!clearOfQuiet(d.x, d.y, R, Q)) return false;
+        if (phone ? !aboveOrBelow(d.y, R, Q) : cfg.halo && !inHalo(d.x, d.y, R, Q, cfg.haloWidth)) return false;
+      }
       // Keep clear of photos already open, so two never overlap
       return busy.every(o => Math.hypot(o.x - d.x, o.y - d.y) > R + o.r * Math.max(o.size, cfg.autoSize) + 8);
     };
@@ -487,7 +555,7 @@ export function createGallery({ canvas, stage, cfg, photos, insets, onStatus }) 
 
   function updateOpenings(dt) {
     const pausedForHover = hovered && cfg.pauseAutoOnHover;
-    if (playing && !pausedForHover && t >= nextAuto) {
+    if (playing && !pausedForHover && t >= nextAuto && (!autoGate || autoGate())) {
       if (autoOpen() < cfg.maxOpen && tryAutoOpen()) scheduleNext();
       else nextAuto = t + 0.25;               // nothing fits right now; look again shortly
     }
@@ -524,16 +592,34 @@ export function createGallery({ canvas, stage, cfg, photos, insets, onStatus }) 
     canvas.classList.toggle('is-pointing', !!d);
   }
 
+  // Where a pointer may open a dot: not on the hero's copy and not inside its quiet centre
+  const openableAt = (x, y) => !(hoverBlocked && hoverBlocked(x, y)) && quietFactor(x, y, Q, 0) >= 1;
+  const local = e => { const b = canvas.getBoundingClientRect(); return [e.clientX - b.left, e.clientY - b.top]; };
+  function tap(x, y) {
+    const d = openableAt(x, y) ? dotAt(x, y) : null;
+    if (d) open(d, 'tap');
+  }
+
+  let press = null;
   canvas.addEventListener('pointermove', e => {
     if (e.pointerType !== 'mouse') return;
-    pointer = [e.clientX, e.clientY];
+    pointer = local(e);
   });
   canvas.addEventListener('pointerleave', () => { pointer = null; setHover(null); });
   canvas.addEventListener('pointerdown', e => {
     if (e.pointerType === 'mouse') return;
-    const d = dotAt(e.clientX, e.clientY);
-    if (d) open(d, 'tap');
+    const [x, y] = local(e);
+    if (tapSlop == null) tap(x, y);
+    else press = { id: e.pointerId, x: e.clientX, y: e.clientY };
   });
+  // With tapSlop, a touch opens on lift, and only if it didn't move more than tapSlop px (otherwise it was a scroll)
+  canvas.addEventListener('pointerup', e => {
+    if (!press || press.id !== e.pointerId) return;
+    const moved = Math.hypot(e.clientX - press.x, e.clientY - press.y);
+    press = null;
+    if (moved <= tapSlop) tap(...local(e));
+  });
+  canvas.addEventListener('pointercancel', () => { press = null; });
 
   /* ---------- Drawing ---------- */
   let shownStatus = '';
@@ -592,20 +678,53 @@ export function createGallery({ canvas, stage, cfg, photos, insets, onStatus }) 
     for (let s = 1; s < pts.length; s++) out.lineTo(pts[s][0], pts[s][1]);
   }
 
+  /* A line that is drawing out takes the headline word's colour (setWordColor), then eases back to the line colour
+     over colorSettle seconds once it has finished. */
+  let wordColor = null;
+  function tintFor(o, p) {
+    if (cfg.wordColor && wordColor && p > 0 && p < 1) { o.tint = wordColor; o.tintDone = null; return wordColor; }
+    if (!o.tint) return cfg.lineColor;
+    if (o.tintDone == null) o.tintDone = gt;
+    const k = clamp((gt - o.tintDone) / Math.max(0.05, cfg.colorSettle ?? 2.5));
+    if (k >= 1) { o.tint = null; return cfg.lineColor; }
+    return mixHex(o.tint, cfg.lineColor, k);
+  }
+  function clearTints() {
+    for (const nw of networks) for (const o of [...nw.nodes, ...nw.sends]) { o.tint = null; o.tintDone = null; }
+  }
+
+  // Lines are stroked in groups that share a colour, a strength (faded in the quiet centre) and dashing
   function drawLinks() {
-    const family = new Path2D(), sent = new Path2D();
     const dashed = cfg.sentStyle === 'dashed';
+    const groups = new Map();
+    const link = (o, a, b, p, arch, bow, route, dash) => {
+      if (p <= 0 || !a.geo || !b.geo) return;
+      let alpha = 1;
+      if (Q) {
+        const f = quietFactor((a.x + b.x) / 2, (a.y + b.y) / 2, Q, cfg.quietSoftness ?? 0.35);
+        alpha = lerp(cfg.quietLineAlpha ?? 1, 1, f);
+        if (alpha <= 0.01) return;
+        alpha = Math.ceil(alpha * 8) / 8;
+      }
+      const color = tintFor(o, p), key = color + '|' + alpha + '|' + dash;
+      let g = groups.get(key);
+      if (!g) groups.set(key, g = { path: new Path2D(), color, alpha, dash });
+      addLink(g.path, a, b, p, arch, bow, route);
+    };
     for (const nw of networks) {
-      for (const n of nw.nodes) if (n.parent) addLink(family, n.parent.dot, n.dot, lineP(n), cfg.arch, n.bow, n.route);
-      for (const s of nw.sends) addLink(dashed ? sent : family, s.from.dot, s.to.root.dot, sendP(s), cfg.sentArch, s.bow, s.route);
+      for (const n of nw.nodes) if (n.parent) link(n, n.parent.dot, n.dot, lineP(n), cfg.arch, n.bow, n.route, false);
+      for (const s of nw.sends) link(s, s.from.dot, s.to.root.dot, sendP(s), cfg.sentArch, s.bow, s.route, dashed);
     }
-    ctx.stroke(family);
-    if (dashed) {
-      const w = Math.max(1, cfg.netLineWidth);
-      ctx.setLineDash([w * 3, w * 3.5]);
-      ctx.stroke(sent);
-      ctx.setLineDash([]);
+    const w = Math.max(1, cfg.netLineWidth);
+    for (const g of groups.values()) {
+      ctx.globalAlpha = g.alpha;
+      ctx.strokeStyle = g.color;
+      ctx.setLineDash(g.dash ? [w * 3, w * 3.5] : []);
+      ctx.stroke(g.path);
     }
+    ctx.setLineDash([]);
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = cfg.lineColor;
   }
 
   function draw() {
@@ -658,6 +777,12 @@ export function createGallery({ canvas, stage, cfg, photos, insets, onStatus }) 
       }
     }
 
+    // While tuning the hero: the quiet centre's outline
+    if (Q && cfg.showQuiet) {
+      ctx.beginPath(); ctx.ellipse(Q.cx, Q.cy, Q.rx, Q.ry, 0, 0, TAU);
+      ctx.globalAlpha = 0.8; ctx.lineWidth = 1; ctx.strokeStyle = '#C2861A'; ctx.stroke(); ctx.globalAlpha = 1;
+    }
+
     if (onStatus) {
       const open = dots.filter(d => d.goal === 1).length;
       const s = `${inView} dots in view · ${open} open${playing ? '' : ' · paused'}`;
@@ -685,11 +810,12 @@ export function createGallery({ canvas, stage, cfg, photos, insets, onStatus }) 
     t += dt;                                   // keeps running while paused, so open photos still close
     if (playing) { lon += cfg.spin * cruise * dt; gt += dt; }
 
+    Q = quiet ? quiet() : null;
     place();
     locate();
     updateNetworks(dt);
     applyShown();
-    if (pointer) setHover(dotAt(pointer[0], pointer[1]));
+    if (pointer) setHover(openableAt(pointer[0], pointer[1]) ? dotAt(pointer[0], pointer[1]) : null);
     updateOpenings(dt);
     draw();
     raf = requestAnimationFrame(frame);
@@ -718,7 +844,9 @@ export function createGallery({ canvas, stage, cfg, photos, insets, onStatus }) 
     setPlaying,
     restart,
     rebuild() { hovered = null; build(); },
-    regrow() { gt = 0; resetNetworks(); },
+    regrow() { gt = 0; resetNetworks(); clearTints(); },
+    // The headline word's colour (#rrggbb) for lines that are drawing out, or null for none
+    setWordColor(color) { wordColor = /^#[0-9a-f]{6}$/i.test(color || '') ? color : null; },
     refit,
     loadPhotos,
     debug() {
