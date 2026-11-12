@@ -266,3 +266,24 @@ test('reduced motion shows a still gallery', async ({ page }) => {
   await page.mouse.move(spot.x, spot.y);
   await expect.poll(async () => (await page.evaluate(() => window.__heroGallery.debug().open)).some(o => o.kind === 'hover')).toBe(true);
 });
+
+test('hovering a dot next to the copy never grows a photo over it', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });          // a still view, so the dot stays put
+  await openPage(page, '/hero.html?heroArt=gallery');
+  await expect.poll(() => page.evaluate(() => !!window.__heroGallery?.running)).toBe(true);
+  await page.waitForTimeout(500);
+  const spot = await page.evaluate(() => {
+    const q = window.__heroQuiet(), g = document.getElementById('gallery-canvas').getBoundingClientRect();
+    const hover = 2.9;                                               // galleryHoverSize
+    const d = window.__heroGallery.debug().dots.filter(d => d.y > 110 && d.r > 3).find(d => {
+      const out = ((d.x - q.cx) / q.rx) ** 2 + ((d.y - q.cy) / q.ry) ** 2 > 1.02;   // the dot itself is outside
+      const R = d.r * hover;
+      return out && ((d.x - q.cx) / (q.rx + R)) ** 2 + ((d.y - q.cy) / (q.ry + R)) ** 2 < 1;   // its photo would reach in
+    });
+    return d && { x: d.x + g.left, y: d.y + g.top };
+  });
+  expect(spot).toBeTruthy();
+  await page.mouse.move(spot.x, spot.y);
+  await page.waitForTimeout(800);
+  expect((await page.evaluate(() => window.__heroGallery.debug().open)).filter(o => o.kind === 'hover')).toEqual([]);
+});

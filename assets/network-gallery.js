@@ -97,13 +97,14 @@ export function prefixedConfig(cfg, prefix) {
 }
 
 /* The quiet centre: an ellipse q = { cx, cy, rx, ry } (canvas px) around the hero's copy where the gallery recedes.
-   quietFactor is 0 deep inside, 1 outside, easing across a soft band `softness` (share of the radius) wide. */
+   quietFactor is 0 everywhere inside (the copy's corners sit on the ellipse, so they're fully quiet too) and 1 beyond
+   a soft band outside it, `softness` (share of the radius) wide, easing across the band. */
 export function quietFactor(x, y, q, softness) {
   if (!q) return 1;
-  const e = Math.hypot((x - q.cx) / q.rx, (y - q.cy) / q.ry), inner = 1 - softness;
-  if (e <= inner) return 0;
-  if (e >= 1) return 1;
-  const u = (e - inner) / (1 - inner);
+  const e = Math.hypot((x - q.cx) / q.rx, (y - q.cy) / q.ry);
+  if (e <= 1) return 0;
+  if (e >= 1 + softness) return 1;
+  const u = (e - 1) / softness;
   return u * u * (3 - 2 * u);
 }
 // A circle of radius R at (x, y) stays clear of the ellipse (the ellipse grown by R holds every touching circle)
@@ -617,8 +618,13 @@ export function createGallery({ canvas, stage, cfg, photos, insets, onStatus, qu
   // Where a pointer may open a dot: not on the hero's copy and not inside its quiet centre
   const openableAt = (x, y) => !(hoverBlocked && hoverBlocked(x, y)) && quietFactor(x, y, Q, 0) >= 1;
   const local = e => { const b = canvas.getBoundingClientRect(); return [e.clientX - b.left, e.clientY - b.top]; };
-  function tap(x, y) {
+  // The dot a pointer would open there, if its photo (hover size) stays clear of the quiet centre
+  function pickAt(x, y) {
     const d = openableAt(x, y) ? dotAt(x, y) : null;
+    return d && Q && !clearOfQuiet(d.x, d.y, d.r0 * cfg.hoverSize, Q) ? null : d;
+  }
+  function tap(x, y) {
+    const d = pickAt(x, y);
     if (d) open(d, 'tap');
   }
 
@@ -839,7 +845,7 @@ export function createGallery({ canvas, stage, cfg, photos, insets, onStatus, qu
     locate();
     updateNetworks(dt);
     applyShown();
-    if (pointer) setHover(openableAt(pointer[0], pointer[1]) ? dotAt(pointer[0], pointer[1]) : null);
+    if (pointer) setHover(pickAt(pointer[0], pointer[1]));
     updateOpenings(dt);
     draw();
     raf = requestAnimationFrame(frame);

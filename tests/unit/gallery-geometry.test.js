@@ -16,11 +16,13 @@ describe('prefixedConfig', () => {
 });
 
 describe('quiet centre', () => {
-  test('quietFactor is 0 deep inside, 1 outside, between in the soft band', () => {
+  test('quietFactor is 0 everywhere inside, 1 beyond the soft band outside it, between in the band', () => {
     expect(quietFactor(500, 300, q, 0.35)).toBe(0);
     expect(quietFactor(500 + 200 * 0.6, 300, q, 0.35)).toBe(0);
-    expect(quietFactor(800, 300, q, 0.35)).toBe(1);
-    const mid = quietFactor(500 + 200 * 0.83, 300, q, 0.35);
+    expect(quietFactor(500 + 200, 300, q, 0.35)).toBe(0);          // on the ellipse, where the text's corners sit
+    expect(quietFactor(500, 300 - 100, q, 0.35)).toBe(0);
+    expect(quietFactor(500 + 200 * 1.36, 300, q, 0.35)).toBe(1);
+    const mid = quietFactor(500 + 200 * 1.17, 300, q, 0.35);
     expect(mid).toBeGreaterThan(0); expect(mid).toBeLessThan(1);
     expect(quietFactor(500, 300, null, 0.35)).toBe(1);
   });

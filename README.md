@@ -232,7 +232,7 @@ turning into view, which is what carries the sense of how big the network is.
    **Copy settings** includes them. In Gallery mode:
    - **Quiet centre.** An ellipse round the copy (sized to the widest headline word, plus `galleryQuietPadX` /
      `galleryQuietPadY`) where dots shrink to specks (`galleryQuietDotScale`) and network lines fade out
-     (`galleryQuietLineAlpha`) across a soft edge (`galleryQuietSoftness`). It replaces the white fade. No photo
+     (`galleryQuietLineAlpha`), easing back to full across a soft edge just outside it (`galleryQuietSoftness`). It replaces the white fade. No photo
      opens in it, or drifts into it, and hovering or tapping the copy never opens one. **Show quiet centre
      outline** (`galleryShowQuiet`) draws it while tuning.
    - **Photos around the heading** (`galleryHalo`): automatic photos open in a ring `galleryHaloWidth` px wide just
