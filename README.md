@@ -253,7 +253,7 @@ turning into view, which is what carries the sense of how big the network is.
 4. **What we do:** image plus stats (7,088 disciples, 1,559 groups, 3 subnetworks) that count up from 0 as they scroll into view (once; straight to the numbers with reduced motion).
 5. **How we do it:** four rows, **Process**, **Tools**, **Training** and **Coaching** (links are
    placeholders), built and behaving exactly like the Find a hub rows below: the same hover fill, ring-dots and cursor.
-6. **Testimony:** portrait and quote (placeholder name and words).
+6. **Testimony:** Anastasia, group leader in Anaheim: her portrait (`assets/anastasia.jpg`) and quote.
 7. **Our disciple-making tool:** group photo beside an iPhone showing a screenshot of the Jesus Disciple App's
    Learn page (`assets/jesus-disciple-app.jpg`), with App Store and Google Play buttons
    (placeholders; swap in the official store badges before publishing).

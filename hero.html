@@ -497,6 +497,7 @@
   /* Testimony */
   .testimony { display: grid; grid-template-columns: 0.8fr 1.2fr; gap: clamp(32px, 6vw, 88px); align-items: center; }
   .testimony .frame { aspect-ratio: 4 / 4.6; }
+  .testimony .frame img { object-position: 50% 30%; }   /* keeps her face in frame when the box crops */
   .quote { margin: 0; }
   .quote p {
     margin: 0; color: var(--heading); font-weight: 400;
@@ -965,11 +966,11 @@
   <section class="section" id="testimony">
     <div class="wrap testimony">
       <div class="frame">
-        <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=900&h=1040&fit=crop&q=75&auto=format" alt="" loading="lazy">
+        <img src="assets/anastasia.jpg" alt="Anastasia" loading="lazy">
       </div>
       <blockquote class="quote">
-        <p>“I came to a group as a guest. A year later I was leading one, and now three new groups have grown out of ours.”</p>
-        <footer><span class="glyph" aria-hidden="true"></span><span><strong>Name Surname</strong>, group leader in Anaheim</span></footer>
+        <p>“Not only did I have my leaders pouring into me…I was able to pour into others…”</p>
+        <footer><span class="glyph" aria-hidden="true"></span><span><strong>Anastasia</strong>, group leader in Anaheim</span></footer>
       </blockquote>
     </div>
   </section>
