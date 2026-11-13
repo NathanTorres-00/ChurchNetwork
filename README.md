@@ -13,6 +13,12 @@ shape.
 - **`network-globe-pins.html`**: the globe with photo pins on hover (see [Network Pins](#network-pins) below).
 - **`network-gallery.html`**: a close-up of the globe as a gallery, its dots opening into photos (see [Network Gallery](#network-gallery) below).
 - **`hero.html`**: a sample landing page with the Pins globe as its hero (see [Hero](#hero-sample-webpage) below).
+- **`groups.html`**: the Groups page, opened by the home page's **Start a group**. Its flow and copy follow the
+  TR-ANAHEIM "Groups" Figma frame; its look is the home page's (Geist, the four headline colors, gray surfaces,
+  24px corners, pill buttons). Sections: a photo hero (Church Groups), What are Rock Network Groups? with the
+  Church Groups and Discipleship Groups cards and "Already a part of a group?", the weekly Network Video
+  (placeholder), a group member's quote over their group's photo, and Meet the team (placeholder names). Links not
+  built yet are marked `data-placeholder`.
 
 ## Embedding in Wix
 1. Wix Editor → **Add → Embed Code → Embed HTML**.
@@ -220,7 +226,7 @@ turning into view, which is what carries the sense of how big the network is.
 
 1. **Hero:** the flying globe with pins behind the title "A New Testament Church Network", a headline
    ("Multiplying Disciples / Leaders / Churches / Movements", each word in its own color), and **Learn more**
-   (scrolls to section 2) and **Start a group** (links nowhere for now). The one-line statement under them is hidden for
+   (scrolls to section 2) and **Start a group** (opens `groups.html`). The one-line statement under them is hidden for
    now (one CSS line in `hero.html` brings it back).
 
    **Art: Pins globe or Gallery.** The Adjust panel's **Hero layout** section has an **Art** row: **Pins globe** (the

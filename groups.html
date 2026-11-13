@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Groups · The Rock Network</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='7' fill='%232F7D6D'/%3E%3Ccircle cx='16' cy='16' r='12.5' fill='none' stroke='%232F7D6D' stroke-width='3'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* The site's design system, as on hero.html: Geist, the four headline colors, soft gray surfaces, 24px corners,
+     pill buttons and ring-dot glyphs. Flow, order and copy follow the TR-ANAHEIM "Groups" Figma frame. */
+  :root {
+    --font: 'Geist', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    --c-disciples: #2F7D6D;
+    --c-leaders: #C2861A;
+    --c-churches: #3F55A8;
+    --c-movements: #B23A5B;
+    --section-space: 128px;
+    --radius: 24px;
+    --content-width: 1180px;
+    --body-size: 17px;
+    --heading: #1F1F23;
+    --text: #52525B;
+    --surface: #F5F5F6;
+    --line: #E4E4E7;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  body {
+    margin: 0; font-family: var(--font); -webkit-font-smoothing: antialiased;
+    font-size: var(--body-size); line-height: 1.6; color: var(--text); background: #fff;
+  }
+  img { display: block; max-width: 100%; }
+  a { color: inherit; }
+  .wrap { max-width: var(--content-width); margin: 0 auto; padding: 0 24px; }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+  /* ---------- Header ---------- */
+  .site-header { position: absolute; top: 0; left: 0; right: 0; z-index: 5; }
+  .site-header .wrap { display: flex; align-items: center; justify-content: space-between; height: 76px; }
+  .brand { display: inline-flex; align-items: center; color: var(--heading); text-decoration: none; }
+  .logo {
+    --logo-h: 32px;
+    display: block; height: var(--logo-h); aspect-ratio: 960 / 202; background: currentColor;
+    -webkit-mask: url("assets/the-rock-network.png") center / contain no-repeat;
+            mask: url("assets/the-rock-network.png") center / contain no-repeat;
+  }
+  .site-footer .logo { --logo-h: 26px; }
+  .site-nav { display: flex; gap: 28px; font-size: 15px; }
+  .site-nav a { text-decoration: none; color: var(--text); }
+  .site-nav a:hover, .site-nav a[aria-current="page"] { color: var(--heading); }
+  .site-nav a[aria-current="page"] { font-weight: 500; }
+  @media (max-width: 1000px) { .site-nav { gap: 18px; } }
+  @media (max-width: 760px) { .site-nav { display: none; } }
+
+  .glyph {
+    --g: 9px; --gc: var(--c-disciples); --ring: #fff;
+    display: inline-block; width: var(--g); height: var(--g); border-radius: 50%; background: var(--gc); flex: none;
+    box-shadow: 0 0 0 calc(var(--g) * .3) var(--ring), 0 0 0 calc(var(--g) * .56) var(--gc);
+    margin: calc(var(--g) * .56);
+  }
+
+  .button {
+    display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+    font: 500 15px/1 var(--font); text-decoration: none; cursor: pointer;
+    padding: 15px 24px; border-radius: 999px; border: 1px solid transparent;
+    transition: background .25s ease, border-color .25s ease, color .25s ease;
+  }
+  .button-primary { background: var(--heading); color: #fff; }
+  .button-primary:hover { background: #3A3A40; }
+  .button-secondary { background: rgba(255,255,255,.8); color: var(--heading); border-color: #D4D4D8; }
+  .button-secondary:hover { border-color: #A1A1AA; }
+  /* on a photo: white leads, the outline follows */
+  .button-light { background: #fff; color: var(--heading); }
+  .button-light:hover { background: #ECECEE; }
+  .button-ghost { background: rgba(255,255,255,.08); color: #fff; border-color: rgba(255,255,255,.45); }
+  .button-ghost:hover { border-color: #fff; }
+
+  /* ---------- Sections ---------- */
+  .section { padding: var(--section-space) 0; }
+  .section-tint { background: var(--surface); }
+  .section-title {
+    margin: 0; text-wrap: balance; color: var(--heading); font-weight: 500;
+    font-size: clamp(32px, 4.2vw, 50px); line-height: 1.08; letter-spacing: -0.025em;
+  }
+  .lead { margin: 18px 0 0; max-width: 58ch; font-size: calc(var(--body-size) * 1.12); }
+  .eyebrow { margin: 0 0 20px; font-size: 16px; font-weight: 500; color: var(--c-disciples); }
+  .frame { border-radius: var(--radius); overflow: hidden; background: #E9E9EC; }
+  .frame img { width: 100%; height: 100%; object-fit: cover; }
+
+  /* ---------- 1. Hero: a photo card with the page's title over it ---------- */
+  .groups-hero { padding: 100px 0 0; }
+  .hero-card {
+    position: relative; min-height: min(720px, calc(100vh - 124px)); display: flex; flex-direction: column;
+    justify-content: space-between; gap: 48px; padding: clamp(32px, 6vw, 72px); color: #fff; isolation: isolate;
+  }
+  .hero-card > img { position: absolute; inset: 0; z-index: -2; }
+  .hero-card::after {
+    content: ''; position: absolute; inset: 0; z-index: -1;
+    background: linear-gradient(180deg, rgba(20,20,24,.62) 0%, rgba(20,20,24,.38) 45%, rgba(20,20,24,.7) 100%);
+  }
+  .hero-card h1 {
+    margin: 0; font-weight: 600; letter-spacing: -0.035em; line-height: 1.02;
+    font-size: clamp(52px, 7.4vw, 96px);
+  }
+  .hero-card .sub { margin: 18px 0 0; font-size: clamp(19px, 1.9vw, 24px); font-weight: 400; color: rgba(255,255,255,.88); letter-spacing: -0.01em; }
+  .hero-card .actions { display: flex; flex-wrap: wrap; gap: 12px; justify-content: flex-end; }
+
+  /* ---------- 2. What are Rock Network Groups? ---------- */
+  .group-types { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 64px; }
+  .group-type {
+    --gc: var(--c-churches);
+    display: flex; flex-direction: column; align-items: flex-start;
+    padding: clamp(32px, 4vw, 48px); border-radius: var(--radius); background: var(--surface);
+  }
+  .group-type.is-discipleship { --gc: var(--c-disciples); }
+  .group-type .tag { display: flex; align-items: center; gap: 10px; margin: 0 0 22px; font-size: 15px; font-weight: 500; color: var(--gc); }
+  .group-type .tag .glyph { --g: 12px; --ring: var(--surface); margin: 0 4px 0 7px; }
+  .group-type h3 {
+    margin: 0; color: var(--heading); font-weight: 500; letter-spacing: -0.025em; line-height: 1.05;
+    font-size: clamp(36px, 4vw, 52px);
+  }
+  .group-type .this { margin: 28px 0 10px; color: var(--heading); font-weight: 500; }
+  .traits { list-style: none; margin: 0 0 36px; padding: 0; display: grid; gap: 0; flex: 1; align-content: start; width: 100%; }
+  .traits li { display: flex; gap: 14px; align-items: baseline; padding: 12px 0; border-top: 1px solid var(--line); }
+  .traits li:last-child { border-bottom: 1px solid var(--line); }
+  .traits li::before {
+    content: ''; flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--gc);
+    translate: 0 -2px;
+  }
+  @media (max-width: 860px) { .group-types { grid-template-columns: 1fr; } }
+
+  .already {
+    margin-top: 72px; padding-top: 56px; border-top: 1px solid var(--line);
+    display: flex; flex-direction: column; align-items: center; gap: 22px; text-align: center;
+  }
+  .already p { margin: 0; color: var(--heading); font-weight: 500; font-size: clamp(26px, 2.8vw, 34px); letter-spacing: -0.02em; line-height: 1.2; }
+
+  /* ---------- 3. Network Video ---------- */
+  .video { position: relative; aspect-ratio: 16 / 9; margin-top: 56px; }
+  .video::after { content: ''; position: absolute; inset: 0; background: rgba(31,31,35,.28); pointer-events: none; }
+  .play {
+    position: absolute; z-index: 1; left: 50%; top: 50%; translate: -50% -50%;
+    width: 88px; height: 88px; border-radius: 50%; border: 0; cursor: pointer;
+    background: rgba(255,255,255,.94); display: grid; place-items: center;
+    transition: transform .3s ease;
+  }
+  .play:hover { transform: scale(1.05); }
+  .play::before {
+    content: ''; margin-left: 6px;
+    border-left: 22px solid var(--heading); border-top: 14px solid transparent; border-bottom: 14px solid transparent;
+  }
+
+  /* ---------- 4. A group member's words over their group's photo ---------- */
+  .photo-quote { position: relative; isolation: isolate; min-height: 560px; display: grid; place-items: center; padding: clamp(40px, 7vw, 96px); }
+  .photo-quote > img { position: absolute; inset: 0; z-index: -2; object-position: 50% 35%; }
+  .photo-quote::after { content: ''; position: absolute; inset: 0; z-index: -1; background: rgba(20,20,24,.55); }
+  .photo-quote blockquote { margin: 0; max-width: 820px; text-align: center; color: #fff; }
+  .photo-quote p { margin: 0; font-size: clamp(26px, 3.2vw, 42px); line-height: 1.25; letter-spacing: -0.02em; font-weight: 500; text-wrap: balance; }
+  .photo-quote footer { margin-top: 28px; display: inline-flex; align-items: center; gap: 12px; font-size: 16px; color: rgba(255,255,255,.88); }
+  .photo-quote footer .glyph { --ring: #2b2b30; }
+
+  /* ---------- 5. Meet the team ---------- */
+  .team-head .lead { margin-top: 14px; }
+  .team { list-style: none; margin: 56px 0 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
+  .member .frame { aspect-ratio: 4 / 5; display: grid; place-items: center; }
+  .member .frame .glyph { --g: 18px; --gc: #C9C9CF; --ring: #E9E9EC; }
+  .member h3 { margin: 18px 0 2px; font-size: 19px; font-weight: 500; color: var(--heading); letter-spacing: -0.01em; }
+  .member p { margin: 0; font-size: 15px; }
+  @media (max-width: 960px) { .team { grid-template-columns: repeat(2, 1fr); gap: 16px; } }
+
+  /* ---------- Footer ---------- */
+  .site-footer { padding: 40px 0; border-top: 1px solid var(--line); font-size: 14px; }
+  .site-footer .wrap { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+
+  @media (max-width: 760px) {
+    :root { --section-space: 88px; }
+    .groups-hero { padding-top: 84px; }
+    .hero-card .actions { justify-content: flex-start; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="hero.html" aria-label="The Rock Network, home"><span class="logo" aria-hidden="true"></span></a>
+    <nav class="site-nav" aria-label="Site">
+      <a href="hero.html#story">Our story</a>
+      <a href="hero.html#what-we-do">What we do</a>
+      <a href="hero.html#how">How we do it</a>
+      <a href="hero.html#app">App</a>
+      <a href="groups.html" aria-current="page">Groups</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <!-- 1. Hero -->
+  <section class="groups-hero" id="top">
+    <div class="wrap">
+      <div class="frame hero-card">
+        <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=2000&h=1200&fit=crop&q=75&auto=format" alt="">
+        <div>
+          <h1>Church Groups</h1>
+          <p class="sub">Build solid lives that build solid lives</p>
+        </div>
+        <div class="actions">
+          <a class="button button-light" href="#start">Start a group</a>
+          <a class="button button-ghost" href="#what">Learn more</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2. What are Rock Network Groups? -->
+  <section class="section" id="what">
+    <div class="wrap">
+      <p class="eyebrow">Groups</p>
+      <h2 class="section-title">What are Rock Network Groups?</h2>
+      <p class="lead">Rock Network groups are groups of three or more that gather, grow, give and go make disciples.</p>
+
+      <div class="group-types" id="start">
+        <article class="group-type">
+          <p class="tag" aria-hidden="true"><span class="glyph"></span></p>
+          <h3>Church Groups</h3>
+          <p class="this">This group:</p>
+          <ul class="traits">
+            <li>Consists of believers</li>
+            <li>Is ready to gather, grow, give and go together</li>
+            <li>Agrees to meet long term</li>
+            <li>Uses the Jesus Disciple App</li>
+          </ul>
+          <a class="button button-primary" href="#" data-placeholder>Start a church group</a>
+        </article>
+        <article class="group-type is-discipleship">
+          <p class="tag" aria-hidden="true"><span class="glyph"></span></p>
+          <h3>Discipleship Groups</h3>
+          <p class="this">This group:</p>
+          <ul class="traits">
+            <li>Has someone who believes in Jesus leading others who do not</li>
+            <li>Agrees to meet together for a set period</li>
+            <li>Uses the Jesus Disciple App</li>
+          </ul>
+          <a class="button button-primary" href="#" data-placeholder>Start a discipleship group</a>
+        </article>
+      </div>
+
+      <div class="already">
+        <p>Already a part of a group?</p>
+        <a class="button button-secondary" href="#" data-placeholder>Find resources for you</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. Network Video -->
+  <section class="section section-tint" id="video">
+    <div class="wrap">
+      <p class="eyebrow">Weekly</p>
+      <h2 class="section-title">Network Video</h2>
+      <div class="frame video">
+        <img src="https://images.unsplash.com/photo-1529070538774-1843cb3265df?w=1600&h=900&fit=crop&q=75&auto=format" alt="" loading="lazy">
+        <button class="play" type="button" aria-label="Play this week's network video (placeholder)"></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. A group member's words -->
+  <section class="section" id="story">
+    <div class="wrap">
+      <figure class="frame photo-quote" style="margin: 0">
+        <img src="assets/group-gathered.jpg" alt="A church group gathered together in a living room" loading="lazy">
+        <blockquote>
+          <p>“Doing church in a group changed everything for me. It’s the closest thing to family I’ve found.”</p>
+          <footer><span class="glyph" aria-hidden="true"></span><span>Church group member</span></footer>
+        </blockquote>
+      </figure>
+    </div>
+  </section>
+
+  <!-- 5. Meet the team -->
+  <section class="section section-tint" id="team">
+    <div class="wrap">
+      <div class="team-head">
+        <p class="eyebrow">Connect with the Network</p>
+        <h2 class="section-title">Meet the team</h2>
+        <p class="lead">Working together to serve your region.</p>
+      </div>
+      <ul class="team">
+        <li class="member"><div class="frame"><span class="glyph" aria-hidden="true"></span></div><h3>Name Surname</h3><p>Role</p></li>
+        <li class="member"><div class="frame"><span class="glyph" aria-hidden="true"></span></div><h3>Name Surname</h3><p>Role</p></li>
+        <li class="member"><div class="frame"><span class="glyph" aria-hidden="true"></span></div><h3>Name Surname</h3><p>Role</p></li>
+        <li class="member"><div class="frame"><span class="glyph" aria-hidden="true"></span></div><h3>Name Surname</h3><p>Role</p></li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <a class="brand" href="hero.html" aria-label="The Rock Network, home"><span class="logo" aria-hidden="true"></span></a>
+    <span>Sample page with placeholder content</span>
+  </div>
+</footer>
+
+<script>
+  // Links still to be built go nowhere for now (as on the home page)
+  document.addEventListener('click', e => {
+    if (e.target.closest && e.target.closest('a[data-placeholder]')) e.preventDefault();
+  });
+</script>
+</body>
+</html>
