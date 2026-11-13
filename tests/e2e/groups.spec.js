@@ -83,3 +83,17 @@ test('arriving at Home from Groups skips the loading screen', async ({ page }) =
   await expect(page.locator('html')).not.toHaveClass(/is-loading/, { timeout: 2000 });
   await expect(page.locator('#story')).toBeInViewport();
 });
+
+test('Full width ends in the Home hero arc, set from Bottom curve', async ({ page }) => {
+  await page.goto('/groups.html?heroShape=full');
+  const card = page.locator('.hero-card');
+  expect(await card.evaluate(el => getComputedStyle(el).maskImage || getComputedStyle(el).webkitMaskImage)).toContain('radial-gradient');
+  const curve = () => card.evaluate(el => parseFloat(getComputedStyle(el).marginBottom));
+  expect(await curve()).toBeLessThan(-40);                      // 5vw at 1280px wide = 64px of dip
+  await page.locator('#adjust').click();
+  await page.locator('#c-heroCurve').fill('0');
+  expect(await curve()).toBe(0);
+  // the card shape keeps its straight, rounded edge
+  await page.locator('.seg[data-key="heroShape"] [data-value="card"]').click();
+  expect(await card.evaluate(el => getComputedStyle(el).maskImage)).toBe('none');
+});

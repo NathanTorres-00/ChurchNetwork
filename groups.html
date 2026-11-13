@@ -17,6 +17,8 @@ const CONFIG = {
   heroArt: 'photo',         // 'photo' (the group photo card) or 'globe' (the home page's Pins globe behind the title)
   heroShape: 'card',        // 'card' (rounded, inside the page margins) or 'full' (edge to edge, full height)
   heroPins: true,           // with the globe: photo pins rise from its networks
+  heroCurve: 5,             // vw, Full width: how far the hero's bottom edge dips at the center, as on Home
+                            // (0 = straight, capped at 120px)
 
   // Page load
   loadStyle: 'rise',        // 'rise', 'reveal' (the hero opens out from its middle), 'fade' or 'none'
@@ -43,6 +45,7 @@ const cfg = { ...CONFIG };
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) { cfg.loadStyle = 'none'; cfg.scrollReveal = false; }
   root.dataset.art = cfg.heroArt;
   root.dataset.shape = cfg.heroShape;
+  root.style.setProperty('--hero-curve', cfg.heroCurve + 'vw');
   root.dataset.load = cfg.loadStyle;
   root.style.setProperty('--load-speed', cfg.loadSpeed + 's');
   root.style.setProperty('--load-stagger', cfg.loadStagger + 's');
@@ -180,6 +183,22 @@ const cfg = { ...CONFIG };
   html[data-shape="full"] .hero-card {
     border-radius: 0; min-height: max(600px, 100vh); box-shadow: none;
     padding: 160px max(24px, calc((100vw - var(--content-width)) / 2 + 24px)) 72px;
+  }
+  /* Full width ends in the Home hero's arc: the hero runs --curve past its straight bottom edge and is masked to
+     an ellipse 1.5x its width whose bottom dips --curve below that edge and whose sides meet it at the screen
+     edges (a height of --curve / (1 - sqrt(1 - 1/1.5^2)), so 3.93 x --curve). The dip lies over the next
+     section's top space. */
+  html[data-shape="full"] .groups-hero { position: relative; z-index: 1; }
+  html[data-shape="full"] .hero-card {
+    --curve: min(var(--hero-curve, 5vw), 120px);
+    --arc: calc(var(--curve) * 3.93);
+    min-height: calc(max(600px, 100vh) + var(--curve));
+    padding-bottom: calc(72px + var(--curve));
+    margin-bottom: calc(-1 * var(--curve));
+    -webkit-mask: linear-gradient(#000 0 0) top / 100% calc(100% - var(--curve)) no-repeat,
+                  radial-gradient(ellipse 75% var(--arc) at 50% calc(100% - var(--arc)), #000 99.6%, transparent);
+            mask: linear-gradient(#000 0 0) top / 100% calc(100% - var(--curve)) no-repeat,
+                  radial-gradient(ellipse 75% var(--arc) at 50% calc(100% - var(--arc)), #000 99.6%, transparent);
   }
   html[data-shape="full"][data-art="photo"] .site-header { color: #fff; }
   html[data-shape="full"][data-art="photo"] .site-header .brand,
@@ -331,6 +350,7 @@ const cfg = { ...CONFIG };
   .prow.check { grid-template-columns: auto 1fr; gap: 10px; }
   .prow.check input { margin: 0; accent-color: var(--ink); width: 15px; height: 15px; }
   .prow.is-off { opacity: .45; }
+  .prow .only { font-size: 11px; color: var(--ink-soft); margin-left: 6px; white-space: nowrap; }
   .panel input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; height: 20px; background: transparent; margin: 0; cursor: pointer; --p: 50%; }
   .panel input[type="range"]::-webkit-slider-runnable-track { height: 2px; border-radius: 2px; background: linear-gradient(to right, var(--thumb) var(--p), var(--track) var(--p)); }
   .panel input[type="range"]::-moz-range-track { height: 2px; border-radius: 2px; background: linear-gradient(to right, var(--thumb) var(--p), var(--track) var(--p)); }
@@ -494,6 +514,8 @@ const cfg = { ...CONFIG };
         <button type="button" data-value="full">Full width</button>
       </div>
     </div>
+    <div class="prow" id="row-heroCurve"><label for="c-heroCurve">Bottom curve <span class="only">Full width</span></label><output id="o-heroCurve"></output>
+      <input type="range" id="c-heroCurve" data-key="heroCurve" min="0" max="10" step="0.5"></div>
     <label class="prow check" id="row-heroPins"><input type="checkbox" data-key="heroPins"><span>Photo pins on the globe</span></label>
   </section>
 
@@ -546,6 +568,7 @@ const cfg = { ...CONFIG };
     const root = document.documentElement;
     root.dataset.art = cfg.heroArt;
     root.dataset.shape = cfg.heroShape;
+    root.style.setProperty('--hero-curve', cfg.heroCurve + 'vw');
     const holder = document.getElementById('hero-globe');
     if (cfg.heroArt !== 'globe') { holder.replaceChildren(); return; }
     const src = `hero.html?embed=globe&controls=0&smoothScroll=0&heroArt=pins&showPins=${cfg.heroPins ? 1 : 0}`;
@@ -610,7 +633,7 @@ const cfg = { ...CONFIG };
     document.getElementById('close').addEventListener('click', () => open(false));
     document.addEventListener('keydown', e => { if (e.key === 'Escape') open(false); });
 
-    const fmt = { loadSpeed: v => v.toFixed(2) + ' s', loadStagger: v => v.toFixed(2) + ' s', duration: v => v.toFixed(2) + ' s' };
+    const fmt = { heroCurve: v => v + 'vw', loadSpeed: v => v.toFixed(2) + ' s', loadStagger: v => v.toFixed(2) + ' s', duration: v => v.toFixed(2) + ' s' };
     const fill = input => input.style.setProperty('--p', ((input.value - input.min) / (input.max - input.min) * 100) + '%');
     const vt = window.rnPageTransition;
 
@@ -622,6 +645,7 @@ const cfg = { ...CONFIG };
         else { input.value = cfg[k]; fill(input); document.getElementById('o-' + k).textContent = fmt[k](cfg[k]); }
       });
       document.getElementById('row-heroPins').classList.toggle('is-off', cfg.heroArt !== 'globe');
+      document.getElementById('row-heroCurve').classList.toggle('is-off', cfg.heroShape !== 'full');
       const t = vt.get();
       panel.querySelectorAll('.seg[data-transition-key] button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.value === t.style)));
       const d = document.getElementById('c-vtDuration');

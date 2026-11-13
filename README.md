@@ -22,7 +22,8 @@ shape.
   - **Adjust panel** (bottom right; `?controls=0` hides it), with its own CONFIG at the top of `groups.html`:
     - **Hero › Art:** **Photo** (default) or **Pins globe**, the home page's own globe and photo pins behind the
       title. It's `hero.html?embed=globe` in a frame, loaded only when chosen; its pins keep clear of the Groups
-      title, tagline, buttons and header (the frame asks `window.rnHeroTextRects`). **Shape:** Card or Full width.
+      title, tagline, buttons and header (the frame asks `window.rnHeroTextRects`). **Shape:** Card or Full width; Full width ends in the Home hero's curved bottom arc,
+      its depth set by **Bottom curve** (`heroCurve`, in vw, 0 = straight).
     - **Page load:** Rise, Reveal (the hero opens out from its middle), Fade or None, with speed and stagger, and
       **Sections rise in on scroll**. **Replay** plays it again.
     - **Page transition:** Rise, Slide, Fade or None, and its speed, between Home and Groups. It uses the
