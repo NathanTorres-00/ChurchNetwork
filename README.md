@@ -216,16 +216,16 @@ turning into view, which is what carries the sense of how big the network is.
 
 # Hero (sample webpage)
 
-`hero.html` is a sample church-network landing page with the Gallery globe as its hero (the Pins globe is one click away). Sections:
+`hero.html` is a sample church-network landing page with the Pins globe as its hero (the Gallery globe is one click away). Sections:
 
 1. **Hero:** the flying globe with pins behind the title "A New Testament Church Network", a headline
    ("Multiplying Disciples / Leaders / Churches / Movements", each word in its own color), and **Learn more**
    (scrolls to section 2) and **Start a group** (links nowhere for now). The one-line statement under them is hidden for
    now (one CSS line in `hero.html` brings it back).
 
-   **Art: Pins globe or Gallery.** The Adjust panel's **Hero layout** section has an **Art** row: **Gallery** (the
-   default, `heroArt: 'gallery'`), the close-up gallery globe from the Gallery tab, or **Pins globe**
-   (`heroArt: 'pins'`, or `?heroArt=pins`). Only the chosen art runs; the panel shows its settings ("Globe: …" or "Gallery: …"),
+   **Art: Pins globe or Gallery.** The Adjust panel's **Hero layout** section has an **Art** row: **Pins globe** (the
+   default, `heroArt: 'pins'`), or **Gallery** (`heroArt: 'gallery'`, or `?heroArt=gallery`), the close-up
+   gallery globe from the Gallery tab. Only the chosen art runs; the panel shows its settings ("Globe: …" or "Gallery: …"),
    and **Pause globe** / **Restart globe** act on it. The Gallery's engine loads only when it's chosen, so the
    Pins hero loads exactly as before. Its settings are the Gallery tab's, prefixed `gallery` (`gallerySpin`,
    `galleryZoom`, …), calmer by default (at most 2 photos open, one every 3.5 s, growth starting **In view**, the globe keeps turning on hover), and
