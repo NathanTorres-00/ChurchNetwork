@@ -17,7 +17,7 @@ shape.
   TR-ANAHEIM "Groups" Figma frame; its look is the home page's (Geist, the four headline colors, gray surfaces,
   24px corners, pill buttons). Sections: a photo hero (Church Groups), What are Rock Network Groups? with the
   Church Groups and Discipleship Groups cards and "Already a part of a group?", the weekly Network Video
-  (placeholder), a group member's quote over their group's photo, and Meet the team (placeholder names). Links not
+  (a YouTube video: its thumbnail until play, then YouTube's player; change `data-youtube` each week), a group member's quote over their group's photo, and Meet the team (placeholder names). Links not
   built yet are marked `data-placeholder`.
 
 ## Embedding in Wix

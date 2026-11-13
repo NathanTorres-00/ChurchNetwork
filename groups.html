@@ -142,7 +142,9 @@
 
   /* ---------- 3. Network Video ---------- */
   .video { position: relative; aspect-ratio: 16 / 9; margin-top: 56px; }
-  .video::after { content: ''; position: absolute; inset: 0; background: rgba(31,31,35,.28); pointer-events: none; }
+  .video::after { content: ''; position: absolute; inset: 0; background: rgba(31,31,35,.12); pointer-events: none; }
+  .video iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+  .video.is-started::after { display: none; }
   .play {
     position: absolute; z-index: 1; left: 50%; top: 50%; translate: -50% -50%;
     width: 88px; height: 88px; border-radius: 50%; border: 0; cursor: pointer;
@@ -262,9 +264,10 @@
     <div class="wrap">
       <p class="eyebrow">Weekly</p>
       <h2 class="section-title">Network Video</h2>
-      <div class="frame video">
-        <img src="https://images.unsplash.com/photo-1529070538774-1843cb3265df?w=1600&h=900&fit=crop&q=75&auto=format" alt="" loading="lazy">
-        <button class="play" type="button" aria-label="Play this week's network video (placeholder)"></button>
+      <!-- This week's video: change data-youtube to the new video's ID (the part after youtu.be/) each week -->
+      <div class="frame video" id="network-video" data-youtube="qo52gy0Gq74" data-title="Weekly Church Group Video | November 6 - November 12, 2026">
+        <img src="https://i.ytimg.com/vi/qo52gy0Gq74/maxresdefault.jpg" alt="" loading="lazy">
+        <button class="play" type="button" aria-label="Play this week's network video"></button>
       </div>
     </div>
   </section>
@@ -308,6 +311,25 @@
 </footer>
 
 <script>
+  // Network Video: the YouTube thumbnail until play is pressed, then YouTube's player in its place (nothing from
+  // YouTube's player loads before that). The thumbnail follows data-youtube, so a new week is one ID to change.
+  (() => {
+    const box = document.getElementById('network-video');
+    if (!box) return;
+    const id = box.dataset.youtube;
+    box.querySelector('img').src = `https://i.ytimg.com/vi/${id}/maxresdefault.jpg`;
+    box.querySelector('.play').addEventListener('click', () => {
+      const frame = document.createElement('iframe');
+      frame.src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0&playsinline=1`;
+      frame.title = box.dataset.title || 'Network video';
+      frame.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
+      frame.allowFullscreen = true;
+      box.replaceChildren(frame);
+      box.classList.add('is-started');
+      frame.focus();
+    });
+  })();
+
   // Links still to be built go nowhere for now (as on the home page)
   document.addEventListener('click', e => {
     if (e.target.closest && e.target.closest('a[data-placeholder]')) e.preventDefault();
