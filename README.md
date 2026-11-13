@@ -19,6 +19,17 @@ shape.
   Church Groups and Discipleship Groups cards and "Already a part of a group?", the weekly Network Video
   (a YouTube video: its thumbnail until play, then YouTube's player; change `data-youtube` each week), a group member's quote over their group's photo, and Meet the team (placeholder names). Links not
   built yet are marked `data-placeholder`.
+  - **Adjust panel** (bottom right; `?controls=0` hides it), with its own CONFIG at the top of `groups.html`:
+    - **Hero › Art:** **Photo** (default) or **Pins globe**, the home page's own globe and photo pins behind the
+      title. It's `hero.html?embed=globe` in a frame, loaded only when chosen; its pins keep clear of the Groups
+      title, tagline, buttons and header (the frame asks `window.rnHeroTextRects`). **Shape:** Card or Full width.
+    - **Page load:** Rise, Reveal (the hero opens out from its middle), Fade or None, with speed and stagger, and
+      **Sections rise in on scroll**. **Replay** plays it again.
+    - **Page transition:** Rise, Slide, Fade or None, and its speed, between Home and Groups. It uses the
+      browser's cross-document View Transitions (`assets/page-transition.css` and `.js`, loaded on both pages), so
+      it plays in Chrome, Edge and Safari 18.2+; the choice is kept in this browser (`localStorage`) for both pages.
+- **Home's loading screen** plays when arriving from outside the site; arriving from another of its pages (Groups →
+  Home) the page opens straight away with the page transition.
 
 ## Embedding in Wix
 1. Wix Editor → **Add → Embed Code → Embed HTML**.

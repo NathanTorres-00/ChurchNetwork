@@ -41,3 +41,45 @@ test('the Network Video shows its YouTube thumbnail and plays in place', async (
   await expect(frame).toHaveAttribute('src', /youtube-nocookie\.com\/embed\/qo52gy0Gq74\?autoplay=1/);
   await expect(box.locator('.play')).toHaveCount(0);
 });
+
+test('the Adjust panel switches the hero to the Pins globe and back', async ({ page }) => {
+  const errors = [];
+  page.on('pageerror', e => errors.push(String(e)));
+  await page.goto('/groups.html');
+  await expect(page.locator('#hero-globe iframe')).toHaveCount(0);           // the globe loads only when chosen
+  await page.locator('#adjust').click();
+  await page.locator('.seg[data-key="heroArt"] [data-value="globe"]').click();
+  await expect(page.locator('html')).toHaveAttribute('data-art', 'globe');
+  const frame = page.locator('#hero-globe iframe');
+  await expect(frame).toHaveAttribute('src', /hero\.html\?embed=globe/);
+  // the embedded page shows only its globe, with no loading screen
+  const inner = page.frameLocator('#hero-globe iframe');
+  await expect(inner.locator('#canvas')).toBeVisible();
+  await expect(inner.locator('.hero-copy')).toBeHidden();
+  await expect(inner.locator('#loader')).toHaveCount(0);
+  await page.locator('.seg[data-key="heroShape"] [data-value="full"]').click();
+  await expect(page.locator('html')).toHaveAttribute('data-shape', 'full');
+  await page.locator('.seg[data-key="heroArt"] [data-value="photo"]').click();
+  await expect(frame).toHaveCount(0);
+  expect(errors).toEqual([]);
+});
+
+test('page load style and the page transition come from the panel', async ({ page }) => {
+  await page.goto('/groups.html?loadStyle=fade');
+  await expect(page.locator('html')).toHaveAttribute('data-load', 'fade');
+  await page.locator('#adjust').click();
+  await page.locator('.seg[data-key="loadStyle"] [data-value="reveal"]').click();
+  await expect(page.locator('html')).toHaveAttribute('data-load', 'reveal');
+  await page.locator('.seg[data-transition-key="style"] [data-value="slide"]').click();
+  // kept for every page of the site
+  await page.goto('/hero.html');
+  await expect(page.locator('html')).toHaveAttribute('data-transition', 'slide');
+});
+
+test('arriving at Home from Groups skips the loading screen', async ({ page }) => {
+  await page.goto('/groups.html');
+  await page.locator('.site-nav a', { hasText: 'Our story' }).click();
+  await expect(page).toHaveURL(/hero\.html#story$/);
+  await expect(page.locator('html')).not.toHaveClass(/is-loading/, { timeout: 2000 });
+  await expect(page.locator('#story')).toBeInViewport();
+});

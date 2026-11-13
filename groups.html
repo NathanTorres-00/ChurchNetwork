@@ -8,6 +8,47 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/page-transition.css">
+<script src="assets/page-transition.js"></script>
+<script>
+/* ---------- Settings: the Adjust panel changes these; Copy settings gives a block to paste over this one ---------- */
+const CONFIG = {
+  // Hero
+  heroArt: 'photo',         // 'photo' (the group photo card) or 'globe' (the home page's Pins globe behind the title)
+  heroShape: 'card',        // 'card' (rounded, inside the page margins) or 'full' (edge to edge, full height)
+  heroPins: true,           // with the globe: photo pins rise from its networks
+
+  // Page load
+  loadStyle: 'rise',        // 'rise', 'reveal' (the hero opens out from its middle), 'fade' or 'none'
+  loadSpeed: 0.9,           // seconds each piece takes to come in
+  loadStagger: 0.09,        // seconds between one piece and the next
+  scrollReveal: true,       // sections below the hero rise in as they scroll into view
+};
+const SHOW_CONTROLS = true;  // false hides the Adjust button (so does ?controls=0)
+
+// Any setting can also come from the address, e.g. groups.html?heroArt=globe&loadStyle=fade
+const DEFAULTS = { ...CONFIG };
+const cfg = { ...CONFIG };
+(() => {
+  const params = new URLSearchParams(location.search);
+  for (const key of Object.keys(DEFAULTS)) {
+    if (!params.has(key)) continue;
+    const raw = params.get(key), def = DEFAULTS[key];
+    if (typeof def === 'number') { const n = parseFloat(raw); if (Number.isFinite(n)) cfg[key] = n; }
+    else if (typeof def === 'boolean') cfg[key] = raw === '1' || raw === 'true';
+    else cfg[key] = raw;
+  }
+  // set before the first paint, so the load animation starts from its first frame
+  const root = document.documentElement;
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) { cfg.loadStyle = 'none'; cfg.scrollReveal = false; }
+  root.dataset.art = cfg.heroArt;
+  root.dataset.shape = cfg.heroShape;
+  root.dataset.load = cfg.loadStyle;
+  root.style.setProperty('--load-speed', cfg.loadSpeed + 's');
+  root.style.setProperty('--load-stagger', cfg.loadStagger + 's');
+  if (cfg.scrollReveal) root.dataset.scrollReveal = '';
+})();
+</script>
 <style>
   /* The site's design system, as on hero.html: Geist, the four headline colors, soft gray surfaces, 24px corners,
      pill buttons and ring-dot glyphs. Flow, order and copy follow the TR-ANAHEIM "Groups" Figma frame. */
@@ -109,6 +150,66 @@
   }
   .hero-card .sub { margin: 18px 0 0; font-size: clamp(19px, 1.9vw, 24px); font-weight: 400; color: rgba(255,255,255,.88); letter-spacing: -0.01em; }
   .hero-card .actions { display: flex; flex-wrap: wrap; gap: 12px; justify-content: flex-end; }
+  /* the copy lets the pointer through to the globe (so its pins open on hover); the buttons still take it */
+  .hero-card > div:not(.hero-globe) { pointer-events: none; }
+  .hero-card a { pointer-events: auto; }
+
+  /* Hero art: the Pins globe. The home page's own globe (hero.html?embed=globe) fills the card; the title turns
+     dark on its pale ground, and a soft white wash behind the copy keeps it readable over the networks. */
+  .hero-globe { position: absolute; inset: 0; z-index: -2; display: none; background: #fff; }
+  .hero-globe iframe { display: block; width: 100%; height: 100%; border: 0; }
+  html[data-art="globe"] .hero-globe { display: block; }
+  html[data-art="globe"] .hero-card { color: var(--heading); background: #fff; outline: 1px solid var(--line); outline-offset: -1px; }
+  html[data-art="globe"][data-shape="full"] .hero-card { outline: 0; }
+  html[data-art="globe"] .hero-card > img { display: none; }
+  html[data-art="globe"] .hero-card::after {
+    pointer-events: none;
+    background:
+      radial-gradient(ellipse 60% 55% at 0% 0%, rgba(255,255,255,.92), rgba(255,255,255,0) 100%),
+      radial-gradient(ellipse 40% 35% at 100% 100%, rgba(255,255,255,.85), rgba(255,255,255,0) 100%);
+  }
+  html[data-art="globe"] .hero-card .sub { color: var(--text); }
+  html[data-art="globe"] .hero-card .button-light { background: var(--heading); color: #fff; }
+  html[data-art="globe"] .hero-card .button-light:hover { background: #3A3A40; }
+  html[data-art="globe"] .hero-card .button-ghost { background: rgba(255,255,255,.8); color: var(--heading); border-color: #D4D4D8; }
+  html[data-art="globe"] .hero-card .button-ghost:hover { border-color: #A1A1AA; }
+
+  /* Hero shape: Full width runs the hero edge to edge at full height, under the header */
+  html[data-shape="full"] .groups-hero { padding: 0; }
+  html[data-shape="full"] .groups-hero > .wrap { max-width: none; padding: 0; }
+  html[data-shape="full"] .hero-card {
+    border-radius: 0; min-height: max(600px, 100vh); box-shadow: none;
+    padding: 160px max(24px, calc((100vw - var(--content-width)) / 2 + 24px)) 72px;
+  }
+  html[data-shape="full"][data-art="photo"] .site-header { color: #fff; }
+  html[data-shape="full"][data-art="photo"] .site-header .brand,
+  html[data-shape="full"][data-art="photo"] .site-nav a { color: rgba(255,255,255,.88); }
+  html[data-shape="full"][data-art="photo"] .site-nav a:hover,
+  html[data-shape="full"][data-art="photo"] .site-nav a[aria-current="page"] { color: #fff; }
+
+  /* ---------- Page load: the header, the hero, then its title, line and buttons, one after another ---------- */
+  [data-enter] { animation-duration: var(--load-speed, .9s); animation-delay: calc(var(--i, 0) * var(--load-stagger, .09s)); animation-fill-mode: both; animation-timing-function: cubic-bezier(.2, .7, .2, 1); }
+  html[data-load="rise"] [data-enter] { animation-name: g-rise; }
+  html[data-load="rise"] .hero-card[data-enter] { animation-name: g-settle; }
+  html[data-load="fade"] [data-enter] { animation-name: g-fade; }
+  html[data-load="reveal"] [data-enter] { animation-name: g-rise; }
+  html[data-load="reveal"] .hero-card[data-enter] { animation-name: g-open; animation-duration: calc(var(--load-speed, .9s) * 1.4); animation-timing-function: cubic-bezier(.65, 0, .35, 1); }
+  html[data-load="reveal"] .site-header[data-enter] { animation-name: g-fade; }
+  html[data-load="none"] [data-enter] { animation: none; }
+  @keyframes g-fade { from { opacity: 0; } }
+  @keyframes g-rise { from { opacity: 0; transform: translateY(28px); } }
+  @keyframes g-settle { from { opacity: 0; transform: scale(.965); } }
+  @keyframes g-open { from { clip-path: inset(18% 22% round var(--radius)); opacity: .2; } to { clip-path: inset(0 round var(--radius)); } }
+  html[data-shape="full"][data-load="reveal"] .hero-card[data-enter] { animation-name: g-open-full; }
+  @keyframes g-open-full { from { clip-path: inset(18% 22% round var(--radius)); opacity: .2; } to { clip-path: inset(0 round 0); } }
+
+  /* Sections below the hero rise in as they scroll into view (set from the Adjust panel) */
+  html[data-scroll-reveal] .reveal { opacity: 0; transform: translateY(32px); transition: opacity .8s ease, transform .9s cubic-bezier(.2, .7, .2, 1); transition-delay: calc(var(--i, 0) * 90ms); }
+  html[data-scroll-reveal] .reveal.is-in { opacity: 1; transform: none; }
+  @media (prefers-reduced-motion: reduce) {
+    [data-enter] { animation: none !important; }
+    html[data-scroll-reveal] .reveal { opacity: 1; transform: none; transition: none; }
+  }
 
   /* ---------- 2. What are Rock Network Groups? ---------- */
   .group-types { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 64px; }
@@ -184,11 +285,69 @@
     .groups-hero { padding-top: 84px; }
     .hero-card .actions { justify-content: flex-start; }
   }
+
+  /* ---------- Adjust panel (as on the home page) ---------- */
+  .adjust {
+    --hair: #E7E7EA; --thumb: #C9C9C9;
+    position: fixed; right: 16px; bottom: 16px; z-index: 6;
+    display: inline-flex; align-items: center; gap: 8px;
+    font: 500 13px/1 var(--font); color: #3F3F46;
+    padding: 9px 14px 9px 11px; border-radius: 999px;
+    background: #fff; border: 1px solid var(--hair); cursor: pointer;
+    transition: opacity .4s ease, transform .6s cubic-bezier(.65, 0, .35, 1);
+  }
+  .adjust:hover { background: #F7F7F8; }
+  .adjust .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--thumb); box-shadow: 0 0 0 2px #fff, 0 0 0 3.5px var(--thumb); margin: 0 3px; }
+  .adjust[aria-expanded="true"] { opacity: 0; pointer-events: none; transform: translateY(6px); }
+  .panel {
+    --ink: #3F3F46; --ink-soft: #8A8A93; --hair: #E7E7EA; --track: #E6E6E9; --thumb: #C9C9C9;
+    position: fixed; top: 0; right: 0; bottom: 0; z-index: 7; width: 304px; max-width: 100%;
+    background: #fff; border-left: 1px solid var(--hair); color: var(--ink); font-size: 13px; line-height: 1.4;
+    overflow-y: auto; overscroll-behavior: contain; padding: 18px 20px 28px;
+    transform: translateX(100%); visibility: hidden;
+    transition: transform .7s cubic-bezier(.65, 0, .35, 1), visibility 0s linear .7s;
+  }
+  .panel.is-open { transform: none; visibility: visible; transition: transform .7s cubic-bezier(.65, 0, .35, 1); }
+  .panel-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+  .panel-title { font-size: 15px; font-weight: 500; margin: 0; letter-spacing: -0.005em; }
+  .panel .close { font: 400 13px/1 var(--font); color: var(--ink-soft); background: none; border: 0; padding: 6px 4px; cursor: pointer; }
+  .panel .close:hover { color: var(--ink); }
+  .panel-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+  .panel .btn {
+    font: 400 13px/1 var(--font); color: var(--ink); text-decoration: none;
+    padding: 8px 12px; border-radius: 999px; background: #fff; border: 1px solid var(--hair); cursor: pointer;
+  }
+  .panel .btn:hover { background: #F6F6F7; }
+  .pgroup { border-top: 1px solid var(--hair); margin-top: 18px; padding-top: 14px; }
+  .pgroup h2 { font-size: 13px; font-weight: 500; margin: 0 0 4px; color: var(--ink); }
+  .picker-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 10px 0; }
+  .seg { display: inline-flex; gap: 2px; padding: 3px; border: 1px solid var(--hair); border-radius: 999px; }
+  .seg button { font: 400 13px/1 var(--font); color: var(--ink-soft); background: none; border: 0; padding: 7px 10px; border-radius: 999px; cursor: pointer; }
+  .seg button:hover { color: var(--ink); }
+  .seg button[aria-pressed="true"] { background: #F1F1F3; color: var(--ink); }
+  .prow { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 4px 12px; margin: 10px 0; }
+  .prow output { font-size: 12px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+  .prow input[type="range"] { grid-column: 1 / -1; }
+  .prow.check { grid-template-columns: auto 1fr; gap: 10px; }
+  .prow.check input { margin: 0; accent-color: var(--ink); width: 15px; height: 15px; }
+  .prow.is-off { opacity: .45; }
+  .panel input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; height: 20px; background: transparent; margin: 0; cursor: pointer; --p: 50%; }
+  .panel input[type="range"]::-webkit-slider-runnable-track { height: 2px; border-radius: 2px; background: linear-gradient(to right, var(--thumb) var(--p), var(--track) var(--p)); }
+  .panel input[type="range"]::-moz-range-track { height: 2px; border-radius: 2px; background: linear-gradient(to right, var(--thumb) var(--p), var(--track) var(--p)); }
+  .panel input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 10px; height: 10px; margin-top: -4px; border-radius: 50%; background: var(--thumb); box-shadow: 0 0 0 2.5px #fff, 0 0 0 4px var(--thumb); }
+  .panel input[type="range"]::-moz-range-thumb { width: 10px; height: 10px; border: 0; border-radius: 50%; background: var(--thumb); box-shadow: 0 0 0 2.5px #fff, 0 0 0 4px var(--thumb); }
+  .panel :focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  .panel .hint { font-size: 12px; color: var(--ink-soft); line-height: 1.5; margin: 10px 0 0; max-width: 34ch; }
+  .panel .foot { border-top: 1px solid var(--hair); margin-top: 18px; padding-top: 16px; }
+  @media (max-width: 640px) {
+    .panel { top: auto; left: 0; width: 100%; max-height: 62vh; border-left: 0; border-top: 1px solid var(--hair); border-radius: 16px 16px 0 0; padding: 16px 16px 24px; transform: translateY(100%); }
+  }
+  @media (prefers-reduced-motion: reduce) { .panel, .adjust { transition: none; } }
 </style>
 </head>
 <body>
 
-<header class="site-header">
+<header class="site-header" data-enter style="--i: 0">
   <div class="wrap">
     <a class="brand" href="hero.html" aria-label="The Rock Network, home"><span class="logo" aria-hidden="true"></span></a>
     <nav class="site-nav" aria-label="Site">
@@ -205,13 +364,14 @@
   <!-- 1. Hero -->
   <section class="groups-hero" id="top">
     <div class="wrap">
-      <div class="frame hero-card">
+      <div class="frame hero-card" data-enter style="--i: 1">
         <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=2000&h=1200&fit=crop&q=75&auto=format" alt="">
+        <div class="hero-globe" id="hero-globe"></div>
         <div>
-          <h1>Church Groups</h1>
-          <p class="sub">Multiplying disciples, leaders, churches, and movements</p>
+          <h1 data-enter style="--i: 2">Church Groups</h1>
+          <p class="sub" data-enter style="--i: 3">Multiplying disciples, leaders, churches, and movements</p>
         </div>
-        <div class="actions">
+        <div class="actions" data-enter style="--i: 4">
           <a class="button button-light" href="#start">Start a group</a>
           <a class="button button-ghost" href="#what">Learn more</a>
         </div>
@@ -222,12 +382,12 @@
   <!-- 2. What are Rock Network Groups? -->
   <section class="section" id="what">
     <div class="wrap">
-      <p class="eyebrow">Groups</p>
-      <h2 class="section-title">What are Rock Network Groups?</h2>
-      <p class="lead">Rock Network groups are groups of three or more that gather, grow, give and go make disciples.</p>
+      <p class="eyebrow reveal">Groups</p>
+      <h2 class="section-title reveal" style="--i: 1">What are Rock Network Groups?</h2>
+      <p class="lead reveal" style="--i: 2">Rock Network groups are groups of three or more that gather, grow, give and go make disciples.</p>
 
       <div class="group-types" id="start">
-        <article class="group-type">
+        <article class="group-type reveal">
           <p class="tag" aria-hidden="true"><span class="glyph"></span></p>
           <h3>Church Groups</h3>
           <p class="this">This group:</p>
@@ -239,7 +399,7 @@
           </ul>
           <a class="button button-primary" href="#" data-placeholder>Start a church group</a>
         </article>
-        <article class="group-type is-discipleship">
+        <article class="group-type is-discipleship reveal" style="--i: 1">
           <p class="tag" aria-hidden="true"><span class="glyph"></span></p>
           <h3>Discipleship Groups</h3>
           <p class="this">This group:</p>
@@ -252,7 +412,7 @@
         </article>
       </div>
 
-      <div class="already">
+      <div class="already reveal">
         <p>Already a part of a group?</p>
         <a class="button button-secondary" href="#" data-placeholder>Find resources for you</a>
       </div>
@@ -262,10 +422,10 @@
   <!-- 3. Network Video -->
   <section class="section section-tint" id="video">
     <div class="wrap">
-      <p class="eyebrow">Weekly</p>
-      <h2 class="section-title">Network Video</h2>
+      <p class="eyebrow reveal">Weekly</p>
+      <h2 class="section-title reveal" style="--i: 1">Network Video</h2>
       <!-- This week's video: change data-youtube to the new video's ID (the part after youtu.be/) each week -->
-      <div class="frame video" id="network-video" data-youtube="qo52gy0Gq74" data-title="Weekly Church Group Video | November 6 - November 12, 2026">
+      <div class="frame video reveal" style="--i: 2" id="network-video" data-youtube="qo52gy0Gq74" data-title="Weekly Church Group Video | November 6 - November 12, 2026">
         <img src="https://i.ytimg.com/vi/qo52gy0Gq74/maxresdefault.jpg" alt="" loading="lazy">
         <button class="play" type="button" aria-label="Play this week's network video"></button>
       </div>
@@ -275,7 +435,7 @@
   <!-- 4. A group member's words -->
   <section class="section" id="story">
     <div class="wrap">
-      <figure class="frame photo-quote" style="margin: 0">
+      <figure class="frame photo-quote reveal" style="margin: 0">
         <img src="assets/group-gathered.jpg" alt="A church group gathered together in a living room" loading="lazy">
         <blockquote>
           <p>“Doing church in a group changed everything for me. It’s the closest thing to family I’ve found.”</p>
@@ -288,16 +448,16 @@
   <!-- 5. Meet the team -->
   <section class="section section-tint" id="team">
     <div class="wrap">
-      <div class="team-head">
+      <div class="team-head reveal">
         <p class="eyebrow">Connect with the Network</p>
         <h2 class="section-title">Meet the team</h2>
         <p class="lead">Working together to serve your region.</p>
       </div>
       <ul class="team">
-        <li class="member"><div class="frame"><span class="glyph" aria-hidden="true"></span></div><h3>Name Surname</h3><p>Role</p></li>
-        <li class="member"><div class="frame"><span class="glyph" aria-hidden="true"></span></div><h3>Name Surname</h3><p>Role</p></li>
-        <li class="member"><div class="frame"><span class="glyph" aria-hidden="true"></span></div><h3>Name Surname</h3><p>Role</p></li>
-        <li class="member"><div class="frame"><span class="glyph" aria-hidden="true"></span></div><h3>Name Surname</h3><p>Role</p></li>
+        <li class="member reveal"><div class="frame"><span class="glyph" aria-hidden="true"></span></div><h3>Name Surname</h3><p>Role</p></li>
+        <li class="member reveal"><div class="frame"><span class="glyph" aria-hidden="true"></span></div><h3>Name Surname</h3><p>Role</p></li>
+        <li class="member reveal"><div class="frame"><span class="glyph" aria-hidden="true"></span></div><h3>Name Surname</h3><p>Role</p></li>
+        <li class="member reveal"><div class="frame"><span class="glyph" aria-hidden="true"></span></div><h3>Name Surname</h3><p>Role</p></li>
       </ul>
     </div>
   </section>
@@ -309,6 +469,208 @@
     <span>Sample page with placeholder content</span>
   </div>
 </footer>
+
+<button class="adjust" id="adjust" type="button" aria-expanded="false" aria-controls="panel" hidden>
+  <span class="dot" aria-hidden="true"></span>Adjust
+</button>
+
+<aside class="panel" id="panel" aria-label="Groups page settings">
+  <div class="panel-head">
+    <p class="panel-title">Groups page settings</p>
+    <button class="close" id="close" type="button">Close</button>
+  </div>
+
+  <section class="pgroup" aria-label="Hero">
+    <h2>Hero</h2>
+    <div class="picker-row"><span>Art</span>
+      <div class="seg" role="group" aria-label="Art" data-key="heroArt">
+        <button type="button" data-value="photo">Photo</button>
+        <button type="button" data-value="globe">Pins globe</button>
+      </div>
+    </div>
+    <div class="picker-row"><span>Shape</span>
+      <div class="seg" role="group" aria-label="Shape" data-key="heroShape">
+        <button type="button" data-value="card">Card</button>
+        <button type="button" data-value="full">Full width</button>
+      </div>
+    </div>
+    <label class="prow check" id="row-heroPins"><input type="checkbox" data-key="heroPins"><span>Photo pins on the globe</span></label>
+  </section>
+
+  <section class="pgroup" aria-label="Page load">
+    <h2>Page load</h2>
+    <div class="picker-row"><span>Style</span>
+      <div class="seg" role="group" aria-label="Load style" data-key="loadStyle">
+        <button type="button" data-value="rise">Rise</button>
+        <button type="button" data-value="reveal">Reveal</button>
+        <button type="button" data-value="fade">Fade</button>
+        <button type="button" data-value="none">None</button>
+      </div>
+    </div>
+    <div class="prow"><label for="c-loadSpeed">Speed</label><output id="o-loadSpeed"></output>
+      <input type="range" id="c-loadSpeed" data-key="loadSpeed" min="0.3" max="2" step="0.05"></div>
+    <div class="prow"><label for="c-loadStagger">Stagger</label><output id="o-loadStagger"></output>
+      <input type="range" id="c-loadStagger" data-key="loadStagger" min="0" max="0.4" step="0.01"></div>
+    <label class="prow check"><input type="checkbox" data-key="scrollReveal"><span>Sections rise in on scroll</span></label>
+    <div class="panel-actions"><button class="btn" id="replay" type="button">Replay</button></div>
+  </section>
+
+  <section class="pgroup" aria-label="Page transition">
+    <h2>Page transition</h2>
+    <div class="picker-row"><span>Style</span>
+      <div class="seg" role="group" aria-label="Transition style" data-transition-key="style">
+        <button type="button" data-value="rise">Rise</button>
+        <button type="button" data-value="slide">Slide</button>
+        <button type="button" data-value="fade">Fade</button>
+        <button type="button" data-value="none">None</button>
+      </div>
+    </div>
+    <div class="prow"><label for="c-vtDuration">Speed</label><output id="o-vtDuration"></output>
+      <input type="range" id="c-vtDuration" data-transition-key="duration" min="0.2" max="1.5" step="0.05"></div>
+    <div class="panel-actions"><a class="btn" href="hero.html">Try it: go to Home</a></div>
+    <p class="hint">Plays when moving between Home and Groups, and is kept in this browser for both pages. Chrome, Edge and Safari 18.2+; other browsers change pages without it.</p>
+  </section>
+
+  <div class="foot">
+    <div class="panel-actions">
+      <button class="btn" id="copy" type="button">Copy settings</button>
+      <button class="btn" id="reset" type="button">Reset to defaults</button>
+    </div>
+    <p class="hint">Copied settings paste into the CONFIG block at the top of groups.html (the transition into DEFAULT in assets/page-transition.js). Add ?controls=0 to the address to hide this panel.</p>
+  </div>
+</aside>
+
+<script>
+  /* ---------- Hero art: the Pins globe loads (as an embed of the home page's globe) only when it's chosen ---------- */
+  function syncHero() {
+    const root = document.documentElement;
+    root.dataset.art = cfg.heroArt;
+    root.dataset.shape = cfg.heroShape;
+    const holder = document.getElementById('hero-globe');
+    if (cfg.heroArt !== 'globe') { holder.replaceChildren(); return; }
+    const src = `hero.html?embed=globe&controls=0&smoothScroll=0&heroArt=pins&showPins=${cfg.heroPins ? 1 : 0}`;
+    const current = holder.querySelector('iframe');
+    if (current && current.getAttribute('src') === src) return;
+    const frame = document.createElement('iframe');
+    frame.src = src;
+    frame.title = 'The Rock Network globe: networks of dots multiplying across the world';
+    frame.setAttribute('tabindex', '-1');
+    frame.setAttribute('aria-hidden', 'true');
+    holder.replaceChildren(frame);
+  }
+  syncHero();
+
+  /* The globe's photo pins keep clear of the hero's text: the embedded globe asks for these boxes (in its own
+     coordinates) each time it places a pin. One box per line of the title and tagline, the buttons and the header. */
+  window.rnHeroTextRects = frame => {
+    const f = frame.getBoundingClientRect(), range = document.createRange(), boxes = [];
+    for (const el of document.querySelectorAll('.hero-card h1, .hero-card .sub')) {
+      const walk = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+      for (let n = walk.nextNode(); n; n = walk.nextNode()) { range.selectNodeContents(n); boxes.push(...range.getClientRects()); }
+    }
+    for (const el of document.querySelectorAll('.hero-card .actions .button, .site-header .brand, .site-nav a')) boxes.push(el.getBoundingClientRect());
+    return boxes.map(r => ({ left: r.left - f.left, right: r.right - f.left, top: r.top - f.top, bottom: r.bottom - f.top, width: r.width, height: r.height }))
+      .filter(b => b.width > 0 && b.height > 0);
+  };
+
+  /* ---------- Sections rise in as they scroll into view ---------- */
+  const revealer = 'IntersectionObserver' in window
+    ? new IntersectionObserver(entries => entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('is-in'); revealer.unobserve(e.target); } }), { threshold: 0.15, rootMargin: '0px 0px -40px 0px' })
+    : null;
+  function syncReveal() {
+    const root = document.documentElement;
+    if (!cfg.scrollReveal || !revealer) { delete root.dataset.scrollReveal; return; }
+    root.dataset.scrollReveal = '';
+    document.querySelectorAll('.reveal:not(.is-in)').forEach(el => revealer.observe(el));
+  }
+  syncReveal();
+
+  /* ---------- Page load animation ---------- */
+  function syncLoad() {
+    const root = document.documentElement;
+    root.style.setProperty('--load-speed', cfg.loadSpeed + 's');
+    root.style.setProperty('--load-stagger', cfg.loadStagger + 's');
+    root.dataset.load = cfg.loadStyle;
+  }
+  function replay() {
+    const root = document.documentElement;
+    root.dataset.load = 'none';
+    void root.offsetWidth;          // restart the animations from their first frame
+    syncLoad();
+  }
+
+  /* ---------- Adjust panel ---------- */
+  (() => {
+    const showControls = SHOW_CONTROLS && new URLSearchParams(location.search).get('controls') !== '0';
+    const adjust = document.getElementById('adjust'), panel = document.getElementById('panel');
+    if (!showControls) { adjust.remove(); panel.remove(); return; }
+    adjust.hidden = false;
+    const open = on => { panel.classList.toggle('is-open', on); adjust.setAttribute('aria-expanded', String(on)); };
+    adjust.addEventListener('click', () => open(true));
+    document.getElementById('close').addEventListener('click', () => open(false));
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') open(false); });
+
+    const fmt = { loadSpeed: v => v.toFixed(2) + ' s', loadStagger: v => v.toFixed(2) + ' s', duration: v => v.toFixed(2) + ' s' };
+    const fill = input => input.style.setProperty('--p', ((input.value - input.min) / (input.max - input.min) * 100) + '%');
+    const vt = window.rnPageTransition;
+
+    function syncPanel() {
+      panel.querySelectorAll('.seg[data-key]').forEach(seg => seg.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.value === cfg[seg.dataset.key]))));
+      panel.querySelectorAll('input[data-key]').forEach(input => {
+        const k = input.dataset.key;
+        if (input.type === 'checkbox') input.checked = !!cfg[k];
+        else { input.value = cfg[k]; fill(input); document.getElementById('o-' + k).textContent = fmt[k](cfg[k]); }
+      });
+      document.getElementById('row-heroPins').classList.toggle('is-off', cfg.heroArt !== 'globe');
+      const t = vt.get();
+      panel.querySelectorAll('.seg[data-transition-key] button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.value === t.style)));
+      const d = document.getElementById('c-vtDuration');
+      d.value = t.duration; fill(d); document.getElementById('o-vtDuration').textContent = fmt.duration(t.duration);
+    }
+    const apply = key => {
+      if (key.startsWith('hero')) syncHero();
+      else if (key === 'scrollReveal') syncReveal();
+      else if (key === 'loadStyle') replay();
+      else syncLoad();
+      syncPanel();
+    };
+
+    panel.addEventListener('click', e => {
+      const b = e.target.closest('.seg button');
+      if (!b) return;
+      const seg = b.parentElement;
+      if (seg.dataset.key) { cfg[seg.dataset.key] = b.dataset.value; apply(seg.dataset.key); }
+      else { vt.set({ style: b.dataset.value }); syncPanel(); }
+    });
+    panel.addEventListener('input', e => {
+      const input = e.target;
+      if (input.dataset.transitionKey) { vt.set({ duration: parseFloat(input.value) }); syncPanel(); return; }
+      const k = input.dataset.key;
+      if (!k) return;
+      cfg[k] = input.type === 'checkbox' ? input.checked : parseFloat(input.value);
+      apply(k);
+    });
+    document.getElementById('replay').addEventListener('click', replay);
+
+    const copyBtn = document.getElementById('copy');
+    copyBtn.addEventListener('click', async () => {
+      const text = 'const CONFIG = ' + JSON.stringify(cfg, null, 2) + ';\n// assets/page-transition.js DEFAULT: ' + JSON.stringify(vt.get());
+      try { await navigator.clipboard.writeText(text); }
+      catch {
+        const ta = Object.assign(document.createElement('textarea'), { value: text });
+        document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
+      }
+      copyBtn.textContent = 'Copied';
+      setTimeout(() => (copyBtn.textContent = 'Copy settings'), 1800);
+    });
+    document.getElementById('reset').addEventListener('click', () => {
+      Object.assign(cfg, DEFAULTS);
+      vt.reset();
+      syncHero(); syncReveal(); replay(); syncPanel();
+    });
+    syncPanel();
+  })();
+</script>
 
 <script>
   // Network Video: the YouTube thumbnail until play is pressed, then YouTube's player in its place (nothing from
