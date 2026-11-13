@@ -250,7 +250,7 @@ turning into view, which is what carries the sense of how big the network is.
 2. **What is a New Testament Church Network?:** rounded video box (placeholder image and play button; no video yet).
 3. **How we got started:** a four-step timeline from one local church to a global movement. The milestone dots
    grow and step through the four headline colors.
-4. **What we do:** image plus stats (5,000 disciples, 500 groups, 5 subnetworks).
+4. **What we do:** image plus stats (7,088 disciples, 1,559 groups, 3 subnetworks) that count up from 0 as they scroll into view (once; straight to the numbers with reduced motion).
 5. **How we do it:** four rows, **Process**, **Tools**, **Training** and **Coaching** (links are
    placeholders), built and behaving exactly like the Find a hub rows below: the same hover fill, ring-dots and cursor.
 6. **Testimony:** portrait and quote (placeholder name and words).
