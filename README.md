@@ -247,7 +247,7 @@ turning into view, which is what carries the sense of how big the network is.
    - **Phones** (≤ 640 px): photos open only above and below the copy, or not at all
      (`galleryPhoneOpenings: 'off'`). A touch that moves is a scroll, not a tap.
    - **Reduced motion:** a still view; hovering still opens dots.
-2. **What is a New Testament Church Network?:** rounded video box (placeholder image and play button; no video yet).
+2. **What is a New Testament Church Network?:** rounded video box with the **Welcome to the Rock Network** video (`assets/welcome-to-the-rock-network.mp4`, an H.264 copy of the original, about 15 MB, with a poster frame from 0:20). Nothing downloads until the play button is pressed; then it plays with the browser's controls, and pauses when scrolled out of view.
 3. **How we got started:** a four-step timeline from one local church to a global movement. The milestone dots
    grow and step through the four headline colors.
 4. **What we do:** image plus stats (7,088 disciples, 1,559 groups, 3 subnetworks) that count up from 0 as they scroll into view (once; straight to the numbers with reduced motion).

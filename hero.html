@@ -443,7 +443,10 @@
 
   /* What is a New Testament Church Network? */
   .video { position: relative; aspect-ratio: 16 / 9; }
-  .video::after { content: ''; position: absolute; inset: 0; background: rgba(31,31,35,.18); }
+  .video::after { content: ''; position: absolute; inset: 0; background: rgba(31,31,35,.18); pointer-events: none; transition: opacity .3s ease; }
+  .video video { display: block; width: 100%; height: 100%; object-fit: cover; background: #000; }
+  .video.is-started::after, .video.is-started .play { opacity: 0; pointer-events: none; }
+  .video .play { transition: transform .3s ease, opacity .3s ease; }
   .play {
     position: absolute; z-index: 1; left: 50%; top: 50%; translate: -50% -50%;
     width: 88px; height: 88px; border-radius: 50%; border: 0; cursor: pointer;
@@ -455,7 +458,6 @@
     content: ''; margin-left: 6px;
     border-left: 22px solid var(--heading); border-top: 14px solid transparent; border-bottom: 14px solid transparent;
   }
-  .video-note { margin: 16px 0 0; font-size: 14px; color: #8A8A93; }
 
   /* How we got started */
   .timeline {
@@ -850,11 +852,11 @@
   <section class="section" id="church-network">
     <div class="wrap">
       <p class="eyebrow">What is a New Testament Church Network?</p>
-      <div class="frame video">
-        <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1600&h=900&fit=crop&q=75&auto=format" alt="" loading="lazy">
-        <button class="play" type="button" aria-label="Play video (placeholder)"></button>
+      <div class="frame video" id="intro-video">
+        <video src="assets/welcome-to-the-rock-network.mp4" poster="assets/welcome-to-the-rock-network.jpg"
+          preload="none" playsinline aria-label="Welcome to the Rock Network"></video>
+        <button class="play" type="button" aria-label="Play video: Welcome to the Rock Network"></button>
       </div>
-      <p class="video-note">Video placeholder</p>
     </div>
   </section>
 
@@ -3214,6 +3216,24 @@ function heroGalleryGroups(GALLERY_CONTROLS) {
     });
   }, { threshold: 0.4 });
   io.observe(els[0].closest('.stats'));
+})();
+</script>
+<script>
+/* What is a New Testament Church Network?: the welcome video. It shows its poster until the play button is pressed,
+   then plays with the browser's own controls; it pauses when scrolled out of view. Nothing downloads until play. */
+(() => {
+  const box = document.getElementById('intro-video');
+  if (!box) return;
+  const video = box.querySelector('video'), play = box.querySelector('.play');
+  play.addEventListener('click', () => {
+    box.classList.add('is-started');
+    video.controls = true;
+    video.play().catch(() => {});
+    video.focus({ preventScroll: true });
+  });
+  if ('IntersectionObserver' in window) {
+    new IntersectionObserver(([e]) => { if (!e.isIntersecting && !video.paused) video.pause(); }, { threshold: 0.25 }).observe(box);
+  }
 })();
 </script>
 <script type="module">
