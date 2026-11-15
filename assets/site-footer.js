@@ -16,7 +16,7 @@
    The newsletter form isn't connected to a mailing list yet, so it checks the address and says so. */
 (() => {
   const KEY = 'rn:footer';
-  const DEFAULT = { mark: 'clip', clip: 0.35, shift: -0.08, scale: 1, theme: 'light', reveal: 'on', revealDistance: 0.6, revealShade: 0.2, edge: 'flat', curve: 5, grey: 0.9, anim: 'pins', animStrength: 0.6 };
+  const DEFAULT = { mark: 'clip', clip: 0.35, shift: -0.08, scale: 1, theme: 'light', reveal: 'on', revealDistance: 0.6, revealShade: 0.2, edge: 'curve', curve: 5, grey: 0.9, anim: 'pins', animStrength: 0.2 };
   const SEGS = ['mark', 'theme', 'reveal', 'edge', 'anim'];
   let f = DEFAULT;
   try { f = { ...DEFAULT, ...JSON.parse(localStorage.getItem(KEY) || '{}') }; } catch {}

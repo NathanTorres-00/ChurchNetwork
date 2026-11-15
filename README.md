@@ -34,16 +34,16 @@ shape.
   wordmark (`assets/the-rock-network-large.png`, 1944px wide so it stays sharp). Links not built yet are
   `data-placeholder`. Both Adjust panels have a **Footer** section, kept in this browser for both pages; Copy
   settings adds it as a comment for `DEFAULT` in `site-footer.js`:
-  - **Colors:** Light, Grey (with **Grey shade**; dark shades switch the text to light) or Inverted (the dark of
+  - **Colors:** Light (default), Grey (with **Grey shade**; dark shades switch the text to light) or Inverted (the dark of
     the site's headings).
   - **Animation:** Pins globe (the Home hero's globe, `hero.html?embed=globe` recoloured to the footer with `?bg=`,
     loaded only while the footer is near the screen so it grows again each time; its pins avoid the footer's
-    text) or Off, with **Animation strength**.
-  - **Top edge:** Flat or Curved: the last section above the footer ends in the Home hero's downward arc, with
+    text) or Off, with **Animation strength** (default 20%).
+  - **Top edge:** Flat or Curved (default): the last section above the footer ends in the Home hero's downward arc, with
     the footer showing past its sides. **Curve depth** sets it (in vw, like the hero's Bottom curve).
-  - **Logo:** Full or Clipped (copyright first, the wordmark running off the bottom edge, Figma-style), with
+  - **Logo:** Full or Clipped (default; copyright first, the wordmark running off the bottom edge, Figma-style), with
     **Logo scale**, and for Clipped, **Clip** (how much is cut off) and **Position** (moves it up or down).
-  - **Reveal:** Slide out (the page sits above the footer; the footer starts tucked up under the last section and
+  - **Reveal:** Slide out (default; the page sits above the footer; the footer starts tucked up under the last section and
     slides down into place as you scroll to it) or Off, with **Slide distance** and **Shade while tucked**.
     Reduced motion turns the slide off.
 - **Home's loading screen** plays when arriving from outside the site; arriving from another of its pages (Groups →
@@ -283,9 +283,9 @@ turning into view, which is what carries the sense of how big the network is.
      (`galleryPhoneOpenings: 'off'`). A touch that moves is a scroll, not a tap.
    - **Reduced motion:** a still view; hovering still opens dots.
 2. **What is a New Testament Church Network?:** rounded video box with the **Welcome to the Rock Network** video (`assets/welcome-to-the-rock-network.mp4`, an H.264 copy of the original, about 15 MB). Its poster is the "What is a New Testament Church Network?" thumbnail (`assets/what-is-a-new-testament-church-network.jpg`), shown undimmed, with a dark play button under the poster's title on its left edge so it doesn't cover the words. Nothing downloads until the play button is pressed; then it plays with the browser's controls, and pauses when scrolled out of view.
-3. **How we got started:** a four-step timeline from one local church to a global movement. The milestone dots
-   grow and step through the four headline colors.
-4. **What we do:** image, the line "We are a four-stage ministry", and stats (7,088 Disciples joined, 1,559 Groups started, 25 Missions workers, 3 Four-Stage Subnetworks) that count up from 0 as they scroll into view (once; straight to the numbers with reduced motion).
+3. **What we do:** image, the line "We are a four-stage ministry", and stats (7,088 Disciples joined, 1,559 Groups started, 25 Missions workers, 3 Four-Stage Subnetworks) that count up from 0 as they scroll into view (once; straight to the numbers with reduced motion).
+4. **How we do it:** four rows, **A Clear Process**, **Effective Tools**, **Available Training** and **On-going Coaching** (links are
+   placeholders), built and behaving exactly like the Find a hub rows: the same hover fill, ring-dots and cursor.
 5. **Testimony:** Anastasia, group leader in Anaheim: her portrait (`assets/anastasia.jpg`) and quote.
 6. **Jesus Disciple – A Four-Stage Ministry tool** (`#app`): three rows of tall video cards, **Vision Videos**,
    **How to use Jesus Disciple** and **Jesus Disciple Stories**. Each row is a sideways carousel that starts at the
@@ -313,8 +313,8 @@ turning into view, which is what carries the sense of how big the network is.
 
    Photos are placeholders, set per row with `data-photo`. Tabbing to a row fills it and raises its pin over the
    hub's dot. Touch screens keep the plain rows.
-8. **How we do it** (the last section before the footer): four rows, **A Clear Process**, **Effective Tools**, **Available Training** and **On-going Coaching** (links are
-   placeholders), built and behaving exactly like the Find a hub rows above it: the same hover fill, ring-dots and cursor.
+8. **How we got started** (the last section before the footer): a four-step timeline from one local church to a global movement. The milestone dots
+   grow and step through the four headline colors.
 
 All copy, names, stats and photos are placeholders to replace. Links marked `data-placeholder` (Start a group, store
 buttons, directions) go nowhere until you add real URLs.
