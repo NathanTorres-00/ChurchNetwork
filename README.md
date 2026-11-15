@@ -286,10 +286,8 @@ turning into view, which is what carries the sense of how big the network is.
 3. **How we got started:** a four-step timeline from one local church to a global movement. The milestone dots
    grow and step through the four headline colors.
 4. **What we do:** image, the line "We are a four-stage ministry", and stats (7,088 Disciples joined, 1,559 Groups started, 25 Missions workers, 3 Four-Stage Subnetworks) that count up from 0 as they scroll into view (once; straight to the numbers with reduced motion).
-5. **How we do it:** four rows, **A Clear Process**, **Effective Tools**, **Available Training** and **On-going Coaching** (links are
-   placeholders), built and behaving exactly like the Find a hub rows below: the same hover fill, ring-dots and cursor.
-6. **Testimony:** Anastasia, group leader in Anaheim: her portrait (`assets/anastasia.jpg`) and quote.
-7. **Jesus Disciple – A Four-Stage Ministry tool** (`#app`): three rows of tall video cards, **Vision Videos**,
+5. **Testimony:** Anastasia, group leader in Anaheim: her portrait (`assets/anastasia.jpg`) and quote.
+6. **Jesus Disciple – A Four-Stage Ministry tool** (`#app`): three rows of tall video cards, **Vision Videos**,
    **How to use Jesus Disciple** and **Jesus Disciple Stories**. Each row is a sideways carousel that starts at the
    text's left edge and runs off the right of the window: trackpad, swipe, mouse drag, the arrow buttons beside the
    row title (hidden on touch screens, greyed at a row's ends), or Tab. Each card is a thumbnail with a play button
@@ -301,7 +299,7 @@ turning into view, which is what carries the sense of how big the network is.
    card's link is a placeholder until its video has an address (set the card's `href` and remove `data-placeholder`).
    Under the rows, separate from the videos, a **Jesus Disciple University** banner with **Learn more** (a
    placeholder link for now).
-8. **Find a hub:** full-width rows for Anaheim, Anaheim West, jChurch and Iglesia Mi Ciudad (details to come).
+7. **Find a hub:** full-width rows for Anaheim, Anaheim West, jChurch and Iglesia Mi Ciudad (details to come).
    **Hidden by default**, along with its header link: turn it on with **Show Find a hub** in the Adjust panel's Page
    group (`showHubs` in CONFIG, or `?showHubs=1`). Each row is one link. Hovering a row fills it with that hub's color (the Figma "Hub Row=Hover"), turns its text
    white, and ripples in a grid of white ring-dots beside the name, out from where the pointer came in (as many of
@@ -315,6 +313,8 @@ turning into view, which is what carries the sense of how big the network is.
 
    Photos are placeholders, set per row with `data-photo`. Tabbing to a row fills it and raises its pin over the
    hub's dot. Touch screens keep the plain rows.
+8. **How we do it** (the last section before the footer): four rows, **A Clear Process**, **Effective Tools**, **Available Training** and **On-going Coaching** (links are
+   placeholders), built and behaving exactly like the Find a hub rows above it: the same hover fill, ring-dots and cursor.
 
 All copy, names, stats and photos are placeholders to replace. Links marked `data-placeholder` (Start a group, store
 buttons, directions) go nowhere until you add real URLs.
