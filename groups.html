@@ -10,6 +10,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/page-transition.css">
 <script src="assets/page-transition.js"></script>
+<link rel="stylesheet" href="assets/site-footer.css">
+<script src="assets/site-footer.js"></script>
 <script>
 /* ---------- Settings: the Adjust panel changes these; Copy settings gives a block to paste over this one ---------- */
 const CONFIG = {
@@ -88,12 +90,12 @@ const cfg = { ...CONFIG };
   .site-header .wrap { display: flex; align-items: center; justify-content: space-between; height: 76px; }
   .brand { display: inline-flex; align-items: center; color: var(--heading); text-decoration: none; }
   .logo {
-    --logo-h: 32px;
+    --logo-h: 52px;
     display: block; height: var(--logo-h); aspect-ratio: 960 / 202; background: currentColor;
     -webkit-mask: url("assets/the-rock-network.png") center / contain no-repeat;
             mask: url("assets/the-rock-network.png") center / contain no-repeat;
   }
-  .site-footer .logo { --logo-h: 26px; }
+  @media (max-width: 1000px) { .site-header .logo { --logo-h: 44px; } }
   .site-nav { display: flex; gap: 28px; font-size: 15px; }
   .site-nav a { text-decoration: none; color: var(--text); }
   .site-nav a:hover, .site-nav a[aria-current="page"] { color: var(--heading); }
@@ -296,8 +298,6 @@ const cfg = { ...CONFIG };
   @media (max-width: 960px) { .team { grid-template-columns: repeat(2, 1fr); gap: 16px; } }
 
   /* ---------- Footer ---------- */
-  .site-footer { padding: 40px 0; border-top: 1px solid var(--line); font-size: 14px; }
-  .site-footer .wrap { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
 
   @media (max-width: 760px) {
     :root { --section-space: 88px; }
@@ -485,8 +485,42 @@ const cfg = { ...CONFIG };
 
 <footer class="site-footer">
   <div class="wrap">
-    <a class="brand" href="hero.html" aria-label="The Rock Network, home"><span class="logo" aria-hidden="true"></span></a>
-    <span>Sample page with placeholder content</span>
+    <div class="footer-top">
+      <div>
+        <p class="footer-tagline">A New Testament Church Network returning to the original model.</p>
+        <ul class="footer-social" aria-label="Social">
+          <li><a href="#" data-placeholder>Facebook</a></li>
+          <li><a href="#" data-placeholder>Instagram</a></li>
+          <li><a href="#" data-placeholder>YouTube</a></li>
+        </ul>
+        <div class="footer-signup">
+          <h2 class="footer-label" id="signup-label">Stay in the loop</h2>
+          <form novalidate aria-labelledby="signup-label">
+            <div class="signup-row">
+              <input type="email" name="email" required placeholder="Enter your email" aria-label="Email address" autocomplete="email">
+              <button class="button button-primary" type="submit">Subscribe</button>
+            </div>
+            <p class="signup-note" role="status"></p>
+          </form>
+        </div>
+      </div>
+      <nav class="footer-cols" aria-label="Footer">
+        <div>
+          <h2 class="footer-label">Explore</h2>
+          <ul><li><a href="hero.html">Home</a></li><li><a href="groups.html" aria-current="page">Groups</a></li></ul>
+        </div>
+        <div>
+          <h2 class="footer-label">Connect</h2>
+          <ul><li><a href="hero.html#app">The Rock App</a></li><li><a href="#" data-placeholder>Contact</a></li></ul>
+        </div>
+        <div>
+          <h2 class="footer-label">Policy</h2>
+          <ul><li><a href="#" data-placeholder>Privacy</a></li><li><a href="#" data-placeholder>Terms</a></li></ul>
+        </div>
+      </nav>
+    </div>
+    <a class="footer-mark" href="hero.html" aria-label="The Rock Network, home"><span class="logo" aria-hidden="true"></span></a>
+    <div class="footer-bottom"><span>© 2026 The Rock Network</span></div>
   </div>
 </footer>
 
@@ -553,12 +587,64 @@ const cfg = { ...CONFIG };
     <p class="hint">Plays when moving between Home and Groups, and is kept in this browser for both pages. Chrome, Edge and Safari 18.2+; other browsers change pages without it.</p>
   </section>
 
+  <section class="pgroup" aria-label="Footer">
+    <h2>Footer</h2>
+    <div class="picker-row"><span>Colors</span>
+      <div class="seg" role="group" aria-label="Footer colors" data-footer-key="theme">
+        <button type="button" data-value="light">Light</button>
+        <button type="button" data-value="grey">Grey</button>
+        <button type="button" data-value="dark">Inverted</button>
+      </div>
+    </div>
+    <div class="prow" data-footer-row><label for="c-footerGrey">Grey shade</label><output></output>
+      <input type="range" id="c-footerGrey" data-footer-key="grey" min="0.3" max="0.96" step="0.01"></div>
+    <div class="picker-row"><span>Animation</span>
+      <div class="seg" role="group" aria-label="Footer animation" data-footer-key="anim">
+        <button type="button" data-value="pins">Pins globe</button>
+        <button type="button" data-value="off">Off</button>
+      </div>
+    </div>
+    <div class="prow" data-footer-row><label for="c-footerAnim">Animation strength</label><output></output>
+      <input type="range" id="c-footerAnim" data-footer-key="animStrength" min="0.15" max="1" step="0.01"></div>
+    <div class="picker-row"><span>Top edge</span>
+      <div class="seg" role="group" aria-label="Footer top edge" data-footer-key="edge">
+        <button type="button" data-value="flat">Flat</button>
+        <button type="button" data-value="curve">Curved</button>
+      </div>
+    </div>
+    <div class="prow" data-footer-row><label for="c-footerCurve">Curve depth</label><output></output>
+      <input type="range" id="c-footerCurve" data-footer-key="curve" min="0" max="10" step="0.5"></div>
+    <div class="picker-row"><span>Logo</span>
+      <div class="seg" role="group" aria-label="Footer logo" data-footer-key="mark">
+        <button type="button" data-value="full">Full</button>
+        <button type="button" data-value="clip">Clipped</button>
+      </div>
+    </div>
+    <div class="prow" data-footer-row><label for="c-footerScale">Logo scale</label><output></output>
+      <input type="range" id="c-footerScale" data-footer-key="scale" min="0.5" max="1.5" step="0.01"></div>
+    <div class="prow" data-footer-row><label for="c-footerClip">Clip</label><output></output>
+      <input type="range" id="c-footerClip" data-footer-key="clip" min="0.15" max="0.6" step="0.01"></div>
+    <div class="prow" data-footer-row><label for="c-footerShift">Position</label><output></output>
+      <input type="range" id="c-footerShift" data-footer-key="shift" min="-0.3" max="0.5" step="0.01"></div>
+    <div class="picker-row"><span>Reveal</span>
+      <div class="seg" role="group" aria-label="Footer reveal" data-footer-key="reveal">
+        <button type="button" data-value="on">Slide out</button>
+        <button type="button" data-value="off">Off</button>
+      </div>
+    </div>
+    <div class="prow" data-footer-row><label for="c-footerRevealDistance">Slide distance</label><output></output>
+      <input type="range" id="c-footerRevealDistance" data-footer-key="revealDistance" min="0.1" max="1" step="0.01"></div>
+    <div class="prow" data-footer-row><label for="c-footerRevealShade">Shade while tucked</label><output></output>
+      <input type="range" id="c-footerRevealShade" data-footer-key="revealShade" min="0" max="0.8" step="0.01"></div>
+    <p class="hint">Clip and Position set where the clipped logo lands. Slide out tucks the footer under the last section and slides it down as you scroll to it. Kept in this browser for Home and Groups.</p>
+  </section>
+
   <div class="foot">
     <div class="panel-actions">
       <button class="btn" id="copy" type="button">Copy settings</button>
       <button class="btn" id="reset" type="button">Reset to defaults</button>
     </div>
-    <p class="hint">Copied settings paste into the CONFIG block at the top of groups.html (the transition into DEFAULT in assets/page-transition.js). Add ?controls=0 to the address to hide this panel.</p>
+    <p class="hint">Copied settings paste into the CONFIG block at the top of groups.html (the transition into DEFAULT in assets/page-transition.js, the footer into DEFAULT in assets/site-footer.js). Add ?controls=0 to the address to hide this panel.</p>
   </div>
 </aside>
 
@@ -575,6 +661,7 @@ const cfg = { ...CONFIG };
     const current = holder.querySelector('iframe');
     if (current && current.getAttribute('src') === src) return;
     const frame = document.createElement('iframe');
+    frame.name = 'rn-embed:' + src.split('?')[1];   // hero.html restores its settings from this if the address loses them
     frame.src = src;
     frame.title = 'The Rock Network globe: networks of dots multiplying across the world';
     frame.setAttribute('tabindex', '-1');
@@ -664,7 +751,7 @@ const cfg = { ...CONFIG };
       if (!b) return;
       const seg = b.parentElement;
       if (seg.dataset.key) { cfg[seg.dataset.key] = b.dataset.value; apply(seg.dataset.key); }
-      else { vt.set({ style: b.dataset.value }); syncPanel(); }
+      else if (seg.dataset.transitionKey) { vt.set({ style: b.dataset.value }); syncPanel(); }
     });
     panel.addEventListener('input', e => {
       const input = e.target;
@@ -678,7 +765,7 @@ const cfg = { ...CONFIG };
 
     const copyBtn = document.getElementById('copy');
     copyBtn.addEventListener('click', async () => {
-      const text = 'const CONFIG = ' + JSON.stringify(cfg, null, 2) + ';\n// assets/page-transition.js DEFAULT: ' + JSON.stringify(vt.get());
+      const text = 'const CONFIG = ' + JSON.stringify(cfg, null, 2) + ';\n// assets/page-transition.js DEFAULT: ' + JSON.stringify(vt.get()) + '\n// assets/site-footer.js DEFAULT: ' + JSON.stringify(window.rnFooter.get());
       try { await navigator.clipboard.writeText(text); }
       catch {
         const ta = Object.assign(document.createElement('textarea'), { value: text });
@@ -690,6 +777,7 @@ const cfg = { ...CONFIG };
     document.getElementById('reset').addEventListener('click', () => {
       Object.assign(cfg, DEFAULTS);
       vt.reset();
+      window.rnFooter.reset();
       syncHero(); syncReveal(); replay(); syncPanel();
     });
     syncPanel();

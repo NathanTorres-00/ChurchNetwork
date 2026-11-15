@@ -97,3 +97,89 @@ test('Full width ends in the Home hero arc, set from Bottom curve', async ({ pag
   await page.locator('.seg[data-key="heroShape"] [data-value="card"]').click();
   expect(await card.evaluate(el => getComputedStyle(el).maskImage)).toBe('none');
 });
+
+test('footer logo can be clipped from the panel, and Home keeps the choice', async ({ page }) => {
+  await page.goto('/groups.html');
+  const mark = page.locator('.footer-mark');
+  await page.locator('#adjust').click();
+  await page.locator('[data-footer-key="mark"] [data-value="full"]').click();
+  const full = await mark.evaluate(el => el.getBoundingClientRect().height);
+  await page.locator('[data-footer-key="mark"] [data-value="clip"]').click();
+  await page.locator('#c-footerShift').fill('0');
+  const clipped = await mark.evaluate(el => el.getBoundingClientRect().height);
+  expect(clipped).toBeLessThan(full * 0.7);
+  // the copyright comes before the clipped wordmark
+  const order = await page.evaluate(() => document.querySelector('.footer-bottom').getBoundingClientRect().top < document.querySelector('.footer-mark').getBoundingClientRect().top);
+  expect(order).toBe(true);
+  // Position moves the clipped logo down inside its box
+  const top = () => page.locator('.footer-mark .logo').evaluate(el => el.getBoundingClientRect().top - el.parentElement.getBoundingClientRect().top);
+  expect(await top()).toBeCloseTo(0, 0);
+  await page.locator('#c-footerShift').fill('0.2');
+  expect(await top()).toBeGreaterThan(20);
+  // the transition style isn't touched by the footer buttons
+  expect(await page.evaluate(() => window.rnPageTransition.get().style)).toBe('rise');
+  await page.goto('/hero.html');
+  await expect(page.locator('html')).toHaveAttribute('data-footer-mark', 'clip');
+});
+
+test('footer slides out from under the last section, and can be inverted', async ({ page }) => {
+  await page.goto('/groups.html');
+  const y = () => page.evaluate(() => new DOMMatrix(getComputedStyle(document.querySelector('.site-footer')).transform).m42);
+  // with the footer's top just coming into view, it's still tucked up under the section above
+  await page.evaluate(() => scrollTo(0, document.querySelector('main').getBoundingClientRect().bottom + scrollY - innerHeight + 40));
+  await expect.poll(y).toBeLessThan(-100);
+  // at the bottom of the page it has landed
+  await page.evaluate(() => scrollTo(0, document.body.scrollHeight));
+  await expect.poll(y).toBeCloseTo(0, 0);
+  // the footer sits under the page, and the page covers it
+  expect(await page.evaluate(() => getComputedStyle(document.querySelector('main')).zIndex)).toBe('1');
+  // Off puts it back in place everywhere
+  await page.evaluate(() => window.rnFooter.set({ reveal: 'off' }));
+  await page.evaluate(() => scrollTo(0, 0));
+  expect(await y()).toBe(0);
+  // Inverted turns it dark
+  await page.locator('#adjust').click();
+  await page.locator('[data-footer-key="theme"] [data-value="dark"]').click();
+  expect(await page.locator('.site-footer').evaluate(el => getComputedStyle(el).backgroundColor)).toBe('rgb(31, 31, 35)');
+});
+
+test('Curved puts the hero\'s arc on the bottom of the last section, with the footer under it', async ({ page }) => {
+  await page.goto('/groups.html');
+  await page.locator('#adjust').click();
+  await page.locator('[data-footer-key="edge"] [data-value="curve"]').click();
+  const team = page.locator('#team');
+  await expect(team).toHaveClass(/footer-above/);
+  expect(await team.evaluate(el => getComputedStyle(el).maskImage)).toContain('radial-gradient');
+  // the page overlaps the footer by the curve's depth, so the footer shows past the arc's sides
+  expect(await page.evaluate(() => parseFloat(getComputedStyle(document.querySelector('main')).marginBottom))).toBeLessThan(-20);
+  // at the bottom of the page the footer has fully landed: no gap under it
+  await page.evaluate(() => scrollTo({ top: document.body.scrollHeight, behavior: 'instant' }));
+  await expect.poll(() => page.evaluate(() => Math.round(innerHeight - document.querySelector('.site-footer').getBoundingClientRect().bottom))).toBe(0);
+  await page.locator('[data-footer-key="edge"] [data-value="flat"]').click();
+  await expect(team).not.toHaveClass(/footer-above/);
+  expect(await team.evaluate(el => getComputedStyle(el).maskImage)).toBe('none');
+});
+
+test('footer can be grey, and plays the Pins globe behind it when it comes into view', async ({ page }) => {
+  await page.goto('/groups.html');
+  await page.locator('#adjust').click();
+  await page.locator('[data-footer-key="theme"] [data-value="grey"]').click();
+  await page.locator('#c-footerGrey').fill('0.4');
+  await expect(page.locator('html')).toHaveAttribute('data-footer-ink', 'light');   // dark grey: light text
+  await page.locator('#close').click();
+  // the globe loads only once the footer is near the screen, on the footer's grey
+  await expect(page.locator('.footer-anim iframe')).toHaveCount(0);
+  await page.evaluate(() => scrollTo({ top: document.body.scrollHeight, behavior: 'instant' }));
+  const frame = page.locator('.footer-anim iframe');
+  await expect(frame).toHaveCount(1);
+  const src = await frame.getAttribute('src');
+  expect(src).toContain('embed=globe');
+  const bg = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--footer-bg').trim());
+  expect(src).toContain('bg=' + bg.slice(1));
+  // its pins keep clear of the footer's text
+  const rects = await page.evaluate(() => window.rnHeroTextRects(document.querySelector('.footer-anim iframe')));
+  expect(rects.length).toBeGreaterThan(5);
+  // Off removes it
+  await page.evaluate(() => window.rnFooter.set({ anim: 'off' }));
+  await expect(page.locator('.footer-anim iframe')).toHaveCount(0);
+});

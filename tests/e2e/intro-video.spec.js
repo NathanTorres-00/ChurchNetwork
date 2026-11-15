@@ -7,9 +7,9 @@ test('the welcome video shows its poster and starts on the play button', async (
   const box = page.locator('#intro-video');
   const video = box.locator('video');
   await expect(video).toHaveAttribute('src', 'assets/welcome-to-the-rock-network.mp4');
-  await expect(video).toHaveAttribute('poster', 'assets/welcome-to-the-rock-network.jpg');
+  await expect(video).toHaveAttribute('poster', 'assets/what-is-a-new-testament-church-network.jpg');
   expect(await video.evaluate(v => v.controls)).toBe(false);
-  const poster = await page.request.get('/assets/welcome-to-the-rock-network.jpg');
+  const poster = await page.request.get('/assets/what-is-a-new-testament-church-network.jpg');
   expect(poster.ok()).toBe(true);
   const file = await page.request.head('/assets/welcome-to-the-rock-network.mp4');
   expect(file.ok()).toBe(true);

@@ -275,7 +275,7 @@ test('strokeShifted is true when what a loop surrounded has split apart', async 
 // follows the word, so the card mustn't say it was drawn on another screen.
 test('a loop around a word isn\'t badged as shifted when its text rewraps', async ({ page }) => {
   const drawn = {};
-  for (const [sel, word] of [['#story h2', 'started'], ['#app .lead', 'moving']]) {
+  for (const [sel, word] of [['#story h2', 'started'], ['#app .lead', 'Launch']]) {
     drawn[sel] = await page.evaluate(async ([sel, word]) => {
       const { anchorStroke, resolveStroke, strokeShifted } = await __sa.mod();
       const el = document.querySelector(sel);

@@ -4,6 +4,16 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Church Network</title>
+<script>
+  /* Embedded as the Groups hero's or the site footer's globe, the frame is named "rn-embed:<settings>". Some servers
+     (the `serve` dev server, clean-URL redirects) drop an address's ?settings on the way from hero.html to /hero, so
+     put them back before anything reads them; otherwise the whole page would show inside the frame. */
+  (() => {
+    const tag = 'rn-embed:';
+    if (window.name.startsWith(tag) && !new URLSearchParams(location.search).has('embed'))
+      history.replaceState(null, '', location.pathname + '?' + window.name.slice(tag.length) + location.hash);
+  })();
+</script>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='7' fill='%232F7D6D'/%3E%3Ccircle cx='16' cy='16' r='12.5' fill='none' stroke='%232F7D6D' stroke-width='3'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,6 +25,8 @@
 <link rel="stylesheet" href="versions/versions.css">
 <link rel="stylesheet" href="assets/page-transition.css">
 <script src="assets/page-transition.js"></script>
+<link rel="stylesheet" href="assets/site-footer.css">
+<script src="assets/site-footer.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/lenis@1.3.26/dist/lenis.min.js"></script>
 <style>
   :root {
@@ -227,12 +239,12 @@
   .brand { display: inline-flex; align-items: center; gap: 12px; font-weight: 600; color: var(--heading); text-decoration: none; letter-spacing: -0.01em; }
   /* The Rock Network logo (white on clear in Figma), used as a mask so it takes the heading color */
   .logo {
-    --logo-h: 32px;
+    --logo-h: 52px;
     display: block; height: var(--logo-h); aspect-ratio: 960 / 202; background: currentColor;
     -webkit-mask: url("assets/the-rock-network.png") center / contain no-repeat;
             mask: url("assets/the-rock-network.png") center / contain no-repeat;
   }
-  .site-footer .logo { --logo-h: 26px; }
+  @media (max-width: 1000px) { .site-header .logo { --logo-h: 44px; } }
   .glyph {
     --g: 9px; --gc: var(--c-disciples);
     display: inline-block; width: var(--g); height: var(--g); border-radius: 50%; background: var(--gc); flex: none;
@@ -438,6 +450,7 @@
     font-size: clamp(32px, 4.2vw, 50px); line-height: 1.08; letter-spacing: -0.025em;
   }
   .lead { margin: 18px 0 0; max-width: 58ch; font-size: calc(var(--body-size) * 1.12); }
+  .subtitle { margin: 14px 0 0; font-size: clamp(20px, 2vw, 26px); line-height: 1.25; font-weight: 500; color: var(--heading); letter-spacing: -0.015em; }
   .eyebrow { margin: 0 0 20px; font-size: 16px; font-weight: 500; color: var(--c-disciples); }
 
   .frame { border-radius: var(--radius); overflow: hidden; background: #E9E9EC; }
@@ -445,10 +458,22 @@
 
   /* What is a New Testament Church Network? */
   .video { position: relative; aspect-ratio: 16 / 9; }
-  .video::after { content: ''; position: absolute; inset: 0; background: rgba(31,31,35,.18); pointer-events: none; transition: opacity .3s ease; }
+  .video::after { content: ''; position: absolute; inset: 0; background: transparent; pointer-events: none; transition: opacity .3s ease; }   /* the poster is finished artwork, so no darkening (rgba(31,31,35,.18) dims a plain photo) */
   .video video { display: block; width: 100%; height: 100%; object-fit: cover; background: #000; }
   .video.is-started::after, .video.is-started .play { opacity: 0; pointer-events: none; }
   .video .play { transition: transform .3s ease, opacity .3s ease; }
+  /* On this poster the button sits under the title, on its left edge (7% in, 70% down), so it doesn't cover the words,
+     and it's dark to stand out on the poster's light gray. It scales down with the box on small screens. */
+  .video .play {
+    --s: clamp(44px, 6.5vw, 88px);
+    left: 7%; top: 70%; translate: none; width: var(--s); height: var(--s);
+    background: var(--heading); box-shadow: 0 10px 24px -10px rgba(31,31,35,.5);
+  }
+  .video .play::before {
+    margin-left: calc(var(--s) * .07);
+    border-left: calc(var(--s) * .25) solid #fff;
+    border-top: calc(var(--s) * .16) solid transparent; border-bottom: calc(var(--s) * .16) solid transparent;
+  }
   .play {
     position: absolute; z-index: 1; left: 50%; top: 50%; translate: -50% -50%;
     width: 88px; height: 88px; border-radius: 50%; border: 0; cursor: pointer;
@@ -509,40 +534,61 @@
   .quote footer strong { color: var(--heading); font-weight: 500; }
   @media (max-width: 860px) { .testimony { grid-template-columns: 1fr; } .testimony .frame { aspect-ratio: 4 / 3; } }
 
-  /* Our disciple-making tool */
-  .tool { display: grid; grid-template-columns: 1fr auto; gap: clamp(32px, 5vw, 72px); align-items: center; margin-top: 56px; }
-  .tool .frame { aspect-ratio: 4 / 3.3; }
-  .device { display: grid; justify-items: center; gap: 24px; }
-  .phone {
-    width: 290px; aspect-ratio: 290 / 600; border-radius: 48px; padding: 10px;
-    background: #2A2A2F; box-shadow: 0 30px 60px -30px rgba(31,31,35,.45), inset 0 0 0 2px #45454C;
-    position: relative;
+  /* Jesus Disciple: three rows of video cards. Each row is a sideways carousel that lines up with the page's text on
+     the left and runs off the right edge of the window. Scroll it with a trackpad, a swipe, a mouse drag, the arrow
+     buttons, or Tab through the cards. */
+  .reel-group { margin-top: clamp(56px, 7vw, 88px); }
+  /* Jesus Disciple University: its own mention under the video rows, not one of the videos */
+  .jdu {
+    margin-top: clamp(56px, 7vw, 88px); padding: clamp(28px, 4vw, 44px) clamp(24px, 4vw, 48px);
+    display: flex; align-items: center; justify-content: space-between; gap: 20px 32px; flex-wrap: wrap;
+    border-radius: var(--radius); background: #fff; border: 1px solid var(--line);
   }
-  .phone::before {                            /* the island */
-    content: ''; position: absolute; top: 20px; left: 50%; translate: -50% 0; z-index: 2;
-    width: 92px; height: 27px; border-radius: 20px; background: #0E0E10;
+  .jdu-title { margin: 0; font-size: clamp(24px, 2.6vw, 34px); line-height: 1.15; font-weight: 500; color: var(--heading); letter-spacing: -0.02em; }
+  .reel-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; }
+  .reel-title { margin: 0; font-size: clamp(24px, 2.6vw, 34px); line-height: 1.15; font-weight: 500; color: var(--heading); letter-spacing: -0.02em; }
+  .reel-nav { display: flex; gap: 10px; }
+  .reel-group.is-static .reel-nav { visibility: hidden; }        /* every card fits: nothing to scroll */
+  .reel-btn {
+    width: 44px; height: 44px; padding: 0; border-radius: 50%; border: 1px solid #D4D4D8; cursor: pointer;
+    display: grid; place-items: center; background: transparent; color: var(--heading);
+    transition: background .2s ease, color .2s ease, border-color .2s ease, opacity .2s ease;
   }
-  .screen {
-    --app-bar: #005785;                       /* the app's header blue, so the status bar runs into it */
-    height: 100%; border-radius: 38px; overflow: hidden; background: #fff; display: flex; flex-direction: column;
+  .reel-btn svg { width: 18px; height: 18px; }
+  .reel-btn:hover:not(:disabled) { background: var(--heading); border-color: var(--heading); color: #fff; }
+  .reel-btn:disabled { opacity: .35; cursor: default; }
+  .reel {
+    --edge: max(24px, calc((100% - var(--content-width)) / 2 + 24px));   /* the .wrap's left edge */
+    list-style: none; margin: 22px 0 0; padding: 6px var(--edge) 10px;
+    display: flex; gap: clamp(16px, 2.7vw, 39px);
+    overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scroll-padding-inline: var(--edge);
+    scrollbar-width: none;
   }
-  .screen .status {
-    flex: none; height: 46px; margin: 0; padding: 0 28px; display: flex; align-items: center; justify-content: space-between;
-    background: var(--app-bar); color: #fff; font-weight: 600; font-size: 13px;
+  .reel::-webkit-scrollbar { display: none; }
+  .reel li { flex: none; scroll-snap-align: start; }
+  @media (hover: hover) and (pointer: fine) { .reel { cursor: grab; } }
+  .reel.is-dragging { cursor: grabbing; scroll-snap-type: none; user-select: none; }
+  .vcard {
+    position: relative; display: block; width: clamp(220px, 25.2vw, 362px); aspect-ratio: 7 / 10;   /* the video posters' shape, so their titles aren't cropped */
+    border-radius: var(--radius); overflow: hidden; background: #B5B5B5;
+    -webkit-user-drag: none; user-select: none;
   }
-  .screen .status i { display: inline-block; width: 22px; height: 10px; border-radius: 3px; border: 1.5px solid #fff; }
-  /* A screenshot of the app's Learn page, from its header down */
-  .app-view { flex: 1; min-height: 0; }
-  .app-view img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: top; }
-  .stores { display: flex; gap: 10px; }
-  .store {
-    display: grid; gap: 3px; padding: 10px 18px; border-radius: 14px; min-width: 140px;
-    background: var(--heading); color: #fff; text-decoration: none; line-height: 1;
+  .vcard img { width: 100%; height: 100%; object-fit: cover; transition: transform .6s ease; -webkit-user-drag: none; }
+  .vcard:hover img { transform: scale(1.04); }
+  .vcard:focus-visible { outline: 2px solid var(--heading); outline-offset: 3px; }
+  .vplay {
+    position: absolute; right: 16px; bottom: 16px;               /* a corner, clear of the poster's title */
+    width: 56px; height: 56px; border-radius: 50%; background: rgba(255,255,255,.94);
+    box-shadow: 0 6px 18px -6px rgba(31,31,35,.45);
+    display: grid; place-items: center; transition: transform .3s ease;
   }
-  .store:hover { background: #3A3A40; }
-  .store small { font-size: 11px; opacity: .75; }
-  .store b { font-size: 17px; font-weight: 600; letter-spacing: -0.01em; }
-  @media (max-width: 860px) { .tool { grid-template-columns: 1fr; } }
+  .vplay::before {
+    content: ''; margin-left: 4px;
+    border-left: 14px solid var(--heading); border-top: 9px solid transparent; border-bottom: 9px solid transparent;
+  }
+  .vcard:hover .vplay { transform: scale(1.08); }
+  @media (hover: none) { .reel-nav { display: none; } }          /* touch: swipe instead */
+  @media (prefers-reduced-motion: reduce) { .vcard img, .vplay { transition: none; } .vcard:hover img { transform: none; } }
 
   /* Find a hub and How we do it: one wide row per hub (or point). Hovering a row fills it with its color, ring-dots
      ripple in beside the name, and the cursor changes (see the hub cursor below). */
@@ -687,10 +733,13 @@
   html.embed-globe .hub-cursor { display: none !important; }
   html.embed-globe .hero { --hero-curve: 0px !important; height: 100vh !important; min-height: 0 !important; }
   html.embed-globe .hero-art { -webkit-mask: none !important; mask: none !important; }
+  /* Embedded, only the globe and its photo pins show: everything else on the page (header, hero copy and buttons,
+     scrim, sections, footer, panels, comment mode, anything added to the page later) stays hidden */
+  html.embed-globe body > :not(main), html.embed-globe main > :not(.hero), html.embed-globe .hero > :not(.hero-art),
+  html.embed-globe .hero-art > :not(#stage):not(#pins) { display: none !important; }
+  /* ?bg=RRGGBB: the embedding page's background, so the globe sits on it (the site footer uses this) */
+  html.embed-globe, html.embed-globe body, html.embed-globe .hero { background: var(--embed-bg, #fff) !important; }
 
-  /* Footer */
-  .site-footer { padding: 40px 0; border-top: 1px solid var(--line); font-size: 14px; }
-  .site-footer .wrap { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
 </style>
 </head>
 <body>
@@ -707,6 +756,8 @@
      No loading screen, header, copy or sections; see html.embed-globe in the styles. */
   if (new URLSearchParams(location.search).get('embed') === 'globe') {
     root.classList.add('embed-globe');
+    const bg = new URLSearchParams(location.search).get('bg');
+    if (/^[0-9a-f]{6}$/i.test(bg || '')) root.style.setProperty('--embed-bg', '#' + bg);
     loader.remove();
     return;
   }
@@ -813,6 +864,7 @@
    Nathan's one-time ?owner= link (which just remembers the owner key). The page stays light otherwise. */
 (() => {
   const params = new URLSearchParams(location.search);
+  if (params.get('embed') === 'globe') return;   // the embedded globe never offers comments
   let loading = null;
   const load = () => {
     if (!loading) {
@@ -879,7 +931,7 @@
     <div class="wrap">
       <p class="eyebrow">What is a New Testament Church Network?</p>
       <div class="frame video" id="intro-video">
-        <video src="assets/welcome-to-the-rock-network.mp4" poster="assets/welcome-to-the-rock-network.jpg"
+        <video src="assets/welcome-to-the-rock-network.mp4" poster="assets/what-is-a-new-testament-church-network.jpg"
           preload="none" playsinline aria-label="Welcome to the Rock Network"></video>
         <button class="play" type="button" aria-label="Play video: Welcome to the Rock Network"></button>
       </div>
@@ -927,11 +979,13 @@
       </div>
       <div>
         <h2 class="section-title">What we do</h2>
+        <p class="subtitle">We are a four-stage ministry</p>
         <p class="lead">We multiply disciples, leaders, churches, and movements.</p>
         <div class="stats">
-          <div class="stat"><p class="num" style="color: var(--c-disciples)" data-count>7,088</p><p class="label">Disciples</p></div>
-          <div class="stat"><p class="num" style="color: var(--c-churches)" data-count>1,559</p><p class="label">Groups</p></div>
-          <div class="stat"><p class="num" style="color: var(--c-movements)" data-count>3</p><p class="label">Subnetworks</p></div>
+          <div class="stat"><p class="num" style="color: var(--c-disciples)" data-count>7,088</p><p class="label">Disciples joined</p></div>
+          <div class="stat"><p class="num" style="color: var(--c-leaders)" data-count>1,559</p><p class="label">Groups started</p></div>
+          <div class="stat"><p class="num" style="color: var(--c-churches)" data-count>25</p><p class="label">Missions workers</p></div>
+          <div class="stat"><p class="num" style="color: var(--c-movements)" data-count>3</p><p class="label">Four-Stage Subnetworks</p></div>
         </div>
       </div>
     </div>
@@ -947,8 +1001,8 @@
             <a class="hub-row" href="#" data-placeholder data-photo="1531206715517-5c0ba140b2b8">
               <span class="glyph" aria-hidden="true"></span>
               <span>
-                <h3>Process</h3>
-                <p>Simple steps that lead to big impact</p>
+                <h3>A Clear Process</h3>
+                <p>to Multiply in each stage</p>
               </span>
               <span class="go">Learn more</span>
             </a>
@@ -957,8 +1011,8 @@
             <a class="hub-row" href="#" data-placeholder data-photo="1543269865-cbf427effbad">
               <span class="glyph" aria-hidden="true"></span>
               <span>
-                <h3>Tools</h3>
-                <p>Everything you need, all in the palm of your hand</p>
+                <h3>Effective Tools</h3>
+                <p>to use the process</p>
               </span>
               <span class="go">Learn more</span>
             </a>
@@ -967,8 +1021,8 @@
             <a class="hub-row" href="#" data-placeholder data-photo="1522202176988-66273c2fd55f">
               <span class="glyph" aria-hidden="true"></span>
               <span>
-                <h3>Training</h3>
-                <p>Moving from information to activation</p>
+                <h3>Available Training</h3>
+                <p>to Get started and retain momentum</p>
               </span>
               <span class="go">Learn more</span>
             </a>
@@ -977,8 +1031,8 @@
             <a class="hub-row" href="#" data-placeholder data-photo="1506869640319-fe1a24fd76dc">
               <span class="glyph" aria-hidden="true"></span>
               <span>
-                <h3>Coaching</h3>
-                <p>Encouragement and support from others in the field</p>
+                <h3>On-going Coaching</h3>
+                <p>for encouragement and guidance</p>
               </span>
               <span class="go">Learn more</span>
             </a>
@@ -986,7 +1040,6 @@
         </ul>
     </div>
   </section>
-
   <!-- 6. Testimony -->
   <section class="section" id="testimony">
     <div class="wrap testimony">
@@ -1000,31 +1053,64 @@
     </div>
   </section>
 
-  <!-- 7. Our disciple-making tool -->
+  <!-- 7. Jesus Disciple: video carousels (the cards' links are placeholders until the videos have addresses) -->
   <section class="section section-tint" id="app">
     <div class="wrap">
-      <h2 class="section-title">Our disciple-making tool</h2>
-      <p class="lead">The Jesus Disciple App keeps your group moving together in the same direction.</p>
-      <div class="tool">
-        <div class="frame">
-          <img src="https://images.unsplash.com/photo-1543269865-cbf427effbad?w=1400&h=1150&fit=crop&q=75&auto=format" alt="" loading="lazy">
+      <h2 class="section-title">Jesus Disciple&nbsp;– A Four-Stage Ministry tool</h2>
+      <p class="lead">Use the Jesus Disciple App to Launch your own New Testament Network</p>
+    </div>
+      <div class="reel-group">
+        <div class="wrap reel-head">
+          <h3 class="reel-title" id="reel-vision">Vision Videos</h3>
+          <div class="reel-nav">
+            <button class="reel-btn" type="button" data-dir="-1" aria-label="Previous Vision Videos"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4l-6 6 6 6"/></svg></button>
+            <button class="reel-btn" type="button" data-dir="1" aria-label="Next Vision Videos"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 4l6 6-6 6"/></svg></button>
+          </div>
         </div>
-        <div class="device">
-          <div class="phone">
-            <div class="screen">
-              <div class="status" aria-hidden="true"><span>9:41</span><i></i></div>
-              <div class="app-view">
-                <img src="assets/jesus-disciple-app.jpg" alt="The Jesus Disciple App's Learn page: The Vision, How to use Jesus Disciple, and Simple Studies" loading="lazy">
-              </div>
-            </div>
+        <ul class="reel" aria-labelledby="reel-vision">
+            <li><a class="vcard" href="#" data-placeholder draggable="false" aria-label="Vision video: Multiplication Matters"><img src="assets/videos/vision-multiplication-matters.jpg" alt="" loading="lazy" draggable="false"><span class="vplay" aria-hidden="true"></span></a></li>
+            <li><a class="vcard" href="#" data-placeholder draggable="false" aria-label="Vision video: Think Small"><img src="assets/videos/vision-think-small.jpg" alt="" loading="lazy" draggable="false"><span class="vplay" aria-hidden="true"></span></a></li>
+            <li><a class="vcard" href="#" data-placeholder draggable="false" aria-label="Vision video: New Testament Networks"><img src="assets/videos/vision-new-testament-networks.jpg" alt="" loading="lazy" draggable="false"><span class="vplay" aria-hidden="true"></span></a></li>
+            <li><a class="vcard" href="#" data-placeholder draggable="false" aria-label="Vision video: Prayer and Persons of Peace"><img src="assets/videos/vision-prayer-and-persons-of-peace.jpg" alt="" loading="lazy" draggable="false"><span class="vplay" aria-hidden="true"></span></a></li>
+            <li><a class="vcard" href="#" data-placeholder draggable="false" aria-label="Vision video: Healing and Miracles"><img src="assets/videos/vision-healing-and-miracles.jpg" alt="" loading="lazy" draggable="false"><span class="vplay" aria-hidden="true"></span></a></li>
+            <li><a class="vcard" href="#" data-placeholder draggable="false" aria-label="Vision video: It's Your Turn"><img src="assets/videos/vision-its-your-turn.jpg" alt="" loading="lazy" draggable="false"><span class="vplay" aria-hidden="true"></span></a></li>
+        </ul>
+      </div>
+      <div class="reel-group">
+        <div class="wrap reel-head">
+          <h3 class="reel-title" id="reel-how-to">How to use Jesus Disciple</h3>
+          <div class="reel-nav">
+            <button class="reel-btn" type="button" data-dir="-1" aria-label="Previous How to use Jesus Disciple"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4l-6 6 6 6"/></svg></button>
+            <button class="reel-btn" type="button" data-dir="1" aria-label="Next How to use Jesus Disciple"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 4l6 6-6 6"/></svg></button>
           </div>
-          <div class="stores">
-            <a class="store" href="#" data-placeholder><small>Download on the</small><b>App Store</b></a>
-            <a class="store" href="#" data-placeholder><small>Get it on</small><b>Google Play</b></a>
+        </div>
+        <ul class="reel" aria-labelledby="reel-how-to">
+            <li><a class="vcard" href="#" data-placeholder draggable="false" aria-label="How to use Jesus Disciple: What is it?"><img src="assets/videos/how-to-what-is-it.jpg" alt="" loading="lazy" draggable="false"><span class="vplay" aria-hidden="true"></span></a></li>
+            <li><a class="vcard" href="#" data-placeholder draggable="false" aria-label="How to use Jesus Disciple: Why use it?"><img src="assets/videos/how-to-why-use-it.jpg" alt="" loading="lazy" draggable="false"><span class="vplay" aria-hidden="true"></span></a></li>
+            <li><a class="vcard" href="#" data-placeholder draggable="false" aria-label="How to use Jesus Disciple: How it works"><img src="assets/videos/how-to-how-it-works.jpg" alt="" loading="lazy" draggable="false"><span class="vplay" aria-hidden="true"></span></a></li>
+        </ul>
+      </div>
+      <div class="reel-group">
+        <div class="wrap reel-head">
+          <h3 class="reel-title" id="reel-stories">Jesus Disciple Stories</h3>
+          <div class="reel-nav">
+            <button class="reel-btn" type="button" data-dir="-1" aria-label="Previous Jesus Disciple Stories"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4l-6 6 6 6"/></svg></button>
+            <button class="reel-btn" type="button" data-dir="1" aria-label="Next Jesus Disciple Stories"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 4l6 6-6 6"/></svg></button>
           </div>
+        </div>
+        <ul class="reel" aria-labelledby="reel-stories">
+            <li><a class="vcard" href="#" data-placeholder draggable="false" aria-label="Anastasia's story"><img src="assets/anastasia-thumbnail.jpg" alt="" loading="lazy" draggable="false" style="object-position: 50% 30%"><span class="vplay" aria-hidden="true"></span></a></li>
+            <li><a class="vcard" href="#" data-placeholder draggable="false" aria-label="Story 2"><img src="https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?w=760&h=1170&fit=crop&q=75&auto=format" alt="" loading="lazy" draggable="false"><span class="vplay" aria-hidden="true"></span></a></li>
+            <li><a class="vcard" href="#" data-placeholder draggable="false" aria-label="Story 3"><img src="https://images.unsplash.com/photo-1491438590914-bc09fcaaf77a?w=760&h=1170&fit=crop&q=75&auto=format" alt="" loading="lazy" draggable="false"><span class="vplay" aria-hidden="true"></span></a></li>
+            <li><a class="vcard" href="#" data-placeholder draggable="false" aria-label="Story 4"><img src="https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=760&h=1170&fit=crop&q=75&auto=format" alt="" loading="lazy" draggable="false"><span class="vplay" aria-hidden="true"></span></a></li>
+        </ul>
+      </div>
+      <div class="wrap">
+        <div class="jdu">
+          <h3 class="jdu-title">Jesus Disciple University</h3>
+          <a class="button button-primary" href="#" data-placeholder>Learn more</a>
         </div>
       </div>
-    </div>
   </section>
 
   <!-- 8. Find a hub -->
@@ -1080,8 +1166,42 @@
 
 <footer class="site-footer">
   <div class="wrap">
-    <a class="brand" href="#top" aria-label="The Rock Network"><span class="logo" aria-hidden="true"></span></a>
-    <span>Sample page with placeholder content</span>
+    <div class="footer-top">
+      <div>
+        <p class="footer-tagline">A New Testament Church Network returning to the original model.</p>
+        <ul class="footer-social" aria-label="Social">
+          <li><a href="#" data-placeholder>Facebook</a></li>
+          <li><a href="#" data-placeholder>Instagram</a></li>
+          <li><a href="#" data-placeholder>YouTube</a></li>
+        </ul>
+        <div class="footer-signup">
+          <h2 class="footer-label" id="signup-label">Stay in the loop</h2>
+          <form novalidate aria-labelledby="signup-label">
+            <div class="signup-row">
+              <input type="email" name="email" required placeholder="Enter your email" aria-label="Email address" autocomplete="email">
+              <button class="button button-primary" type="submit">Subscribe</button>
+            </div>
+            <p class="signup-note" role="status"></p>
+          </form>
+        </div>
+      </div>
+      <nav class="footer-cols" aria-label="Footer">
+        <div>
+          <h2 class="footer-label">Explore</h2>
+          <ul><li><a href="#top" aria-current="page">Home</a></li><li><a href="groups.html">Groups</a></li></ul>
+        </div>
+        <div>
+          <h2 class="footer-label">Connect</h2>
+          <ul><li><a href="#app">The Rock App</a></li><li><a href="#" data-placeholder>Contact</a></li></ul>
+        </div>
+        <div>
+          <h2 class="footer-label">Policy</h2>
+          <ul><li><a href="#" data-placeholder>Privacy</a></li><li><a href="#" data-placeholder>Terms</a></li></ul>
+        </div>
+      </nav>
+    </div>
+    <a class="footer-mark" href="#top" aria-label="The Rock Network, home"><span class="logo" aria-hidden="true"></span></a>
+    <div class="footer-bottom"><span>© 2026 The Rock Network</span></div>
   </div>
 </footer>
 
@@ -1145,6 +1265,57 @@
     </div>
   </section>
   <div id="groups"></div>
+  <section class="group" aria-label="Footer">
+    <h2>Footer</h2>
+    <div class="picker-row"><span>Colors</span>
+      <div class="seg" role="group" aria-label="Footer colors" data-footer-key="theme">
+        <button type="button" data-value="light">Light</button>
+        <button type="button" data-value="grey">Grey</button>
+        <button type="button" data-value="dark">Inverted</button>
+      </div>
+    </div>
+    <div class="row" data-footer-row><label for="c-footerGrey">Grey shade</label><output></output>
+      <input type="range" id="c-footerGrey" data-footer-key="grey" min="0.3" max="0.96" step="0.01"></div>
+    <div class="picker-row"><span>Animation</span>
+      <div class="seg" role="group" aria-label="Footer animation" data-footer-key="anim">
+        <button type="button" data-value="pins">Pins globe</button>
+        <button type="button" data-value="off">Off</button>
+      </div>
+    </div>
+    <div class="row" data-footer-row><label for="c-footerAnim">Animation strength</label><output></output>
+      <input type="range" id="c-footerAnim" data-footer-key="animStrength" min="0.15" max="1" step="0.01"></div>
+    <div class="picker-row"><span>Top edge</span>
+      <div class="seg" role="group" aria-label="Footer top edge" data-footer-key="edge">
+        <button type="button" data-value="flat">Flat</button>
+        <button type="button" data-value="curve">Curved</button>
+      </div>
+    </div>
+    <div class="row" data-footer-row><label for="c-footerCurve">Curve depth</label><output></output>
+      <input type="range" id="c-footerCurve" data-footer-key="curve" min="0" max="10" step="0.5"></div>
+    <div class="picker-row"><span>Logo</span>
+      <div class="seg" role="group" aria-label="Footer logo" data-footer-key="mark">
+        <button type="button" data-value="full">Full</button>
+        <button type="button" data-value="clip">Clipped</button>
+      </div>
+    </div>
+    <div class="row" data-footer-row><label for="c-footerScale">Logo scale</label><output></output>
+      <input type="range" id="c-footerScale" data-footer-key="scale" min="0.5" max="1.5" step="0.01"></div>
+    <div class="row" data-footer-row><label for="c-footerClip">Clip</label><output></output>
+      <input type="range" id="c-footerClip" data-footer-key="clip" min="0.15" max="0.6" step="0.01"></div>
+    <div class="row" data-footer-row><label for="c-footerShift">Position</label><output></output>
+      <input type="range" id="c-footerShift" data-footer-key="shift" min="-0.3" max="0.5" step="0.01"></div>
+    <div class="picker-row"><span>Reveal</span>
+      <div class="seg" role="group" aria-label="Footer reveal" data-footer-key="reveal">
+        <button type="button" data-value="on">Slide out</button>
+        <button type="button" data-value="off">Off</button>
+      </div>
+    </div>
+    <div class="row" data-footer-row><label for="c-footerRevealDistance">Slide distance</label><output></output>
+      <input type="range" id="c-footerRevealDistance" data-footer-key="revealDistance" min="0.1" max="1" step="0.01"></div>
+    <div class="row" data-footer-row><label for="c-footerRevealShade">Shade while tucked</label><output></output>
+      <input type="range" id="c-footerRevealShade" data-footer-key="revealShade" min="0" max="0.8" step="0.01"></div>
+    <p class="hint">Clip and Position set where the clipped logo lands. Slide out tucks the footer under the last section and slides it down as you scroll to it. Kept in this browser for Home and Groups.</p>
+  </section>
   <div class="foot">
     <div class="actions">
       <button class="btn" id="copy" type="button">Copy settings</button>
@@ -1565,6 +1736,8 @@ function heroGalleryGroups(GALLERY_CONTROLS) {
     else cfg[key] = /^[0-9a-f]{6}$/i.test(raw) ? '#' + raw : raw;
   }
   const showControls = SHOW_CONTROLS && params.get('controls') !== '0';
+  // The background the globe's haze and edge fade melt into: white, or the embedding page's ?bg=RRGGBB
+  const BG = /^[0-9a-f]{6}$/i.test(params.get('bg') || '') ? '#' + params.get('bg') : '#FFFFFF';
 
   const PAGE_FIELDS = PAGE_CONTROLS.flatMap(g => g.items);
   function applyPage() {
@@ -2085,7 +2258,7 @@ function heroGalleryGroups(GALLERY_CONTROLS) {
     // Aerial haze: distance fades softly into white
     if (cfg.haze > 0) {
       const y0 = view.horizonY - 2, y1 = view.horizonY + (H - view.horizonY) * 0.55;
-      const [r, g, b] = rgb('#FFFFFF');
+      const [r, g, b] = rgb(BG);
       const grad = ctx.createLinearGradient(0, y0, 0, y1);
       grad.addColorStop(0, `rgba(${r},${g},${b},${cfg.haze})`);
       grad.addColorStop(0.45, `rgba(${r},${g},${b},${cfg.haze * 0.35})`);
@@ -2100,7 +2273,7 @@ function heroGalleryGroups(GALLERY_CONTROLS) {
       // that follows the curve, so the globe dissolves into the background with no hard line
       const depth = Math.max(4, cfg.fadeDepth * H), K = 22;
       const a = 1 - Math.pow(0.015, 1 / K);
-      ctx.strokeStyle = '#FFFFFF'; ctx.lineJoin = 'round'; ctx.globalAlpha = a;
+      ctx.strokeStyle = BG; ctx.lineJoin = 'round'; ctx.globalAlpha = a;
       for (let i = 1; i <= K; i++) { ctx.lineWidth = 2 * depth * i / K; ctx.stroke(edge); }
       ctx.globalAlpha = 1;
     } else {
@@ -2671,7 +2844,7 @@ function heroGalleryGroups(GALLERY_CONTROLS) {
 
     const copyBtn = document.getElementById('copy');
     copyBtn.addEventListener('click', async () => {
-      const text = 'const CONFIG = ' + JSON.stringify(cfg, null, 2) + ';';
+      const text = 'const CONFIG = ' + JSON.stringify(cfg, null, 2) + ';\n// assets/site-footer.js DEFAULT: ' + JSON.stringify(window.rnFooter.get());
       try { await navigator.clipboard.writeText(text); }
       catch {
         const ta = Object.assign(document.createElement('textarea'), { value: text });
@@ -2683,6 +2856,7 @@ function heroGalleryGroups(GALLERY_CONTROLS) {
 
     document.getElementById('reset').addEventListener('click', () => {
       Object.assign(cfg, DEFAULTS);
+      window.rnFooter.reset();
       Object.keys(inputs).forEach(syncInput);
       applyPage(); refit();
       if (gallery) gallery.rebuild();
@@ -3215,6 +3389,59 @@ function heroGalleryGroups(GALLERY_CONTROLS) {
     });
     list.addEventListener('focusout', e => { if (!list.contains(e.relatedTarget)) hide(); });
   }
+})();
+</script>
+<script>
+/* Jesus Disciple carousels: the arrow buttons page through a row (and grey out at its ends), and a mouse can drag a
+   row sideways. Trackpads, touch and Tab scroll it natively. */
+(() => {
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.querySelectorAll('.reel-group').forEach(group => {
+    const reel = group.querySelector('.reel');
+    const [prev, next] = group.querySelectorAll('.reel-btn');
+    const update = () => {
+      const max = reel.scrollWidth - reel.clientWidth;
+      prev.disabled = reel.scrollLeft <= 2;
+      next.disabled = reel.scrollLeft >= max - 2;
+      group.classList.toggle('is-static', max <= 2);
+    };
+    const page = dir => {
+      const step = reel.querySelector('li').getBoundingClientRect().width + parseFloat(getComputedStyle(reel).columnGap || 0);
+      const cards = Math.max(1, Math.floor(reel.clientWidth * 0.75 / step));
+      reel.scrollBy({ left: dir * cards * step, behavior: reduce ? 'auto' : 'smooth' });
+    };
+    prev.addEventListener('click', () => page(-1));
+    next.addEventListener('click', () => page(1));
+    reel.addEventListener('scroll', update, { passive: true });
+    // Lenis (the page's smooth scroll) cancels every wheel event that has any vertical movement, and a trackpad swipe
+    // sideways nearly always has a little. So a mostly sideways swipe stops here, before Lenis sees it, and the row
+    // scrolls natively. Mostly vertical swipes still reach Lenis and scroll the page.
+    reel.addEventListener('wheel', e => {
+      if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) e.stopPropagation();
+    }, { passive: true });
+    addEventListener('resize', update);
+    update();
+
+    // Mouse drag. A drag of more than a few pixels doesn't count as a click on the card it started on.
+    let drag = null, quietUntil = 0;
+    reel.addEventListener('pointerdown', e => {
+      if (e.pointerType === 'mouse' && e.button === 0) drag = { x: e.clientX, left: reel.scrollLeft, moved: false };
+    });
+    addEventListener('pointermove', e => {
+      if (!drag) return;
+      const dx = e.clientX - drag.x;
+      if (!drag.moved && Math.abs(dx) > 5) { drag.moved = true; reel.classList.add('is-dragging'); }
+      if (drag.moved) reel.scrollLeft = drag.left - dx;
+    });
+    addEventListener('pointerup', () => {
+      if (!drag) return;
+      if (drag.moved) { quietUntil = performance.now() + 250; reel.classList.remove('is-dragging'); }
+      drag = null;
+    });
+    reel.addEventListener('click', e => {
+      if (performance.now() < quietUntil) { e.preventDefault(); e.stopPropagation(); }
+    }, true);
+  });
 })();
 </script>
 <script>

@@ -90,7 +90,7 @@ test('the Adjust panel switches the hub cursor', async ({ page }) => {
 test('How we do it shows its four points with the same rows and cursor', async ({ page }) => {
   await openPage(page);                           // on by default, unlike Find a hub
   const rows = page.locator('#how .hub-row');
-  await expect(rows.locator('h3')).toHaveText(['Process', 'Tools', 'Training', 'Coaching']);
+  await expect(rows.locator('h3')).toHaveText(['A Clear Process', 'Effective Tools', 'Available Training', 'On-going Coaching']);
   const row = rows.nth(2);
   await row.evaluate(el => el.scrollIntoView({ block: 'center' }));
   await row.locator('h3').hover();
