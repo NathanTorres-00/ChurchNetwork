@@ -55,6 +55,8 @@ async function shoot(browser, url, width, selector, file) {
     null, { timeout: 30_000 },
   );
   await page.waitForTimeout(1500); // let entrance animations settle
+  // the skip link sits off-screen, but a tall element shot stretches the window and catches it
+  await page.addStyleTag({ content: '.skip-link { visibility: hidden !important; }' });
   if (selector) {
     const el = page.locator(selector).first();
     // bottom-aligned, so a footer is fully slid out from under the page

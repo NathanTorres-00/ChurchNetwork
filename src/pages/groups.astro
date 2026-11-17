@@ -1,7 +1,47 @@
 ---
+import { getEntry } from "astro:content";
 import Layout from "@/layouts/BaseLayout.astro";
+import GroupsHero from "@/components/section/GroupsHero.astro";
+import Section from "@/components/wrapper/Section.astro";
+import ContentWrapper from "@/components/wrapper/ContentWrapper.astro";
+import Eyebrow from "@/components/typography/Eyebrow.astro";
+import Heading from "@/components/typography/Heading.astro";
+import Paragraph from "@/components/typography/Paragraph.astro";
+import Grid from "@/components/wrapper/Grid.astro";
+import GroupCard from "@/components/content/GroupCard.astro";
+import CtaDivided from "@/components/content/CtaDivided.astro";
+
+const groups = (await getEntry("groupsPage", "groups"))!.data;
+const { top, what } = groups;
+const cardColors = ["churches", "disciples"] as const;
 ---
 
 <Layout title="Groups" page="groups">
-  <!-- Groups' sections arrive in Tasks 4 and 5 -->
+  <script is:inline slot="head" src="/scripts/groups-config.js"></script>
+
+  <!-- Hero -->
+  <GroupsHero heading={top.heading} tagline={top.tagline} buttons={top.buttons} photo={top.photo} />
+
+  <!-- What are Rock Network Groups? -->
+  <Section id="what">
+    <ContentWrapper>
+      <Eyebrow>{what.eyebrow}</Eyebrow>
+      <Heading>{what.heading}</Heading>
+      <Paragraph variant="large" maxWidth={58}>{what.lead}</Paragraph>
+    </ContentWrapper>
+    <Grid large={2} id="start">
+      {
+        what.items.map((item, i) => (
+          <GroupCard
+            heading={item.heading}
+            intro={item.intro}
+            traits={item.traits}
+            button={item.button}
+            color={cardColors[i] ?? "disciples"}
+          />
+        ))
+      }
+    </Grid>
+    <CtaDivided text={what.already.body} button={what.already.button} />
+  </Section>
 </Layout>

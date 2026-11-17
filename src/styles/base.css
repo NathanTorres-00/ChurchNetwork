@@ -39,7 +39,7 @@
   --focus-offset-inner: calc(var(--focus-width) * -1);
 
   /* Hover motion */
-  --hover-duration: 200ms;
+  --hover-duration: 250ms;
   --hover-ease: ease;
 
   /* Opening motion */
@@ -79,13 +79,13 @@
   --h1: clamp(3.25rem, 7.4vw, 6rem);
   --h1-min: 52;
   --h1-max: 96;
-  --h1-line-height: var(--line-height-small);
-  --h1-letter-spacing: var(--letter-spacing-tight);
+  --h1-line-height: 1.02;
+  --h1-letter-spacing: -0.035em;
   --h1-text-transform: none;
   --h1-margin-top: var(--space-7);
   --h1-margin-bottom: var(--space-6);
   --h1-font-family: var(--primary-family);
-  --h1-font-weight: var(--primary-medium);
+  --h1-font-weight: var(--primary-bold);
   --h1-text-wrap: wrap;
 
   --h2: clamp(2rem, 4.2vw, 3.125rem);
@@ -94,8 +94,8 @@
   --h2-line-height: 1.08;
   --h2-letter-spacing: var(--letter-spacing-tight);
   --h2-text-transform: none;
-  --h2-margin-top: var(--space-7);
-  --h2-margin-bottom: var(--space-5);
+  --h2-margin-top: 1.25rem;
+  --h2-margin-bottom: 1.125rem;
   --h2-font-family: var(--primary-family);
   --h2-font-weight: var(--primary-medium);
   --h2-text-wrap: balance;
@@ -103,7 +103,7 @@
   --h3: clamp(2.25rem, 4vw, 3.25rem);
   --h3-min: 36;
   --h3-max: 52;
-  --h3-line-height: var(--line-height-medium);
+  --h3-line-height: 1.05;
   --h3-letter-spacing: var(--letter-spacing-tight);
   --h3-text-transform: none;
   --h3-margin-top: var(--space-6);
@@ -189,9 +189,9 @@
   --site-margin-min: 24;
   --site-margin-max: 24;
 
-  --site-gutter: clamp(var(--site-gutter-min) / 16 * 1rem, ((var(--site-gutter-min) - ((var(--site-gutter-max) - var(--site-gutter-min)) / (var(--viewport-max) - var(--viewport-min)) * var(--viewport-min))) / 16 * 1rem + ((var(--site-gutter-max) - var(--site-gutter-min)) / (var(--viewport-max) - var(--viewport-min))) * 100vw), var(--site-gutter-max) / 16 * 1rem);
-  --site-gutter-min: 16;
-  --site-gutter-max: 32;
+  --site-gutter: 1.5rem;
+  --site-gutter-min: 24;
+  --site-gutter-max: 24;
 
   --site-width: calc(100% - var(--site-margin) * 2);
 
@@ -217,8 +217,8 @@
   --space-7: clamp(var(--space-7-min) / 16 * 1rem, ((var(--space-7-min) - ((var(--space-7-max) - var(--space-7-min)) / (var(--viewport-max) - var(--viewport-min)) * var(--viewport-min))) / 16 * 1rem + ((var(--space-7-max) - var(--space-7-min)) / (var(--viewport-max) - var(--viewport-min))) * 100vw), var(--space-7-max) / 16 * 1rem);
   --space-7-min: 36;
   --space-7-max: 48;
-  --space-8: clamp(var(--space-8-min) / 16 * 1rem, ((var(--space-8-min) - ((var(--space-8-max) - var(--space-8-min)) / (var(--viewport-max) - var(--viewport-min)) * var(--viewport-min))) / 16 * 1rem + ((var(--space-8-max) - var(--space-8-min)) / (var(--viewport-max) - var(--viewport-min))) * 100vw), var(--space-8-max) / 16 * 1rem);
-  --space-8-min: 40;
+  --space-8: 4rem;
+  --space-8-min: 64;
   --space-8-max: 64;
 
   --section-space-small: clamp(var(--section-space-small-min) / 16 * 1rem, ((var(--section-space-small-min) - ((var(--section-space-small-max) - var(--section-space-small-min)) / (var(--viewport-max) - var(--viewport-min)) * var(--viewport-min))) / 16 * 1rem + ((var(--section-space-small-max) - var(--section-space-small-min)) / (var(--viewport-max) - var(--viewport-min))) * 100vw), var(--section-space-small-max) / 16 * 1rem);
@@ -631,5 +631,5 @@ h5,
 h6,
 p,
 [class*="text-style-"] {
-  text-box: trim-both cap alphabetic;
+  text-box: normal;   /* the old site's spacing is measured between untrimmed line boxes */
 }

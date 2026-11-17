@@ -31,4 +31,13 @@ decision Nathan should know about. Each item is marked **fixed**, **accepted** o
 
 ## Pages
 
-(Filled in section by section from Task 4 on.)
+### Groups: hero and What are Rock Network Groups? (Task 4)
+
+- Compared at 390, 768 and 1440: same positions, sizes, colours and line breaks. **Fixed** on the way: Lumos
+  trims text to its cap height and puts a small marker line before eyebrows; the old site did neither, so both
+  are off (trim through the token, the marker as an opt-in Eyebrow variant).
+- **Hero photo.** The old page in `../NetworkMultiply` now shows the group photo (`group-gathered.jpg`), but
+  that change isn't committed on `main` yet; committed `main` still has the Unsplash photo, which the port
+  uses. It will follow once it is committed.
+- **Scroll-in animation** for the What section is not on yet: it arrives with the Groups page script in
+  Task 5. Until then the section shows without rising in.

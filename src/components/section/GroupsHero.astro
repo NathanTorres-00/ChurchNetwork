@@ -1,0 +1,352 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+type HeroButton = { label: string; href: string; placeholder?: boolean };
+
+interface Props extends HTMLAttributes<"section"> {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+  /** Page title. */
+  heading: string;
+  /** Line under the title. */
+  tagline?: string;
+  /** Up to two links: the first is the light button, the second the outlined one. */
+  buttons?: HeroButton[];
+  /** Photo behind the title. */
+  photo: { src: string; alt: string };
+}
+
+const {
+  render = true,
+  heading,
+  tagline,
+  buttons = [],
+  photo,
+  class: className,
+  ...rest
+} = Astro.props;
+
+const looks = ["button-light", "button-ghost"];
+---
+
+{
+  render && heading && (
+    <section class:list={["groups-hero", className]} id="top" {...rest}>
+      <div class="groups-hero_layout">
+        <div class="frame hero-card" data-enter style="--i: 1">
+          <img src={photo.src} alt={photo.alt} />
+          <div class="hero-globe" id="hero-globe" />
+          <div>
+            <h1 data-enter style="--i: 2">
+              {heading}
+            </h1>
+            {tagline && (
+              <p class="sub" data-enter style="--i: 3">
+                {tagline}
+              </p>
+            )}
+          </div>
+          {buttons.length > 0 && (
+            <div class="actions" data-enter style="--i: 4">
+              {buttons.map((button, i) => (
+                <a
+                  class:list={["button", looks[i] ?? looks[1]]}
+                  href={button.href}
+                  data-placeholder={button.placeholder ? "" : undefined}
+                >
+                  {button.label}
+                </a>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+<style is:global>
+  @layer components {
+    /* Classes and ids the Groups page script reads keep their old names: #top, #hero-globe, .hero-card and its
+       h1, .sub and .actions .button. The look follows <html data-art data-shape data-load>, set before the first
+       paint by public/scripts/groups-config.js. */
+
+    /* ---------- A photo card with the page's title over it ---------- */
+    .groups-hero {
+      padding: 6.25rem 0 0;
+      @media (max-width: 47.5em) {
+        padding-top: 5.25rem;
+      }
+    }
+    .groups-hero_layout {
+      width: var(--site-width);
+      max-width: var(--max-width-main);
+      margin-inline: auto;
+    }
+    .hero-card {
+      position: relative;
+      min-height: min(45rem, calc(100vh - 7.75rem));
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 3rem;
+      padding: clamp(2rem, 6vw, 4.5rem);
+      color: #fff;
+      isolation: isolate;
+      & > img {
+        position: absolute;
+        inset: 0;
+        z-index: -2;
+      }
+      &::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        background: linear-gradient(
+          180deg,
+          rgb(20 20 24 / 0.62) 0%,
+          rgb(20 20 24 / 0.38) 45%,
+          rgb(20 20 24 / 0.7) 100%
+        );
+      }
+      & h1 {
+        color: inherit;
+      }
+      & .sub {
+        margin: 1.125rem 0 0;
+        font-size: clamp(1.1875rem, 1.9vw, 1.5rem);
+        font-weight: var(--primary-regular);
+        color: rgb(255 255 255 / 0.88);
+        letter-spacing: -0.01em;
+      }
+      & .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        justify-content: flex-end;
+        @media (max-width: 47.5em) {
+          justify-content: flex-start;
+        }
+      }
+      /* the copy lets the pointer through to the globe (so its pins open on hover); the buttons still take it */
+      & > div:not(.hero-globe) {
+        pointer-events: none;
+      }
+      & a {
+        pointer-events: auto;
+      }
+    }
+
+    /* The old site's pill buttons, as they sit on the photo: white leads, the outline follows */
+    .groups-hero .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.625rem;
+      font: var(--primary-medium) 0.9375rem/1 var(--primary-family);
+      text-decoration: none;
+      padding: 0.9375rem 1.5rem;
+      border-radius: var(--radius-round);
+      border: var(--border-width) solid transparent;
+      transition:
+        background 0.25s ease,
+        border-color 0.25s ease,
+        color 0.25s ease;
+    }
+    .groups-hero .button-light {
+      background: #fff;
+      color: var(--heading);
+      &:hover {
+        background: #ececee;
+      }
+    }
+    .groups-hero .button-ghost {
+      background: rgb(255 255 255 / 0.08);
+      color: #fff;
+      border-color: rgb(255 255 255 / 0.45);
+      &:hover {
+        border-color: #fff;
+      }
+    }
+
+    /* ---------- Hero art: the Pins globe ----------
+       Home's own globe (/embed/globe) fills the card; the title turns dark on its pale ground, and a soft white
+       wash behind the copy keeps it readable over the networks. */
+    .hero-globe {
+      position: absolute;
+      inset: 0;
+      z-index: -2;
+      display: none;
+      background: #fff;
+      & iframe {
+        display: block;
+        width: 100%;
+        height: 100%;
+        border: 0;
+      }
+    }
+    html[data-art="globe"] {
+      & .hero-globe {
+        display: block;
+      }
+      & .hero-card {
+        color: var(--heading);
+        background: #fff;
+        outline: var(--border-width) solid var(--border);
+        outline-offset: calc(var(--border-width) * -1);
+        & > img {
+          display: none;
+        }
+        &::after {
+          pointer-events: none;
+          background:
+            radial-gradient(ellipse 60% 55% at 0% 0%, rgb(255 255 255 / 0.92), rgb(255 255 255 / 0) 100%),
+            radial-gradient(ellipse 40% 35% at 100% 100%, rgb(255 255 255 / 0.85), rgb(255 255 255 / 0) 100%);
+        }
+        & .sub {
+          color: var(--text);
+        }
+        & .button-light {
+          background: var(--heading);
+          color: #fff;
+          &:hover {
+            background: #3a3a40;
+          }
+        }
+        & .button-ghost {
+          background: rgb(255 255 255 / 0.8);
+          color: var(--heading);
+          border-color: #d4d4d8;
+          &:hover {
+            border-color: #a1a1aa;
+          }
+        }
+      }
+    }
+    html[data-art="globe"][data-shape="full"] .hero-card {
+      outline: 0;
+    }
+
+    /* ---------- Hero shape: Full width runs the hero edge to edge at full height, under the header ----------
+       It ends in the Home hero's arc: the hero runs --curve past its straight bottom edge and is masked to an
+       ellipse 1.5x its width whose bottom dips --curve below that edge and whose sides meet it at the screen edges
+       (a height of --curve / (1 - sqrt(1 - 1/1.5^2)), so 3.93 x --curve). The dip lies over the next section's top
+       space. */
+    html[data-shape="full"] {
+      & .groups-hero {
+        position: relative;
+        z-index: 1;
+        padding: 0;
+      }
+      & .groups-hero_layout {
+        width: 100%;
+        max-width: none;
+      }
+      & .hero-card {
+        --curve: min(var(--hero-curve, 5vw), 7.5rem);
+        --arc: calc(var(--curve) * 3.93);
+        border-radius: 0;
+        box-shadow: none;
+        min-height: calc(max(37.5rem, 100vh) + var(--curve));
+        padding: 10rem max(var(--site-margin), calc((100vw - var(--max-width-main)) / 2))
+          calc(4.5rem + var(--curve));
+        margin-bottom: calc(-1 * var(--curve));
+        -webkit-mask:
+          linear-gradient(#000 0 0) top / 100% calc(100% - var(--curve)) no-repeat,
+          radial-gradient(ellipse 75% var(--arc) at 50% calc(100% - var(--arc)), #000 99.6%, transparent);
+        mask:
+          linear-gradient(#000 0 0) top / 100% calc(100% - var(--curve)) no-repeat,
+          radial-gradient(ellipse 75% var(--arc) at 50% calc(100% - var(--arc)), #000 99.6%, transparent);
+      }
+    }
+    /* Over the full-width photo the header turns white */
+    html[data-shape="full"][data-art="photo"] .site-header {
+      color: #fff;
+      & .brand,
+      & .site-nav a {
+        color: rgb(255 255 255 / 0.88);
+      }
+      & .site-nav a:hover,
+      & .site-nav a[aria-current="page"] {
+        color: #fff;
+      }
+    }
+
+    /* ---------- Page load: the header, the hero, then its title, line and buttons, one after another ---------- */
+    [data-enter] {
+      animation-duration: var(--load-speed, 0.9s);
+      animation-delay: calc(var(--i, 0) * var(--load-stagger, 0.09s));
+      animation-fill-mode: both;
+      animation-timing-function: cubic-bezier(0.2, 0.7, 0.2, 1);
+      @media (prefers-reduced-motion: reduce) {
+        animation: none !important;
+      }
+    }
+    html[data-load="rise"] {
+      & [data-enter] {
+        animation-name: g-rise;
+      }
+      & .hero-card[data-enter] {
+        animation-name: g-settle;
+      }
+    }
+    html[data-load="fade"] [data-enter] {
+      animation-name: g-fade;
+    }
+    html[data-load="reveal"] {
+      & [data-enter] {
+        animation-name: g-rise;
+      }
+      & .hero-card[data-enter] {
+        animation-name: g-open;
+        animation-duration: calc(var(--load-speed, 0.9s) * 1.4);
+        animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1);
+      }
+      & .site-header[data-enter] {
+        animation-name: g-fade;
+      }
+    }
+    html[data-load="none"] [data-enter] {
+      animation: none;
+    }
+    html[data-shape="full"][data-load="reveal"] .hero-card[data-enter] {
+      animation-name: g-open-full;
+    }
+    @keyframes g-fade {
+      from {
+        opacity: 0;
+      }
+    }
+    @keyframes g-rise {
+      from {
+        opacity: 0;
+        transform: translateY(1.75rem);
+      }
+    }
+    @keyframes g-settle {
+      from {
+        opacity: 0;
+        transform: scale(0.965);
+      }
+    }
+    @keyframes g-open {
+      from {
+        clip-path: inset(18% 22% round var(--radius-main));
+        opacity: 0.2;
+      }
+      to {
+        clip-path: inset(0 round var(--radius-main));
+      }
+    }
+    @keyframes g-open-full {
+      from {
+        clip-path: inset(18% 22% round var(--radius-main));
+        opacity: 0.2;
+      }
+      to {
+        clip-path: inset(0 round 0);
+      }
+    }
+  }
+</style>

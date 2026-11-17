@@ -12,12 +12,14 @@ test('Start a group on the home page opens the Groups page', async ({ page }) =>
 test('the Groups page has its sections in order and no errors', async ({ page }) => {
   const errors = [];
   page.on('pageerror', e => errors.push(String(e)));
-  await page.goto('/groups.html');
-  const headings = await page.locator('main h1, main h2').allTextContents();
-  expect(headings).toEqual(['Church Groups', 'What are Rock Network Groups?', 'Network Video', 'Meet the team']);
-  await expect(page.locator('.group-type h3')).toHaveText(['Church Groups', 'Discipleship Groups']);
-  await expect(page.locator('.group-type').first().locator('.traits li')).toHaveCount(4);
-  await expect(page.locator('.group-type').nth(1).locator('.traits li')).toHaveCount(3);
+  await page.goto('/groups');
+  // the sections built so far (Task 5 adds #video, #story and #team)
+  expect(await page.locator('main > section').evaluateAll(els => els.map(el => el.id))).toEqual(['top', 'what']);
+  await expect(page.locator('main h1')).toHaveText('Church Groups');
+  await expect(page.locator('#what h2')).toHaveText('What are Rock Network Groups?');
+  await expect(page.locator('.group-card_wrap h3')).toHaveText(['Church Groups', 'Discipleship Groups']);
+  await expect(page.locator('.group-card_wrap').first().locator('.group-card_item')).toHaveCount(4);
+  await expect(page.locator('.group-card_wrap').nth(1).locator('.group-card_item')).toHaveCount(3);
   await expect(page.getByText('Already a part of a group?')).toBeVisible();
 
   // the hero's Start a group jumps to the two kinds of group

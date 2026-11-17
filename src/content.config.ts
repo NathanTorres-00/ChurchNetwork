@@ -15,7 +15,7 @@ const button = z.object({
 });
 
 /** A photo hosted elsewhere (Unsplash today), kept as an address. */
-const remotePhoto = z.object({ src: z.string().url(), alt: z.string() });
+const remotePhoto = z.object({ src: z.url(), alt: z.string() });
 
 const weeklyVideo = defineCollection({
   loader: one("weekly-video.json", "current"),
