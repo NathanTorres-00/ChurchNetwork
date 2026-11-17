@@ -57,7 +57,8 @@ async function shoot(browser, url, width, selector, file) {
   await page.waitForTimeout(1500); // let entrance animations settle
   if (selector) {
     const el = page.locator(selector).first();
-    await el.scrollIntoViewIfNeeded();
+    // bottom-aligned, so a footer is fully slid out from under the page
+    await el.evaluate((node) => node.scrollIntoView({ block: 'end', behavior: 'instant' }));
     await page.waitForTimeout(800);
     await el.screenshot({ path: file });
   } else {

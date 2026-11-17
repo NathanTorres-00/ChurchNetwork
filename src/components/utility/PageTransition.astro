@@ -1,0 +1,84 @@
+---
+interface Props {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+}
+
+const { render = true } = Astro.props;
+---
+
+{render && <script is:inline src="/scripts/page-transition.js" />}
+
+<style is:global>
+  /* Page transitions between the site's pages (Home ↔ Groups), with the browser's cross-document View Transitions.
+     The style and speed come from the Groups page's Adjust panel (public/scripts/page-transition.js). The header
+     holds still while the page under it changes. */
+  @view-transition {
+    navigation: auto;
+  }
+
+  @layer components {
+    .site-header {
+      view-transition-name: site-header;
+    }
+
+    ::view-transition-group(*) {
+      animation-duration: var(--vt-duration, 0.6s);
+      animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1);
+    }
+    ::view-transition-old(root),
+    ::view-transition-new(root) {
+      animation-duration: var(--vt-duration, 0.6s);
+    }
+
+    /* Rise: the old page fades back; the new one rises into place */
+    html[data-transition="rise"]::view-transition-old(root) {
+      animation: vt-fade-out calc(var(--vt-duration) * 0.6) ease both;
+    }
+    html[data-transition="rise"]::view-transition-new(root) {
+      animation: vt-rise-in var(--vt-duration) cubic-bezier(0.2, 0.7, 0.2, 1) both;
+    }
+
+    /* Slide: the pages pass sideways, the new one coming in from the right */
+    html[data-transition="slide"]::view-transition-old(root) {
+      animation: vt-slide-out var(--vt-duration) cubic-bezier(0.65, 0, 0.35, 1) both;
+    }
+    html[data-transition="slide"]::view-transition-new(root) {
+      animation: vt-slide-in var(--vt-duration) cubic-bezier(0.65, 0, 0.35, 1) both;
+    }
+
+    /* Fade: the browser's cross-fade, at the chosen speed */
+
+    @keyframes vt-fade-out {
+      to {
+        opacity: 0;
+      }
+    }
+    @keyframes vt-rise-in {
+      from {
+        opacity: 0;
+        transform: translateY(3rem);
+      }
+    }
+    @keyframes vt-slide-out {
+      to {
+        opacity: 0;
+        transform: translateX(-12%);
+      }
+    }
+    @keyframes vt-slide-in {
+      from {
+        opacity: 0;
+        transform: translateX(12%);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      ::view-transition-group(*),
+      ::view-transition-old(*),
+      ::view-transition-new(*) {
+        animation: none !important;
+      }
+    }
+  }
+</style>

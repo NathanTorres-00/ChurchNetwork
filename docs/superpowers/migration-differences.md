@@ -16,6 +16,19 @@ decision Nathan should know about. Each item is marked **fixed**, **accepted** o
 - **Lumos licence.** Lumos is MIT-licensed; its licence is kept as `LUMOS-LICENSE` so the site's own repo
   isn't relabelled MIT.
 
+## Site shell (Task 3)
+
+- **Header and footer.** Same links, copy, sizes and settings as before, compared at 390 and 1440 wide.
+  **Fixed:** Lumos wraps paragraphs "pretty" and balances every heading; the old site wrapped normally
+  except section titles. The tokens now match the old wrapping.
+- **Skip link.** Lumos adds a "Skip to content" link that appears only when a keyboard user presses Tab.
+  The old pages had none. Kept (accessibility); **open for Nathan** if he'd rather not.
+- **404 page.** New: the old site had no 404 page of its own. It uses the site header and footer.
+- **Footer globe, until Task 7.** The footer's background globe now points at `/embed/globe`, which is built
+  in Task 7. Until then the frame shows the 404 page faintly behind the footer. Temporary.
+- **Fonts.** Geist is now downloaded at build time and served from the site (Astro's font support), not
+  fetched from Google Fonts on each visit. Same family and weights (300–700).
+
 ## Pages
 
-(Filled in section by section from Task 3 on.)
+(Filled in section by section from Task 4 on.)

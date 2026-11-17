@@ -1,0 +1,119 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+interface Props extends HTMLAttributes<"header"> {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+  /** The page the header sits on. Home links to its own sections; other pages link back to them. */
+  page: "home" | "groups" | "embed" | "other";
+}
+
+const { render = true, page, class: className, ...rest } = Astro.props;
+
+const onHome = page === "home";
+const home = onHome ? "" : "/";
+const links = [
+  { label: "What we do", href: `${home}#what-we-do` },
+  { label: "How we do it", href: `${home}#how` },
+  { label: "App", href: `${home}#app` },
+  { label: "Find a hub", href: "#hubs", render: onHome },
+  { label: "Our story", href: `${home}#story` },
+  { label: "Groups", href: "/groups", current: page === "groups" },
+].filter((link) => link.render !== false);
+---
+
+{
+  render && page !== "embed" && (
+    <header
+      class:list={["site-header", className]}
+      data-enter={page === "groups" ? "" : undefined}
+      style={page === "groups" ? "--i: 0" : undefined}
+      {...rest}
+    >
+      <div class="site-header_layout">
+        <a
+          class="brand"
+          href={onHome ? "#top" : "/"}
+          aria-label={onHome ? "The Rock Network" : "The Rock Network, home"}
+        >
+          <span class="logo" aria-hidden="true" />
+        </a>
+        <nav class="site-nav" aria-label={onHome ? "Sections" : "Site"}>
+          {links.map((link) => (
+            <a href={link.href} aria-current={link.current ? "page" : undefined}>
+              {link.label}
+            </a>
+          ))}
+        </nav>
+      </div>
+    </header>
+  )
+}
+
+<style is:global>
+  @layer components {
+    /* .site-header, .brand, .logo and .site-nav keep their old names: the page scripts and the footer read them */
+    .site-header {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 5;
+    }
+    .site-header_layout {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: var(--site-width);
+      max-width: var(--max-width-main);
+      height: var(--nav-height);
+      margin-inline: auto;
+    }
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-weight: var(--primary-bold);
+      color: var(--heading);
+      text-decoration: none;
+      letter-spacing: -0.01em;
+    }
+    /* The Rock Network logo, used as a mask so it takes the heading color */
+    .logo {
+      --logo-h: 3.25rem;
+      display: block;
+      height: var(--logo-h);
+      aspect-ratio: 960 / 202;
+      background: currentColor;
+      -webkit-mask: url("/assets/the-rock-network.png") center / contain no-repeat;
+      mask: url("/assets/the-rock-network.png") center / contain no-repeat;
+    }
+    .site-header .logo {
+      @media (max-width: 62.5em) {
+        --logo-h: 2.75rem;
+      }
+    }
+    .site-nav {
+      display: flex;
+      gap: 1.75rem;
+      font-size: 0.9375rem;
+      @media (max-width: 62.5em) {
+        gap: 1.125rem;
+      }
+      @media (max-width: 47.5em) {
+        display: none;
+      }
+      & a {
+        text-decoration: none;
+        color: var(--text);
+        &:hover,
+        &[aria-current="page"] {
+          color: var(--heading);
+        }
+        &[aria-current="page"] {
+          font-weight: var(--primary-medium);
+        }
+      }
+    }
+  }
+</style>

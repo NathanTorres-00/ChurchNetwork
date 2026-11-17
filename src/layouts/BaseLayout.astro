@@ -2,36 +2,40 @@
 import "@/styles/global.css";
 import BaseHead from "@/components/utility/BaseHead.astro";
 import SkipLink from "@/components/global/SkipLink.astro";
-import Nav from "@/components/global/Nav.astro";
-import Footer from "@/components/global/Footer.astro";
+import SiteHeader from "@/components/global/SiteHeader.astro";
+import SiteFooter from "@/components/global/SiteFooter.astro";
+import PageTransition from "@/components/utility/PageTransition.astro";
 import type { SeoProps } from "@/types.ts";
 
 type Props = SeoProps & {
-  /** Theme for the whole page. `inherit` leaves the root defaults in place. */
-  theme?: "inherit" | "light" | "dark" | "brand";
-  /**
-   * Fix the nav over the page rather than letting it stick in flow, so the
-   * first section starts underneath it. Give that section
-   * `paddingTop="navoverlap"` to clear the bar.
-   */
-  overlap?: boolean;
+  /** The page being shown. Sets the header's links and the footer's; `embed` shows neither. */
+  page: "home" | "groups" | "embed" | "other";
 };
 
-const { theme = "inherit", overlap = false, ...seo } = Astro.props;
+const { page, ...seo } = Astro.props;
 ---
 
 <!doctype html>
-<html lang="en" class:list={[theme !== "inherit" && `theme-${theme}`]}>
+<html lang="en">
   <head>
     <BaseHead {...seo} />
+    <PageTransition render={page !== "embed"} />
+    {page !== "embed" && <script is:inline src="/scripts/site-footer.js" />}
     <slot name="head" />
   </head>
   <body>
-    <SkipLink />
-    <Nav overlap={overlap} />
+    <SkipLink render={page !== "embed"} />
+    <SiteHeader page={page} />
     <main id="main" tabindex="-1">
       <slot />
     </main>
-    <Footer />
+    <SiteFooter page={page} />
+    <slot name="after" />
+    <script is:inline>
+      // Links marked data-placeholder have nowhere to go yet: they show, but don't navigate
+      document.addEventListener("click", (e) => {
+        if (e.target.closest && e.target.closest("a[data-placeholder]")) e.preventDefault();
+      });
+    </script>
   </body>
 </html>
