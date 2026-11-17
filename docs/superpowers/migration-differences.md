@@ -51,3 +51,16 @@ decision Nathan should know about. Each item is marked **fixed**, **accepted** o
   until Task 7 builds `/embed/globe`.
 - **Missing content (new behaviour):** with no weekly video the Network Video section is left out; with no
   team members, Meet the team is left out; a member without a photo shows the ring glyph.
+
+### Home: hero, loading screen, globe and Adjust panel (Task 6)
+
+- Compared at 390 and 1440: headline, buttons and globe in the same places. While the hero is Home's only
+  section, the footer's curved edge attaches to it and lifts the headline about 38px; with the edge set to
+  Flat it sits exactly where the old one did (measured: 315px from the top on both). This goes away when
+  Task 7 adds the sections below.
+- **Comment button gone** from the header (as planned), so the header links sit at the right edge.
+- **Headline words** now come from the Home content (`src/content/pages/home.json`): the typed and rotating
+  headline read the four words from the page instead of a list inside the script. Same words, same colors.
+- **Scripts blocked** (d3, topojson or Lenis can't load): the loading screen still gives way after its
+  built-in limit (about 10 seconds) and the page can be read, as on the old site. No change needed.
+- The panel's links to the demos and the hint about where to paste settings name the new paths.

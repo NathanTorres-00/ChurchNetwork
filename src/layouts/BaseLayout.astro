@@ -24,6 +24,7 @@ const { page, ...seo } = Astro.props;
     <slot name="head" />
   </head>
   <body>
+    <slot name="top" />
     <SkipLink render={page !== "embed"} />
     <SiteHeader page={page} />
     <main id="main" tabindex="-1">

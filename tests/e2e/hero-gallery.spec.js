@@ -26,7 +26,7 @@ test('the pins globe is the default art', async ({ page }) => {
 test('the pins globe never loads the gallery engine', async ({ page }) => {
   const engine = [];
   page.on('request', r => { if (r.url().endsWith('/assets/network-gallery.js')) engine.push(r.url()); });
-  await openPage(page, '/hero.html?heroArt=pins');
+  await openPage(page, '/?heroArt=pins');
   await expect(page.locator('.hero')).toHaveAttribute('data-art', 'pins');
   await page.waitForTimeout(3000);
   expect(engine).toEqual([]);
@@ -35,7 +35,7 @@ test('the pins globe never loads the gallery engine', async ({ page }) => {
 
 test('switching art to Gallery and back works without errors', async ({ page }) => {
   const errors = watchErrors(page);
-  await openPage(page, '/hero.html?heroArt=pins');
+  await openPage(page, '/?heroArt=pins');
   await chooseArt(page, 'gallery');
   await expect(page.locator('.hero')).toHaveAttribute('data-art', 'gallery');
   await expect(page.locator('#gallery-canvas')).toBeVisible();
@@ -56,7 +56,7 @@ test('switching art to Gallery and back works without errors', async ({ page }) 
 });
 
 test('switching art quickly leaves one art running', async ({ page }) => {
-  await openPage(page, '/hero.html?heroArt=pins');
+  await openPage(page, '/?heroArt=pins');
   await page.locator('#adjust').click();
   await page.evaluate(() => {
     const b = a => document.querySelector(`.layout-picker [data-art="${a}"]`);
@@ -70,13 +70,13 @@ test('switching art quickly leaves one art running', async ({ page }) => {
 });
 
 test('gallery starts from the address without the panel', async ({ page }) => {
-  await openPage(page, '/hero.html?heroArt=gallery&controls=0');
+  await openPage(page, '/?heroArt=gallery&controls=0');
   await expect.poll(() => galleryState(page), { timeout: 5000 }).toEqual({ playing: true, running: true });
   await expect(page.locator('#gallery-canvas')).toBeVisible();
 });
 
 test('Pause globe and Restart globe act on the gallery', async ({ page }) => {
-  await openPage(page, '/hero.html?heroArt=gallery');
+  await openPage(page, '/?heroArt=gallery');
   await expect.poll(() => galleryState(page)).toEqual({ playing: true, running: true });
   await page.locator('#adjust').click();
   await page.locator('#play').click();
@@ -124,7 +124,7 @@ async function openHeroGallery(page, extra = '') {
       if (e.detail.phase === 'shown' && !document.documentElement.classList.contains('is-loading') && window.__firstShown == null) window.__firstShown = performance.now();
     });
   });
-  await openPage(page, '/hero.html?heroArt=gallery' + extra);
+  await openPage(page, '/?heroArt=gallery' + extra);
   await expect.poll(() => galleryState(page)).toEqual({ playing: true, running: true });
 }
 
@@ -248,7 +248,7 @@ test.describe('on a phone', () => {
 
 test('reduced motion shows a still gallery', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await openPage(page, '/hero.html?heroArt=gallery');
+  await openPage(page, '/?heroArt=gallery');
   await expect.poll(() => page.evaluate(() => !!window.__heroGallery?.running)).toBe(true);
   await page.waitForTimeout(5000);
   expect((await galleryState(page)).playing).toBe(false);
@@ -268,7 +268,7 @@ test('reduced motion shows a still gallery', async ({ page }) => {
 
 test('hovering a dot next to the copy never grows a photo over it', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });          // a still view, so the dot stays put
-  await openPage(page, '/hero.html?heroArt=gallery');
+  await openPage(page, '/?heroArt=gallery');
   await expect.poll(() => page.evaluate(() => !!window.__heroGallery?.running)).toBe(true);
   await page.waitForTimeout(500);
   const spot = await page.evaluate(() => {

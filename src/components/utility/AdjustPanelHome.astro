@@ -1,0 +1,216 @@
+---
+interface Props {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+}
+
+const { render = true } = Astro.props;
+---
+
+{
+  render && (
+    <Fragment>
+      <button class="adjust" id="adjust" type="button" aria-expanded="false" aria-controls="panel">
+        <span class="glyph" aria-hidden="true"></span>Adjust
+      </button>
+
+      <aside class="panel" id="panel" aria-label="Page settings" data-lenis-prevent>
+        <div class="panel-head">
+          <p class="panel-title">Page settings</p>
+          <button class="close" id="close" type="button">Close</button>
+        </div>
+        <p class="status" id="status">Loading the globe</p>
+        <div class="actions">
+          <button class="btn" id="play" type="button">Pause globe</button>
+          <button class="btn" id="restart" type="button">Restart globe</button>
+        </div>
+        <section class="layout-picker" aria-label="Hero layout">
+          <h2>Hero layout</h2>
+          <div class="picker-row">
+            <span>Art</span>
+            <div class="seg" role="group" aria-label="Art">
+              <button type="button" data-art="pins">Pins globe</button>
+              <button type="button" data-art="gallery">Gallery</button>
+            </div>
+          </div>
+          <div class="picker-row">
+            <span>Headline</span>
+            <div class="seg" role="group" aria-label="Headline">
+              <button type="button" data-layout="stacked">Stacked</button>
+              <button type="button" data-layout="rotating">Rotating</button>
+              <button type="button" data-layout="typed">Typed</button>
+            </div>
+          </div>
+          <div class="picker-row">
+            <span>Title</span>
+            <div class="seg" role="group" aria-label="Title">
+              <button type="button" data-title="multiplying">Multiplying</button>
+              <button type="button" data-title="network">Church Network</button>
+            </div>
+          </div>
+          <div class="picker-row">
+            <span>Align</span>
+            <div class="seg" role="group" aria-label="Align">
+              <button type="button" data-align="left">Left</button>
+              <button type="button" data-align="center">Center</button>
+            </div>
+          </div>
+        </section>
+        <div id="groups"></div>
+        <section class="group" aria-label="Footer">
+          <h2>Footer</h2>
+          <div class="picker-row"><span>Colors</span>
+            <div class="seg" role="group" aria-label="Footer colors" data-footer-key="theme">
+              <button type="button" data-value="light">Light</button>
+              <button type="button" data-value="grey">Grey</button>
+              <button type="button" data-value="dark">Inverted</button>
+            </div>
+          </div>
+          <div class="row" data-footer-row><label for="c-footerGrey">Grey shade</label><output></output>
+            <input type="range" id="c-footerGrey" data-footer-key="grey" min="0.3" max="0.96" step="0.01"></div>
+          <div class="picker-row"><span>Animation</span>
+            <div class="seg" role="group" aria-label="Footer animation" data-footer-key="anim">
+              <button type="button" data-value="pins">Pins globe</button>
+              <button type="button" data-value="off">Off</button>
+            </div>
+          </div>
+          <div class="row" data-footer-row><label for="c-footerAnim">Animation strength</label><output></output>
+            <input type="range" id="c-footerAnim" data-footer-key="animStrength" min="0.15" max="1" step="0.01"></div>
+          <div class="picker-row"><span>Top edge</span>
+            <div class="seg" role="group" aria-label="Footer top edge" data-footer-key="edge">
+              <button type="button" data-value="flat">Flat</button>
+              <button type="button" data-value="curve">Curved</button>
+            </div>
+          </div>
+          <div class="row" data-footer-row><label for="c-footerCurve">Curve depth</label><output></output>
+            <input type="range" id="c-footerCurve" data-footer-key="curve" min="0" max="10" step="0.5"></div>
+          <div class="picker-row"><span>Logo</span>
+            <div class="seg" role="group" aria-label="Footer logo" data-footer-key="mark">
+              <button type="button" data-value="full">Full</button>
+              <button type="button" data-value="clip">Clipped</button>
+            </div>
+          </div>
+          <div class="row" data-footer-row><label for="c-footerScale">Logo scale</label><output></output>
+            <input type="range" id="c-footerScale" data-footer-key="scale" min="0.5" max="1.5" step="0.01"></div>
+          <div class="row" data-footer-row><label for="c-footerClip">Clip</label><output></output>
+            <input type="range" id="c-footerClip" data-footer-key="clip" min="0.15" max="0.6" step="0.01"></div>
+          <div class="row" data-footer-row><label for="c-footerShift">Position</label><output></output>
+            <input type="range" id="c-footerShift" data-footer-key="shift" min="-0.3" max="0.5" step="0.01"></div>
+          <div class="picker-row"><span>Reveal</span>
+            <div class="seg" role="group" aria-label="Footer reveal" data-footer-key="reveal">
+              <button type="button" data-value="on">Slide out</button>
+              <button type="button" data-value="off">Off</button>
+            </div>
+          </div>
+          <div class="row" data-footer-row><label for="c-footerRevealDistance">Slide distance</label><output></output>
+            <input type="range" id="c-footerRevealDistance" data-footer-key="revealDistance" min="0.1" max="1" step="0.01"></div>
+          <div class="row" data-footer-row><label for="c-footerRevealShade">Shade while tucked</label><output></output>
+            <input type="range" id="c-footerRevealShade" data-footer-key="revealShade" min="0" max="0.8" step="0.01"></div>
+          <p class="hint">Clip and Position set where the clipped logo lands. Slide out tucks the footer under the last section and slides it down as you scroll to it. Kept in this browser for Home and Groups.</p>
+        </section>
+        <div class="foot">
+          <div class="actions">
+            <button class="btn" id="copy" type="button">Copy settings</button>
+            <button class="btn" id="reset" type="button">Reset to defaults</button>
+          </div>
+          <p class="hint">Copied settings paste into the CONFIG block of public/scripts/home-main.js. Add ?controls=0 to the address to hide this panel.</p>
+          <nav class="switch" id="switch" aria-label="Views">
+            <a href="/network-multiply.html">Flat</a>
+            <a href="/network-globe.html">Globe</a>
+            <a href="/network-globe-pins.html">Pins</a>
+            <a href="/network-gallery.html">Gallery</a>
+            <a href="/" aria-current="page">Hero</a>
+          </nav>
+        </div>
+      </aside>
+    </Fragment>
+  )
+}
+
+<style is:global>
+  @layer components {
+    /* Home's Adjust panel. Ids, classes and data-* attributes are read by public/scripts/home-main.js and
+       site-footer.js, so they keep their old names. ?controls=0 hides it (the script does that). */
+    .panel, .adjust {
+      --bg: #FFFFFF;
+      --panel-bg: #FFFFFF;
+      --ink: #3F3F46;
+      --ink-soft: #8A8A93;
+      --hair: #E7E7EA;
+      --track: #E6E6E9;
+      --thumb: #C9C9C9;
+      --panel-w: 19rem;
+    }
+    /* ---------- Page switch ---------- */
+    .panel .switch { position: fixed; top: 1rem; left: 1rem; z-index: 3; display: flex; gap: 0.125rem; padding: 0.1875rem; background: var(--panel-bg); border: 0.0625rem solid var(--hair); border-radius: var(--radius-round); }
+    .panel .switch a { font: 400 0.8125rem/1 var(--primary-family); color: var(--ink-soft); text-decoration: none; padding: 0.4375rem 0.75rem; border-radius: var(--radius-round); }
+    .panel .switch a:hover { color: var(--ink); }
+    .panel .switch a[aria-current="page"] { background: #F1F1F3; color: var(--ink); }
+    /* ---------- Adjust button ---------- */
+    .adjust { position: fixed; top: 1rem; right: 1rem; z-index: 3; display: inline-flex; align-items: center; gap: 0.5rem; font: 500 0.8125rem/1 var(--primary-family); color: var(--ink); padding: 0.5625rem 0.875rem 0.5625rem 0.6875rem; border-radius: var(--radius-round); background: var(--panel-bg); border: 0.0625rem solid var(--hair); cursor: pointer; transition: opacity .4s ease, transform .6s cubic-bezier(.65, 0, .35, 1); }
+    .adjust:hover { background: #F7F7F8; }
+    .adjust .glyph { width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--thumb); box-shadow: 0 0 0 0.125rem var(--panel-bg), 0 0 0 0.21875rem var(--thumb); margin: 0 0.1875rem; }
+    .adjust[aria-expanded="true"] { opacity: 0; pointer-events: none; transform: translateY(-0.375rem); }
+    /* ---------- Panel ---------- */
+    .panel { position: fixed; top: 0; right: 0; bottom: 0; z-index: 2; width: var(--panel-w); max-width: 100%; background: var(--panel-bg); border-left: 0.0625rem solid var(--hair); overflow-y: auto; overscroll-behavior: contain; padding: 1.125rem 1.25rem 1.75rem; transform: translateX(100%); visibility: hidden; transition: transform .7s cubic-bezier(.65, 0, .35, 1), visibility 0s linear .7s; }
+    .panel.is-open { transform: none; visibility: visible; transition: transform .7s cubic-bezier(.65, 0, .35, 1); }
+    .panel-head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; }
+    .panel-head h1 { font-size: 0.9375rem; font-weight: 500; margin: 0; letter-spacing: -0.005em; }
+    .panel .status { font-size: 0.75rem; color: var(--ink-soft); margin: 0.25rem 0 0.875rem; font-variant-numeric: tabular-nums; }
+    .panel .close { font: 400 0.8125rem/1 var(--primary-family); color: var(--ink-soft); background: none; border: 0; padding: 0.375rem 0.25rem; cursor: pointer; }
+    .panel .close:hover { color: var(--ink); }
+    .panel .actions { display: flex; flex-wrap: wrap; gap: 0.375rem; }
+    .panel .btn { font: 400 0.8125rem/1 var(--primary-family); color: var(--ink); padding: 0.5rem 0.75rem; border-radius: var(--radius-round); background: var(--panel-bg); border: 0.0625rem solid var(--hair); cursor: pointer; }
+    .panel .btn:hover { background: #F6F6F7; }
+    .panel .group { border-top: 0.0625rem solid var(--hair); margin-top: 1.125rem; padding-top: 0.875rem; }
+    .panel .group h2 { font-size: 0.8125rem; font-weight: 500; margin: 0 0 0.125rem; }
+    .panel .row { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 0.25rem 0.75rem; margin: 0.625rem 0; }
+    .panel .row label { font-size: 0.8125rem; color: var(--ink); }
+    .panel .row output { font-size: 0.75rem; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+    .panel .row input[type="range"] { grid-column: 1 / -1; }
+    .panel .row.check { grid-template-columns: auto 1fr; gap: 0.625rem; }
+    .panel .row.check input { margin: 0; accent-color: var(--ink); width: 0.9375rem; height: 0.9375rem; }
+    .panel select { font: 400 0.8125rem/1 var(--primary-family); color: var(--ink); padding: 0.375rem 1.625rem 0.375rem 0.625rem; border: 0.0625rem solid var(--hair); border-radius: 0.5rem; background: var(--panel-bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%238A8A93' stroke-width='1.2'/%3E%3C/svg%3E") no-repeat right 0.625rem center; -webkit-appearance: none; appearance: none; cursor: pointer; }
+    .panel input[type="color"] { -webkit-appearance: none; appearance: none; width: 1.875rem; height: 1.375rem; padding: 0; border: 0.0625rem solid var(--hair); border-radius: 0.375rem; background: none; cursor: pointer; }
+    .panel input[type="color"]::-webkit-color-swatch-wrapper { padding: 0.125rem; }
+    .panel input[type="color"]::-webkit-color-swatch { border: 0; border-radius: 0.25rem; }
+    .panel input[type="color"]::-moz-color-swatch { border: 0; border-radius: 0.25rem; }
+    .panel input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; height: 1.25rem; background: transparent; margin: 0; cursor: pointer; --p: 50%; }
+    .panel input[type="range"]::-webkit-slider-runnable-track { height: 0.125rem; border-radius: 0.125rem; background: linear-gradient(to right, var(--thumb) var(--p), var(--track) var(--p)); }
+    .panel input[type="range"]::-moz-range-track { height: 0.125rem; border-radius: 0.125rem; background: linear-gradient(to right, var(--thumb) var(--p), var(--track) var(--p)); }
+    .panel input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 0.625rem; height: 0.625rem; margin-top: -0.25rem; border-radius: 50%; background: var(--thumb); box-shadow: 0 0 0 0.15625rem var(--panel-bg), 0 0 0 0.25rem var(--thumb); transition: box-shadow .3s ease; }
+    .panel input[type="range"]::-moz-range-thumb { width: 0.625rem; height: 0.625rem; border: 0; border-radius: 50%; background: var(--thumb); box-shadow: 0 0 0 0.15625rem var(--panel-bg), 0 0 0 0.25rem var(--thumb); }
+    .panel input[type="range"]:focus-visible { outline: none; }
+    .panel input[type="range"]:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 0.15625rem var(--panel-bg), 0 0 0 0.25rem var(--ink); }
+    .panel input[type="range"]:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 0.15625rem var(--panel-bg), 0 0 0 0.25rem var(--ink); }
+    .panel :focus-visible { outline: 0.125rem solid var(--ink); outline-offset: 0.125rem; }
+    .panel .foot { border-top: 0.0625rem solid var(--hair); margin-top: 1.125rem; padding-top: 1rem; }
+    .panel .hint { font-size: 0.75rem; color: var(--ink-soft); line-height: 1.5; margin: 0.625rem 0 0; max-width: 34ch; }
+    @media (max-width: 40em) {
+      .panel { top: auto; left: 0; width: 100%; max-height: 62vh; border-left: 0; border-top: 0.0625rem solid var(--hair); border-radius: 1rem 1rem 0 0; padding: 1rem 1rem 1.5rem; transform: translateY(100%); }
+    }
+    /* Panel: layout switches */
+    .panel .layout-picker { border-top: 0.0625rem solid var(--hair); margin-top: 1.125rem; padding-top: 0.875rem; }
+    .panel .layout-picker h2 { font-size: 0.8125rem; font-weight: 500; margin: 0 0 0.25rem; }
+    .panel .picker-row { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin: 0.625rem 0; }
+    .panel .picker-row > span { font-size: 0.8125rem; }
+    .panel .seg { display: inline-flex; gap: 0.125rem; padding: 0.1875rem; border: 0.0625rem solid var(--hair); border-radius: var(--radius-round); }
+    .panel .seg button { font: 400 0.8125rem/1 var(--primary-family); color: var(--ink-soft); background: none; border: 0; padding: 0.4375rem 0.6875rem; border-radius: var(--radius-round); cursor: pointer; }
+    .panel .seg button:hover { color: var(--ink); }
+    .panel .seg button[aria-pressed="true"] { background: #F1F1F3; color: var(--ink); }
+    .panel .row .only { font-size: 0.6875rem; color: var(--ink-soft); margin-left: 0.375rem; white-space: nowrap; }
+    .panel .row.is-off { opacity: .45; }
+    /* doesn't apply to the current layout */
+    .adjust { top: auto; bottom: 1rem; z-index: 6; }
+    .adjust[aria-expanded="true"] { transform: translateY(0.375rem); }
+    .panel { z-index: 7; }
+    .panel-title { font-size: 0.9375rem; font-weight: 500; margin: 0; color: var(--ink); letter-spacing: -0.005em; }
+    .panel .switch { position: static; display: inline-flex; margin-top: 0.625rem; }
+    /* Lumos's heading styles stop at the panel: its small headings take the panel's own type */
+    .panel :is(h1, h2) { line-height: 1.6; letter-spacing: normal; color: inherit; text-wrap: wrap; }
+    @media (prefers-reduced-motion: reduce) {
+      .panel, .adjust { transition: none; }
+    }
+
+  }
+</style>

@@ -1,0 +1,245 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+type HeroButton = { label: string; href: string; placeholder?: boolean };
+
+interface Props extends Omit<HTMLAttributes<"section">, "title"> {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+  /** The line that leads as the page's title. */
+  lead: string;
+  /** The changing headline: its full sentence for screen readers, the word before the changing one, and the four words. */
+  title: { label: string; prefix: string; words: string[] };
+  /** The line that follows the headline in the Multiplying title style. */
+  tagline?: string;
+  /** Statement under the headline (hidden in the current design). */
+  body?: string;
+  /** Up to two links: the first is the dark button, the second the light one. */
+  buttons?: HeroButton[];
+}
+
+const { render = true, lead, title, tagline, body, buttons = [], class: className, ...rest } = Astro.props;
+
+const colors = ["disciples", "leaders", "churches", "movements"];
+const looks = ["button-primary", "button-secondary"];
+---
+
+{
+  render && (
+    <section
+      class:list={["hero", className]}
+      id="top"
+      data-layout="typed"
+      data-align="center"
+      data-title="network"
+      {...rest}
+    >
+      <div class="hero-art">
+        <div class="stage" id="stage">
+          <canvas id="canvas" role="img" aria-label="A camera flies low over a pale globe. Dots appear and multiply into networks across the world; photo pins rise above some of them."></canvas>
+        </div>
+        <div class="stage gallery-stage" id="gallery-stage">
+          <canvas id="gallery-canvas" role="img" aria-label="A close-up of a pale globe turning; networks of dots grow across it and some open into photos of places in the network."></canvas>
+        </div>
+        <div class="hero-scrim" aria-hidden="true"></div>
+        <div class="pins" id="pins"></div>
+        <canvas class="pin-areas" id="pin-areas" aria-hidden="true"></canvas>
+      </div>
+      <div class="hero-copy" id="hero-copy">
+        <h1 class="hero-lead">{lead}</h1>
+        <h1 class="hero-title" aria-label={title.label}>
+          <span class="stacked" aria-hidden="true">
+            {title.words.map((word, i) => (
+              <span class="line">
+                {title.prefix} <span class={`word w-${colors[i]}`}>{word}</span>
+              </span>
+            ))}
+          </span>
+          <span class="solo" aria-hidden="true">
+            {title.prefix} <span class="slot" id="slot"><span class="cursor" id="cursor" /></span>
+          </span>
+          <span class="solo solo-meter" id="solo-meter" aria-hidden="true" />
+        </h1>
+        <div class="word-dots" id="word-dots" role="group" aria-label="Show a word">
+          {title.words.map((word, i) => (
+            <button class="word-dot" type="button" style={`--dc: var(--c-${colors[i]})`} aria-label={word}>
+              <span />
+            </button>
+          ))}
+        </div>
+        {tagline && <h2 class="hero-tagline">{tagline}</h2>}
+        {body && <p class="hero-sub">{body}</p>}
+        {buttons.length > 0 && (
+          <div class="hero-actions">
+            {buttons.map((button, i) => (
+              <a
+                class:list={["button", looks[i] ?? looks[1]]}
+                href={button.href}
+                data-placeholder={button.placeholder ? "" : undefined}
+              >
+                {button.label}
+              </a>
+            ))}
+          </div>
+        )}
+      </div>
+      {/* The pin the globe script copies for each photo pin */}
+      <template id="pin-template">
+      <div class="pin" aria-hidden="true">
+        <svg viewBox="216 127 1168 1080" preserveAspectRatio="xMidYMax meet">
+          <defs>
+            <clipPath id="pin-photo-clip"><rect x="252" y="154" width="1096" height="828" rx="34"/></clipPath>
+          </defs>
+          <path class="pin-frame" d="M1384 981C1384 996.464 1371.46 1009 1356 1009H927.49C917.487 1009 908.243 1014.34 903.241 1023L806.247 1191C795.47 1209.67 768.527 1209.67 757.749 1191L660.755 1023C655.753 1014.34 646.509 1009 636.506 1009H244C228.536 1009 216 996.464 216 981V155C216 139.536 228.536 127 244 127H1356C1371.46 127 1384 139.536 1384 155V981Z"/>
+          <rect class="pin-well" x="252" y="154" width="1096" height="828" rx="34"/>
+          <image class="pin-photo" x="252" y="154" width="1096" height="828" preserveAspectRatio="xMidYMid slice" clip-path="url(#pin-photo-clip)"/>
+        </svg>
+      </div>
+      </template>
+    </section>
+  )
+}
+
+<style is:global>
+  @layer components {
+    /* Home's hero: the Pins globe (or the Gallery) behind the headline. Ids and classes keep their old names:
+       public/scripts/home-main.js and home-boot.js read them, and set data-layout, data-align, data-title and
+       data-art on .hero from the Adjust panel. */
+    /* Every value the Adjust panel's Headline and Page groups change is a variable here, so the panel and CONFIG stay in step */
+    :root {
+      --c-multiplying: #7A7A83;
+      --h1-size: 4rem;
+      --solo-size: 5.75rem;
+      --title-size: 4.5rem;
+      --h1-weight: 600;
+      --h1-leading: 1.04;
+      --h2-size: 1.375rem;
+      --hero-width: 47.5rem;
+      --hero-top: 52;                 /* % of the hero's height, unitless so it can scale lengths too */
+      --scrim: 0.85;
+      --hero-height: 100vh;
+      --hero-curve: 5vw;              /* how far the hero's bottom edge dips at the center */
+    }
+    .hero .stage { position: fixed; inset: 0; }
+    .hero canvas { display: block; width: 100%; height: 100%; opacity: 0; transition: opacity 1.6s ease; }
+    .hero canvas.is-ready { opacity: 1; }
+    /* ---------- Photo pin ---------- */
+    .pins { position: fixed; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; }
+    .pin { position: absolute; left: 0; top: 0; opacity: 0; will-change: transform, opacity; }
+    .pin svg { display: block; width: 100%; height: 100%; overflow: visible; }
+    .pin-frame { fill: var(--pin-frame, #D9D9D9); }
+    .pin-well { fill: #EFEFF1; }
+    .pin-photo { opacity: 0; transition: opacity .5s ease; }
+    .pin-photo.is-loaded { opacity: 1; }
+    /* ---------- Hero ---------- */
+    .hero { --hero-view: max(37.5rem, var(--hero-height)); /* the hero's height down to its straight edge */ --curve: min(var(--hero-curve), 7.5rem); position: relative; z-index: 1; height: var(--hero-height); min-height: 37.5rem; overflow: clip visible; background: #fff; }
+    /* The globe, fade and pins run --curve past the hero's bottom and are masked to an arc, so the next section
+     starts along a curve. The arc is an ellipse 1.5x the hero's width whose bottom dips --curve below the straight
+     edge and whose sides meet it at the screen edges; that takes a height of --curve / (1 - sqrt(1 - 1/1.5^2)). */
+    .hero-art { --arc: calc(var(--curve) * 3.93); position: absolute; inset: 0 0 calc(-1 * var(--curve)) 0; z-index: 0; -webkit-mask: linear-gradient(#000 0 0) top / 100% calc(100% - var(--curve)) no-repeat, radial-gradient(ellipse 75% var(--arc) at 50% calc(100% - var(--arc)), #000 99.6%, transparent); mask: linear-gradient(#000 0 0) top / 100% calc(100% - var(--curve)) no-repeat, radial-gradient(ellipse 75% var(--arc) at 50% calc(100% - var(--arc)), #000 99.6%, transparent); }
+    .hero .stage, .hero .pins { position: absolute; inset: 0; }
+    #gallery-canvas.is-pointing { cursor: pointer; }
+    .hero .stage { z-index: 0; }
+    .hero .pins { z-index: 2; }
+    /* Art: the Gallery replaces the Pins globe, its pins and the fade (its quiet centre does the fade's job) */
+    .hero .gallery-stage { display: none; z-index: 0; }
+    .hero[data-art="gallery"] .gallery-stage { display: block; }
+    .hero[data-art="gallery"] #stage, .hero[data-art="gallery"] .pins,
+  .hero[data-art="gallery"] .pin-areas, .hero[data-art="gallery"] .hero-scrim { display: none !important; }
+    .hero .pin-areas { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 4; pointer-events: none; display: none; opacity: 1; }
+    .hero-scrim { position: absolute; inset: 0; z-index: 1; pointer-events: none; background: linear-gradient(90deg, rgba(255,255,255,var(--scrim)) 0%, rgba(255,255,255,calc(var(--scrim) * .82)) 34%, rgba(255,255,255,0) 64%); }
+    .hero-copy { position: absolute; z-index: 3; top: calc(var(--hero-top) * 1%); transform: translateY(-50%); left: max(1.5rem, calc((100% - (var(--max-width-main) + 2 * var(--site-margin))) / 2 + 1.5rem)); width: min(var(--hero-width), calc(100% - 3rem)); pointer-events: none; /* the globe stays hoverable around the text */ }
+    .hero-copy a, .hero-copy button { pointer-events: auto; }
+    .hero-title { margin: 0; color: var(--c-multiplying); /* each line stays whole: as big as the slider asks, up to what fits the window (the longest line is ~10.3em) */ font-size: max(1.5rem, min(var(--h1-size), calc((100vw - 4rem) / 10.6))); line-height: var(--h1-leading); font-weight: 400; letter-spacing: -0.03em; }
+    .hero-title .line { display: block; white-space: nowrap; }
+    .hero-title .word { font-weight: var(--h1-weight); }
+    .w-disciples { color: var(--c-disciples); }
+    .w-leaders { color: var(--c-leaders); }
+    .w-churches { color: var(--c-churches); }
+    .w-movements { color: var(--c-movements); }
+    .hero-sub { margin: 1.75rem 0 0; max-width: 34ch; text-wrap: balance; font-size: var(--h2-size); line-height: 1.4; font-weight: 400; color: var(--text); letter-spacing: -0.005em; }
+    .hero-actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 2.25rem; }
+    /* ---------- Hero layouts: Stacked, Rotating or Typed headline, aligned left or center ---------- */
+    .hero-title .stacked { display: block; }
+    .hero-title .solo { display: none; }
+    .hero[data-layout="rotating"] .hero-title .stacked,
+  .hero[data-layout="typed"] .hero-title .stacked { display: none; }
+    .hero[data-layout="rotating"] .hero-title .solo,
+  .hero[data-layout="typed"] .hero-title .solo { display: block; }
+    .hero[data-layout="rotating"] .hero-copy,
+  .hero[data-layout="typed"] .hero-copy { width: max-content; max-width: calc(100% - 3rem); }
+    /* One line: "Multiplying" holds still while the word beside it changes */
+    .solo { white-space: nowrap; font-size: max(1.625rem, min(var(--solo-size), calc((100vw - 4rem) / 10.6))); line-height: 1.06; letter-spacing: -0.035em; }
+    .slot { display: inline-block; position: relative; vertical-align: top; min-height: 1.06em; text-align: left; font-weight: var(--h1-weight); transition: width .8s cubic-bezier(.65, 0, .35, 1); /* the line re-centers smoothly */ }
+    .slot-word { display: inline-block; white-space: pre; }
+    .hero .hero-title .solo-meter { display: block; position: absolute; left: -624.9375rem; top: 0; visibility: hidden; }
+    .slot-word.out { position: absolute; left: 0; top: 0; }
+    .ch { display: inline-block; }
+    /* Rotating: letters rise into focus one after another; the old word lifts and dissolves */
+    .slot-word.in .ch { animation: ch-in .85s cubic-bezier(.65, 0, .35, 1) both; animation-delay: calc(var(--i) * 38ms); }
+    .slot-word.out .ch { animation: ch-out .6s cubic-bezier(.65, 0, .35, 1) both; animation-delay: calc(var(--i) * 24ms); }
+    @keyframes ch-in { from { opacity: 0; transform: translateY(.32em); filter: blur(0.5rem); } to { opacity: 1; transform: none; filter: blur(0); } }
+    @keyframes ch-out { from { opacity: 1; transform: none; filter: blur(0); } to { opacity: 0; transform: translateY(-.26em); filter: blur(0.375rem); } }
+    /* Typed: a thin cursor in the current word's color, blinking only while it waits */
+    .cursor { display: none; width: .06em; height: .8em; margin-left: .05em; vertical-align: -0.04em; border-radius: 0.0625rem; background: var(--c-disciples); }
+    .hero[data-layout="typed"] .cursor { display: inline-block; }
+    .cursor.blink { animation: blink 1.1s ease-in-out infinite; }
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+    /* Which word is showing; click one to jump to it */
+    .word-dots { display: none; gap: 0.375rem; margin: 1.375rem 0 0 -0.5625rem; }
+    .hero[data-layout="rotating"] .word-dots,
+  .hero[data-layout="typed"] .word-dots { display: flex; }
+    .hero[data-dots="off"] .word-dots { display: none; }
+    .word-dot { pointer-events: auto; width: 1.625rem; height: 1.625rem; padding: 0; border: 0; border-radius: 50%; background: none; cursor: pointer; display: grid; place-items: center; }
+    .word-dot span { width: 0.4375rem; height: 0.4375rem; border-radius: 50%; background: var(--dc); opacity: .3; transition: opacity .5s ease, box-shadow .5s ease; }
+    .word-dot:hover span { opacity: .6; }
+    .word-dot[aria-current="true"] span { opacity: 1; box-shadow: 0 0 0 0.15rem #fff, 0 0 0 0.2625rem var(--dc); }
+    /* Centered */
+    .hero[data-align="center"] .hero-copy { left: 50%; transform: translate(-50%, -50%); text-align: center; }
+    .hero[data-align="center"] .hero-sub { margin-left: auto; margin-right: auto; }
+    .hero[data-align="center"] .hero-actions,
+  .hero[data-align="center"] .word-dots { justify-content: center; margin-left: 0; }
+    .hero[data-align="center"] .hero-scrim { /* sized to the hero above the curve, not the taller layer the fade sits in */ background: radial-gradient(ellipse 62% calc(var(--hero-view) * .58) at 50% calc(var(--hero-view) * var(--hero-top) / 100), rgba(255,255,255,var(--scrim)) 0%, rgba(255,255,255,calc(var(--scrim) * .75)) 45%, rgba(255,255,255,0) 100%); }
+    /* Title: "A New Testament Church Network" leads as the H1 with the changing headline at H2 size (Church Network),
+     or follows the headline as an H2 (Multiplying) */
+    .hero-lead, .hero-tagline { display: none; margin: 0; text-wrap: balance; color: var(--heading); font-weight: 600; }
+    .hero[data-title="network"] .hero-lead { display: block; margin-bottom: 1.25rem; max-width: 13em; font-size: max(2.25rem, min(var(--title-size), 11vw)); line-height: 1.04; letter-spacing: -0.03em; }
+    .hero[data-title="multiplying"] .hero-tagline { display: block; margin-top: 1.25rem; /* the size of .section-title, but always smaller than the headline above it (which shrinks to fit phones) */ --headline: max(1.5rem, min(var(--h1-size), calc((100vw - 4rem) / 10.6))); font-size: min(clamp(2rem, 4.2vw, 3.125rem), calc(var(--headline) * .78)); line-height: 1.08; letter-spacing: -0.025em; }
+    .hero[data-title="multiplying"]:is([data-layout="rotating"], [data-layout="typed"]) .hero-tagline { --headline: max(1.625rem, min(var(--solo-size), calc((100vw - 4rem) / 10.6))); }
+    .hero[data-title="network"][data-align="center"] .hero-lead { margin-inline: auto; }
+    .hero[data-title="network"] .hero-title,
+  .hero[data-title="network"] .solo { font-size: clamp(2rem, 4.2vw, 3.125rem); }
+    /* the size of .section-title */
+    .hero .hero-sub { display: none; }
+    /* the title says it now; delete this line to bring the statement back */
+    @media (prefers-reduced-motion: reduce) {
+      .slot { transition: none; }
+      .cursor.blink { animation: none; }
+    }
+    /* The old site's pill buttons, as the hero script reads them (.hero-actions .button) */
+    .hero-actions .button { display: inline-flex; align-items: center; justify-content: center; gap: 0.625rem; font: 500 0.9375rem/1 var(--primary-family); text-decoration: none; cursor: pointer; padding: 0.9375rem 1.5rem; border-radius: var(--radius-round); border: 0.0625rem solid transparent; transition: background .25s ease, border-color .25s ease; }
+    .hero-actions .button-primary { background: var(--heading); color: #fff; }
+    .hero-actions .button-primary:hover { background: #3A3A40; }
+    .hero-actions .button-secondary { background: rgba(255,255,255,.8); color: var(--heading); border-color: #D4D4D8; }
+    .hero-actions .button-secondary:hover { border-color: #A1A1AA; }
+    /* ?embed=globe (see the loading screen's script): only the hero's globe and pins, filling the frame */
+    html.embed-globe, html.embed-globe body { overflow: hidden; height: 100%; }
+    html.embed-globe .site-header, html.embed-globe main > section:not(.hero), html.embed-globe .site-footer,
+  html.embed-globe .hero-copy, html.embed-globe .hero-scrim, html.embed-globe .adjust, html.embed-globe .panel,
+  html.embed-globe .hub-cursor { display: none !important; }
+    html.embed-globe .hero { --hero-curve: 0 !important; height: 100vh !important; min-height: 0 !important; }
+    html.embed-globe .hero-art { -webkit-mask: none !important; mask: none !important; }
+    /* Embedded, only the globe and its photo pins show: everything else on the page (header, hero copy and buttons,
+     scrim, sections, footer, panels, comment mode, anything added to the page later) stays hidden */
+    html.embed-globe body > :not(main), html.embed-globe main > :not(.hero), html.embed-globe .hero > :not(.hero-art),
+  html.embed-globe .hero-art > :not(#stage):not(#pins) { display: none !important; }
+    /* ?bg=RRGGBB: the embedding page's background, so the globe sits on it (the site footer uses this) */
+    html.embed-globe, html.embed-globe body, html.embed-globe .hero { background: var(--embed-bg, #fff) !important; }
+    @media (prefers-reduced-motion: reduce) {
+      .hero canvas { transition: none; }
+    }
+    /* The headings here size themselves; Lumos's heading defaults don't apply */
+    .hero :is(.hero-lead, .hero-title, .hero-tagline) { text-wrap: balance; }
+
+  }
+</style>
