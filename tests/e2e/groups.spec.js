@@ -183,3 +183,8 @@ test('footer can be grey, and plays the Pins globe behind it when it comes into 
   await page.evaluate(() => window.rnFooter.set({ anim: 'off' }));
   await expect(page.locator('.footer-anim iframe')).toHaveCount(0);
 });
+
+test('Home nav links to the Groups page', async ({ page }) => {
+  await page.goto('/hero.html');
+  await expect(page.locator('.site-nav a', { hasText: 'Groups' })).toHaveAttribute('href', 'groups.html');
+});
