@@ -182,7 +182,7 @@ html.review-open.has-hub-cursor .hub-row, html.review-open.has-hub-cursor .hub-r
 }
 .rv-record:hover { border-color: #A1A1AA; }
 .rv-rec-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--c-movements, #B23A5B); flex: none; }
-.rv-rec-dot.rv-live { animation: rv-blink 1.2s ease-in-out infinite; }
+.rv-rec-dot.rv-rec-blink { animation: rv-blink 1.2s ease-in-out infinite; }
 @keyframes rv-blink { 50% { opacity: .25; } }
 .rv-recording { display: flex; align-items: center; gap: 10px; width: 100%; }
 .rv-rec-time { font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums; }

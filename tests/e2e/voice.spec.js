@@ -33,6 +33,11 @@ test.describe('with a microphone', () => {
     await composer(page).getByRole('button', { name: 'Record' }).click();
     const timer = composer(page).locator('.rv-rec-time');
     await expect(timer).toHaveText('0:00');
+    // the blinking dot stays a small dot beside the timer (it once shared a class with the marker's
+    // full-screen drawing layer and filled the screen)
+    const dot = await composer(page).locator('.rv-recording .rv-rec-dot').boundingBox();
+    expect(dot.width).toBeLessThanOrEqual(12);
+    expect(dot.height).toBeLessThanOrEqual(12);
     await expect(timer).toHaveText('0:01', { timeout: 3000 });
     await page.waitForTimeout(600);
     const seconds = text => { const [m, s] = text.split(':').map(Number); return m * 60 + s; };

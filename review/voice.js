@@ -101,7 +101,7 @@ export function createRecorderWidget({ maxMs, onTypeInstead }) {
     rec = started;
     recording = true;
     show(h('div', { class: 'rv-recording' }, [
-      h('span', { class: 'rv-rec-dot rv-live', 'aria-hidden': 'true' }),
+      h('span', { class: 'rv-rec-dot rv-rec-blink', 'aria-hidden': 'true' }),
       time,
       h('span', { class: 'rv-sub', text: 'Recording…' }),
       h('button', { type: 'button', class: 'rv-cancel rv-stop', text: 'Stop', onclick: finish }),
