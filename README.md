@@ -287,7 +287,8 @@ turning into view, which is what carries the sense of how big the network is.
 4. **How we do it:** four rows, **A Clear Process**, **Effective Tools**, **Available Training** and **On-going Coaching** (links are
    placeholders), built and behaving exactly like the Find a hub rows: the same hover fill, ring-dots and cursor.
 5. **Testimony:** Anastasia, group leader in Anaheim: her portrait (`assets/anastasia.jpg`) and quote.
-6. **Jesus Disciple – A Four-Stage Ministry tool** (`#app`): three rows of tall video cards, **Vision Videos**,
+6. **Jesus Disciple – A Four-Stage Ministry tool** (`#app`): headed by the Jesus Disciple wordmark
+   (`assets/jesus-disciple-logo.png`) with "A Four-Stage Ministry tool" under it; three rows of tall video cards, **Vision Videos**,
    **How to use Jesus Disciple** and **Jesus Disciple Stories**. Each row is a sideways carousel that starts at the
    text's left edge and runs off the right of the window: trackpad, swipe, mouse drag, the arrow buttons beside the
    row title (hidden on touch screens, greyed at a row's ends), or Tab. Each card is a thumbnail with a play button
@@ -297,8 +298,9 @@ turning into view, which is what carries the sense of how big the network is.
    New Testament Networks, Prayer and Persons of Peace, Healing and Miracles and It's Your Turn; then What is it?,
    Why use it? and How it works. Stories has Anastasia (`assets/anastasia-thumbnail.jpg`) and stock photos. Every
    card's link is a placeholder until its video has an address (set the card's `href` and remove `data-placeholder`).
-   Under the rows, separate from the videos, a **Jesus Disciple University** banner with **Learn more** (a
-   placeholder link for now).
+   Under the rows, separate from the videos, a **Jesus Disciple University** banner: a wide photo
+   (`assets/jdu-banner.jpg`, 1200px copy `jdu-banner-1200.jpg`) with the title, a short description of JDU and **Learn more** (a
+   placeholder link for now) on its navy wall. On phones the text sits above the photo so it doesn't cover the speaker.
 7. **Find a hub:** full-width rows for Anaheim, Anaheim West, jChurch and Iglesia Mi Ciudad (details to come).
    **Hidden by default**, along with its header link: turn it on with **Show Find a hub** in the Adjust panel's Page
    group (`showHubs` in CONFIG, or `?showHubs=1`). Each row is one link. Hovering a row fills it with that hub's color (the Figma "Hub Row=Hover"), turns its text

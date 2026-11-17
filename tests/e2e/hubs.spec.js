@@ -111,3 +111,12 @@ test.describe('on a touch screen', () => {
     expect(await fill(row)).toBe('0');
   });
 });
+
+test('the Jesus Disciple University banner shows its photo, title and Learn more', async ({ page }) => {
+  await page.goto('/hero.html');
+  const jdu = page.locator('.jdu');
+  await jdu.scrollIntoViewIfNeeded();
+  await expect(jdu.getByRole('heading', { name: 'Jesus Disciple University' })).toBeVisible();
+  await expect(jdu.getByRole('link', { name: 'Learn more' })).toBeVisible();
+  await expect.poll(() => jdu.locator('.jdu-photo').evaluate(img => img.complete && img.naturalWidth)).toBeGreaterThan(0);
+});

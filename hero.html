@@ -451,6 +451,9 @@
   }
   .lead { margin: 18px 0 0; max-width: 58ch; font-size: calc(var(--body-size) * 1.12); }
   .subtitle { margin: 14px 0 0; font-size: clamp(20px, 2vw, 26px); line-height: 1.25; font-weight: 500; color: var(--heading); letter-spacing: -0.015em; }
+  /* Jesus Disciple: the app's own wordmark as the heading, with what it is underneath */
+  .jd-heading { display: flex; flex-direction: column; align-items: flex-start; gap: clamp(14px, 1.6vw, 20px); }
+  .jd-logo { display: block; width: clamp(240px, 34vw, 420px); height: auto; }
   .eyebrow { margin: 0 0 20px; font-size: 16px; font-weight: 500; color: var(--c-disciples); }
 
   .frame { border-radius: var(--radius); overflow: hidden; background: #E9E9EC; }
@@ -539,12 +542,40 @@
      buttons, or Tab through the cards. */
   .reel-group { margin-top: clamp(56px, 7vw, 88px); }
   /* Jesus Disciple University: its own mention under the video rows, not one of the videos */
+  /* A wide photo panel: the text sits on the photo's dark navy wall (top left) and the speaker stands to the right.
+     A soft navy wash from the left keeps the text readable wherever the crop lands. */
   .jdu {
-    margin-top: clamp(56px, 7vw, 88px); padding: clamp(28px, 4vw, 44px) clamp(24px, 4vw, 48px);
-    display: flex; align-items: center; justify-content: space-between; gap: 20px 32px; flex-wrap: wrap;
-    border-radius: var(--radius); background: #fff; border: 1px solid var(--line);
+    position: relative; isolation: isolate; overflow: hidden;
+    margin-top: clamp(56px, 7vw, 88px); border-radius: var(--radius); background: #04101C; color: #fff;
+    min-height: clamp(360px, 40vw, 500px); display: flex; align-items: flex-start;
+    padding: clamp(32px, 5vw, 64px);
   }
-  .jdu-title { margin: 0; font-size: clamp(24px, 2.6vw, 34px); line-height: 1.15; font-weight: 500; color: var(--heading); letter-spacing: -0.02em; }
+  .jdu-photo {
+    position: absolute; inset: 0; z-index: -1; width: 100%; height: 100%;
+    object-fit: cover; object-position: 70% 40%;
+  }
+  .jdu::after {
+    content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+    background: linear-gradient(90deg, rgba(4,16,28,.72) 0%, rgba(4,16,28,.35) 38%, rgba(4,16,28,0) 60%);
+  }
+  .jdu-body { max-width: 36rem; }
+  .jdu-title {
+    margin: 0; font-size: clamp(40px, 5.6vw, 76px); line-height: 1; font-weight: 500; letter-spacing: -0.035em;
+    color: #fff; text-wrap: balance;
+  }
+  .jdu-text { margin: 22px 0 0; max-width: 36ch; font-size: clamp(18px, 1.6vw, 22px); line-height: 1.45; color: rgba(255,255,255,.78); }
+  .jdu .button { margin-top: clamp(24px, 3vw, 32px); background: #fff; color: #1F1F23; }
+  .jdu .button:hover { background: #E4E4E7; }
+  .jdu .button:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+  /* Phones: the text on the navy at the top, the photo below it (fading up into the navy), so nothing covers the
+     speaker */
+  @media (max-width: 640px) {
+    .jdu { min-height: 0; flex-direction: column; padding: 32px 24px 0; }
+    .jdu-photo { position: relative; inset: auto; z-index: auto; align-self: stretch; margin: 8px -24px 0; width: auto; max-width: none; height: auto; aspect-ratio: 5 / 4; object-position: 68% 30%;
+      -webkit-mask-image: linear-gradient(transparent, #000 30%); mask-image: linear-gradient(transparent, #000 30%); }
+    .jdu-body { order: -1; }
+    .jdu::after { display: none; }
+  }
   .reel-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; }
   .reel-title { margin: 0; font-size: clamp(24px, 2.6vw, 34px); line-height: 1.15; font-weight: 500; color: var(--heading); letter-spacing: -0.02em; }
   .reel-nav { display: flex; gap: 10px; }
@@ -1024,7 +1055,7 @@
   <!-- 6. Jesus Disciple: video carousels (the cards' links are placeholders until the videos have addresses) -->
   <section class="section section-tint" id="app">
     <div class="wrap">
-      <h2 class="section-title">Jesus Disciple&nbsp;– A Four-Stage Ministry tool</h2>
+      <h2 class="section-title jd-heading"><img class="jd-logo" src="assets/jesus-disciple-logo.png" width="1200" height="194" alt="Jesus Disciple"><span>A Four-Stage Ministry tool</span></h2>
       <p class="lead">Use the Jesus Disciple App to Launch your own New Testament Network</p>
     </div>
       <div class="reel-group">
@@ -1075,8 +1106,13 @@
       </div>
       <div class="wrap">
         <div class="jdu">
-          <h3 class="jdu-title">Jesus Disciple University</h3>
-          <a class="button button-primary" href="#" data-placeholder>Learn more</a>
+          <img class="jdu-photo" src="assets/jdu-banner.jpg" srcset="assets/jdu-banner-1200.jpg 1200w, assets/jdu-banner.jpg 2400w"
+               sizes="(max-width: 1180px) 100vw, 1180px" alt="" loading="lazy">
+          <div class="jdu-body">
+            <h3 class="jdu-title">Jesus Disciple University</h3>
+            <p class="jdu-text">JDU is an online educational training institution that prepares individuals, ministry leaders, and churches to live out, teach, and multiply disciple-making in their own communities.</p>
+            <a class="button button-primary" href="#" data-placeholder>Learn more</a>
+          </div>
         </div>
       </div>
   </section>
