@@ -4,7 +4,7 @@
 
 **Goal:** Rebuild Home and Groups as Astro pages made of Lumos components, looking and behaving as they do today, with admin-editable content held in content collections.
 
-**Architecture:** A Lumos scaffold is merged into the repo root on an `astro-lumos` branch. Each page section becomes a component that takes its content as props from Astro content collections. The existing page scripts (globe, loader, Adjust panels) move over as classic scripts, split only at their existing `<script>` boundaries, so behavior does not change.
+**Architecture:** A Lumos scaffold is merged into the repo root on the `AstroMigrate` branch. Each page section becomes a component that takes its content as props from Astro content collections. The existing page scripts (globe, loader, Adjust panels) move over as classic scripts, split only at their existing `<script>` boundaries, so behavior does not change.
 
 **Tech Stack:** Astro 7, Lumos for Astro 1.0.4 (`npm create lumos@latest`), plain CSS with Lumos tokens, Playwright, Vitest. Node >= 22.23.4.
 
@@ -13,7 +13,7 @@
 ## Global Constraints
 
 - **Nothing is pushed or deployed.** No `git push`, no `vercel` commands, no Vercel MCP writes. Pushing the branch would make Vercel build a preview. All checks run locally. (Nathan, 2026-11-15.)
-- All work is on branch `astro-lumos`. `main` is not changed after the tag in Task 1.
+- All work is on branch `AstroMigrate`, checked out in its own folder `../NetworkMultiply-astro` (a git worktree). `main` lives in `../NetworkMultiply` and is never changed from this folder. Tag `pre-astro` already exists (set 2026-11-17 at `4313c39`).
 - Comment mode, the Versions panel and Convex do not move. No Sanity dependency.
 - No redesign, new section or new copy. Links marked `data-placeholder` and the newsletter form stay as they are.
 - The globe's behavior must not change. Scripts move verbatim; the only edits allowed are removing comment-mode and Versions hooks, and updating paths and URLs.
@@ -25,7 +25,7 @@
 - Fidelity bar: no difference a visitor would notice at 390, 768 and 1440 wide. Every other difference goes in `docs/superpowers/migration-differences.md` for Nathan.
 - Commit after every task, messages in the repo's style (`Area: what changed`). No `Version:` line is needed on this branch.
 
-Corrections to the spec found while planning: the scaffold is Lumos 1.0.4, not 1.0.3; class naming follows `LUMOS.md` (`family_wrap`, `family_child`); checks use a local preview, not a Vercel preview; `transition.spec.js` and `phone.spec.js` test comment mode and are deleted, not ported.
+Corrections to the spec found while planning: the scaffold is Lumos 1.0.4, not 1.0.3; class naming follows `LUMOS.md` (`family_wrap`, `family_child`); checks use a local preview, not a Vercel preview; the branch is `AstroMigrate` in its own worktree, and the old site for comparison is served from the `../NetworkMultiply` folder (no separate legacy worktree); `transition.spec.js` and `phone.spec.js` test comment mode and are deleted, not ported.
 
 ## Review Focus
 
@@ -77,19 +77,13 @@ tests/unit/                 gallery-geometry, content, redirects
 **Interfaces:**
 - Produces: `npm run dev|build|preview|check|test|test:e2e`; old site at `http://127.0.0.1:8792/hero.html`; new site at `http://127.0.0.1:4321/`; `openPage(page, path = '/')` in `tests/e2e/helpers.js`; `node tools/compare.mjs --old <path> --new <path> [--selector <css>]`.
 
-- [ ] **Step 1: Tag and branch**
+- [x] **Step 1: Tag and branch** (done 2026-11-17: tag `pre-astro` at `4313c39`; branch `AstroMigrate` in worktree `../NetworkMultiply-astro`)
 
-```bash
-git tag pre-astro main
-git switch -c astro-lumos
-git worktree add ../NetworkMultiply-legacy pre-astro
-```
-
-The old site is served for comparison with `python3 -m http.server 8792 --bind 127.0.0.1` run inside `../NetworkMultiply-legacy`.
+The old site is served for comparison with `python3 -m http.server 8792 --bind 127.0.0.1` run inside `../NetworkMultiply` (the `main` folder; read-only from here). It may hold uncommitted work in progress; that is fine for comparison.
 
 - [ ] **Step 2: Scaffold Lumos in a temporary folder and merge it into the repo root**
 
-Run `npm create lumos@latest lumos-tmp` outside the repo. Copy in the files listed under Create. Merge `package.json`: name stays `church-network`; take the scaffold's `scripts`, `dependencies`, `devDependencies`, `engines` and `lumos` block; keep `@playwright/test`, `vitest`, `jsdom`; keep scripts `test` and `test:e2e`; remove `convex`, `convex-test`, `@edge-runtime/vm`, `dev:config`. The repo already has a `.claude/` folder: add `skills/` to it, leave the rest. Add `.astro/` to `.gitignore`. Delete `src/pages/example-components.astro`. Run `npm install`.
+Run `npm create lumos@latest lumos-tmp` outside the repo. Check the version you actually got: npm lists `create-lumos` at 0.3.9 while the plan assumed Lumos 1.0.4 (the 1.0.4 may be the template's own version). Record what you find in the differences file; stop and ask Nathan only if the scaffold doesn't look like Lumos for Astro. Copy in the files listed under Create. Merge `package.json`: name stays `church-network`; take the scaffold's `scripts`, `dependencies`, `devDependencies`, `engines` and `lumos` block; keep `@playwright/test`, `vitest`, `jsdom`; keep scripts `test` and `test:e2e`; remove `convex`, `convex-test`, `@edge-runtime/vm`, `dev:config`. The repo already has a `.claude/` folder: add `skills/` to it, leave the rest. Add `.astro/` to `.gitignore`. Delete `src/pages/example-components.astro`. Run `npm install`.
 
 - [ ] **Step 3: Moves and deletions** as listed under Files. In `public/network-gallery.html`, the script path `assets/network-gallery.js` still resolves; confirm it.
 
@@ -127,7 +121,7 @@ Point `gallery.spec.js` at `/network-gallery.html` under the new server.
 
 `node tools/compare.mjs --old /groups.html --new /groups [--selector '#what']` screenshots the old site (port 8792) and the new (port 4321) at widths 390, 768 and 1440, full page or the selector, with `?controls=0` added, into `test-results/compare/<name>-<width>-old.png` and `-new.png`. It waits for `page:revealed` when the page fires it, else for `load`.
 
-- [ ] **Step 8: Commit** `Astro: Lumos scaffold on the astro-lumos branch; comment mode, Versions and Convex removed`
+- [ ] **Step 8: Commit** `Astro: Lumos scaffold on the AstroMigrate branch; comment mode, Versions and Convex removed`
 
 ---
 
@@ -152,7 +146,7 @@ Point `gallery.spec.js` at `/network-gallery.html` under the new server.
 
 - [ ] **Step 1: Write the failing test** `tests/unit/content.test.js`: reads the JSON files directly and asserts `weekly-video.json` has `youtubeId === 'qo52gy0Gq74'`; the team folder has 4 entries with distinct `order`; `group-stories` has `anastasia` and `church-group-member`; every heading in `groups.html` (`Church Groups`, `What are Rock Network Groups?`, `Discipleship Groups`, `Network Video`, `Meet the team`) appears in `pages/groups.json`; every `<h2 class="section-title">` text in `hero.html` appears in `pages/home.json`.
 - [ ] **Step 2: Run** `npm test`. Expected: FAIL, files missing.
-- [ ] **Step 3: Write the config and data.** Copy every piece of copy from `hero.html` and `groups.html` exactly. Images used from markup (`anastasia.jpg`, `group-gathered.jpg`, and the rest referenced by `<img>` or CSS backgrounds in the two pages) are copied to `src/assets/images/` and referenced with `image()`.
+- [ ] **Step 3: Write the config and data.** Copy every piece of copy from `hero.html` and `groups.html` exactly. Images used from markup (`anastasia.jpg`, `group-gathered.jpg`, `jesus-disciple-logo.png`, `jdu-banner.jpg` and `jdu-banner-1200.jpg` (keep the `srcset`), and the rest referenced by `<img>` or CSS backgrounds in the two pages) are copied to `src/assets/images/` and referenced with `image()`.
 - [ ] **Step 4: Run** `npm test` and `npm run build`. Expected: PASS; the build validates every entry against its schema.
 - [ ] **Step 5: Commit** `Content: collections for the weekly video, team, group stories, page copy and footer`
 
@@ -173,7 +167,7 @@ Point `gallery.spec.js` at `/network-gallery.html` under the new server.
 - [ ] **Step 1: Write the failing tests** in `site.spec.js`: on `/` and `/groups` the header shows the same nav links, in the same order, as the old pages; the footer shows the tagline, the three column labels (`Explore`, `Connect`, `Policy`) and the wordmark image; clicking a `data-placeholder` link does not navigate; computed `font-family` of `body` starts with `Geist`.
 - [ ] **Step 2: Run.** Expected: FAIL.
 - [ ] **Step 3: Tokens.** In `base.css` set the swatches, `--primary-family` (Geist, weights 300 to 700, through Astro's `fonts` config with `cssVariable: "--font-geist"`), heading and text sizes (`-min` at the old site's 390 size, `-max` at its 1440 size), radii (24px corners become `1.5rem`), spacing and section space, all read from the `:root` rules and section styles of `hero.html` and `groups.html`. Remove the Inter font file and config.
-- [ ] **Step 4: Shell.** Build `SiteHeader` and `SiteFooter` from the markup both old pages share; footer text from the `footer` collection. `assets/site-footer.css` and `page-transition.css` become component styles (rem, `@layer components`); their scripts move to `public/scripts/` verbatim and load as classic scripts in the same position as today. Header links use `/` and `/groups` (and `/#app` style anchors) in place of `hero.html` and `groups.html`.
+- [ ] **Step 4: Shell.** Build `SiteHeader` and `SiteFooter` from the markup both old pages share; footer text from the `footer` collection. `assets/site-footer.css` and `page-transition.css` become component styles (rem, `@layer components`); their scripts move to `public/scripts/` verbatim and load as classic scripts in the same position as today. Exception: `site-footer.js` builds its own globe embed address (`'hero.html?' + q` in `animUrl()`, with `embed=globe` and about a dozen colour settings); change only that path to `/embed/globe?` + the same settings. The footer globe stays empty until Task 7 builds `/embed/globe`. Header links use `/` and `/groups` (and `/#app` style anchors) in place of `hero.html` and `groups.html`.
 - [ ] **Step 5: Run** the tests. Expected: PASS. Run `node tools/compare.mjs --old /groups.html --new /groups --selector '.site-footer'` and compare by eye; fix or record differences.
 - [ ] **Step 6: Commit** `Shell: the site's tokens in Lumos, shared header and footer, page transition`
 
@@ -208,7 +202,7 @@ Point `gallery.spec.js` at `/network-gallery.html` under the new server.
 
 **Interfaces:**
 - Consumes: `weeklyVideo`, `groupStories` (`church-group-member`), `teamMembers` sorted by `order`, `groupsPage`.
-- Produces: `NetworkVideo` props `heading`, `youtubeId`, `title` (renders `#network-video` with `data-youtube` and `data-title`, as the script expects); `GroupStory` props `quote`, `name`, `attribution`, `photo` (also used on Home in Task 7); `TeamMember` props `name`, `role`, `photo`. The three script files are `groups.html`'s three `<script>` blocks (lines 15, 640, 775) in order.
+- Produces: `NetworkVideo` props `heading`, `youtubeId`, `title` (renders `#network-video` with `data-youtube` and `data-title`, as the script expects); `GroupStory` props `quote`, `name`, `attribution`, `photo` (also used on Home in Task 7); `TeamMember` props `name`, `role`, `photo`. The three script files are `groups.html`'s three inline `<script>` blocks in order: CONFIG ("Settings: the Adjust panel changes these"), the panel and hero art ("Hero art: the Pins globe loads…"), and the Network Video ("Network Video: the YouTube thumbnail…"). Find them by those comments, not line numbers.
 
 - [ ] **Step 1: Write the failing tests.** Port from the old `groups.spec.js`: `the Network Video shows its YouTube thumbnail and plays in place`; `page load style and the page transition come from the panel`; `Full width ends in the Home hero arc, set from Bottom curve`; the full section order (`#top`, `#what`, `#video`, `#story`, `#team`). Add:
 
@@ -244,7 +238,7 @@ In `tests/unit/sections.test.js`, with Astro's container API (`experimental_Astr
 
 **Files:**
 - Modify: `src/pages/index.astro`
-- Create: `src/components/section/HomeHero.astro`, `src/components/utility/Loader.astro`, `src/components/utility/AdjustPanelHome.astro`, `public/scripts/home-boot.js` (the head script, `hero.html` line 729), `home-main.js` (line 1324, CONFIG through the panel), `home-*.js` for each remaining block (lines 1293, 3182, 3350, 3403, 3432), named for what the block does
+- Create: `src/components/section/HomeHero.astro`, `src/components/utility/Loader.astro`, `src/components/utility/AdjustPanelHome.astro`, one file in `public/scripts/` per inline `<script>` block of `hero.html`, found by its opening comment, not by line number (lines drift as `main` changes). As of `4313c39` they are, in order: `home-embed-settings.js` (head, "Embedded as the Groups hero's or the site footer's globe…", restores settings from the `rn-embed:` frame name), `home-boot.js` (loading screen and the `?embed=globe` switch), the comment-mode loader (deleted, not moved), `home-lenis.js` (smooth scrolling), `home-main.js` (CONFIG through the panel and the globe), `home-hubs.js`, `home-jd-carousels.js`, `home-stats.js`, `home-welcome-video.js`, and the Versions module (deleted, not moved)
 - Test: `tests/e2e/home.spec.js`, `tests/e2e/hero-gallery.spec.js`
 
 **Interfaces:**
@@ -275,7 +269,7 @@ test('?controls=0 hides the Adjust panel', ...)
 If the CDN test fails on the old site too, the loader gets a timeout that reveals the page; record that as a deliberate behavior fix in the differences file.
 
 - [ ] **Step 2: Run.** Expected: FAIL.
-- [ ] **Step 3: Move the scripts.** d3, d3-geo-projection, topojson and Lenis stay on their CDN tags, in the `head` slot, same versions. Each `<script>` block becomes one file in `public/scripts/`, loaded as a classic script (`<script is:inline src>`) in the original order. Remove: the comment-mode loader (lines 837 to 860), the Comment button and its styles, the `versions:view` / `versions:current` holds, and the Versions module (line 3450). Replace `groups.html` and `hero.html` in URLs with `/groups` and `/`. Gallery art loads `/assets/network-gallery.js`.
+- [ ] **Step 3: Move the scripts.** d3, d3-geo-projection, topojson and Lenis stay on their CDN tags, in the `head` slot, same versions. Each `<script>` block becomes one file in `public/scripts/`, loaded as a classic script (`<script is:inline src>`) in the original order. Remove: the comment-mode loader (the block starting "Comment mode lives in review/"), the Comment button and its styles, the `versions:view` / `versions:current` holds, and the Versions module (the `<script type="module">` importing `versions-panel.js`). Replace `groups.html` and `hero.html` in URLs with `/groups` and `/`. Gallery art loads `/assets/network-gallery.js`.
 - [ ] **Step 4: Build `HomeHero`, `Loader` and the panel** from the existing markup. Classes the scripts read keep their names. Hero copy comes from `homePage.top`.
 - [ ] **Step 5: Run** the tests and `node tools/compare.mjs --old /hero.html --new / --selector '.hero'`. Expected: PASS.
 - [ ] **Step 6: Commit** `Home: hero, loading screen, globe and Adjust panel on Astro`
@@ -293,10 +287,10 @@ If the CDN test fails on the old site too, the loader gets a timeout that reveal
 - Consumes: `homePage` (all sections), `groupStories` `anastasia` through `GroupStory` from Task 5, the scripts from Task 6.
 - Produces: `/embed/globe`, which shows what `hero.html?embed=globe` shows (globe and pins only, no loader, header, copy or footer) and is `noindex`. Hubs and the video reels keep their data in code.
 
-- [ ] **Step 1: Write the failing tests.** Port `hubs.spec.js`, `stats.spec.js` (7,088 disciples, 1,559 groups, 25 missions workers, 3 subnetworks) and `intro-video.spec.js` to `/`. Port the remaining old `groups.spec.js` tests: `Start a group on the home page opens the Groups page`; `the Adjust panel switches the hero to the Pins globe and back` (frame `src` is `/embed/globe`); `arriving at Home from Groups skips the loading screen`; `footer logo can be clipped from the panel, and Home keeps the choice`. Add to `home.spec.js`: the section order matches `hero.html` on `main` (`#top`, `#church-network`, `#what-we-do`, `#how`, `#testimony`, `#app`, `#hubs`, `#story`); Home does not scroll sideways at 390; `/embed/globe` shows a canvas and no `.site-header`.
+- [ ] **Step 1: Write the failing tests.** Port `hubs.spec.js` (including the Jesus Disciple wordmark heading and the Jesus Disciple University banner checks added in `1fca79f`), `stats.spec.js` (7,088 disciples, 1,559 groups, 25 missions workers, 3 subnetworks) and `intro-video.spec.js` to `/`. Port the remaining old `groups.spec.js` tests: `Start a group on the home page opens the Groups page`; `the Adjust panel switches the hero to the Pins globe and back` (frame `src` is `/embed/globe`); `arriving at Home from Groups skips the loading screen`; `footer logo can be clipped from the panel, and Home keeps the choice`. Add to `home.spec.js`: the section order matches `hero.html` on `main` (`#top`, `#church-network`, `#what-we-do`, `#how`, `#testimony`, `#app`, `#hubs`, `#story`); Home does not scroll sideways at 390; `/embed/globe` shows a canvas and no `.site-header`.
 - [ ] **Step 2: Run.** Expected: FAIL.
 - [ ] **Step 3: Build each section,** one at a time, running `tools/compare.mjs` with the section's selector after each. Use library components wherever the section needs no script or custom CSS.
-- [ ] **Step 4: Build `/embed/globe`** by rendering the Home hero with the embed class set at build time in place of the `?embed=globe` check; add `/embed` to `NOINDEX_ROUTES`.
+- [ ] **Step 4: Build `/embed/globe`** by rendering the Home hero with the embed class set at build time in place of the `?embed=globe` check; add `/embed` to `NOINDEX_ROUTES`. Two pages frame it and pass settings in the address: Groups (`heroArt`, `showPins`, `controls`, `smoothScroll`) and the site footer (`dpr` and about a dozen colours). Every setting other than `embed` must still be read from the address at runtime, and `home-embed-settings.js` (the `rn-embed:` frame-name fallback) must load first on this page too. Test both: the Groups Pins hero and the footer globe each show a canvas inside their frame, and the footer globe takes the footer's colours.
 - [ ] **Step 5: Run** the whole suite: `npm run test:e2e` and `npm test`. Expected: PASS.
 - [ ] **Step 6: Commit** `Home: all sections on Astro; the globe embed has its own page`
 
@@ -306,7 +300,7 @@ If the CDN test fails on the old site too, the loader gets a timeout that reveal
 
 **Files:**
 - Delete: `hero.html`, `groups.html`, root `assets/` (after confirming nothing loads from it), any Lumos component and icon nothing imports (run a search before each)
-- Modify: `vercel.json`, `README.md`, `docs/superpowers/specs/2026-11-15-astro-lumos-migration-design.md` (the four corrections listed under Global Constraints)
+- Modify: `vercel.json`, `README.md`, `docs/superpowers/specs/2026-11-15-astro-lumos-migration-design.md` (the corrections listed under Global Constraints)
 - Create: `tests/unit/redirects.test.js`, `docs/superpowers/migration-differences.md`
 
 - [ ] **Step 1: Write the failing test** `tests/unit/redirects.test.js`: `vercel.json` has `cleanUrls: true` and no `buildCommand`; its redirects send `/hero` to `/` (with `cleanUrls`, `/hero.html` and `/groups.html` reach `/hero` and `/groups` first). In `home.spec.js`: `/#app` scrolls the Jesus Disciple section into view; a search of `dist/` after build finds no `hero.html`, `groups.html`, `review/` or `versions/` in any built page or script.
@@ -314,4 +308,4 @@ If the CDN test fails on the old site too, the loader gets a timeout that reveal
 - [ ] **Step 3: Delete, update `vercel.json`, rewrite the README** for the new structure: how to run it, where content lives, how to change the weekly video, the Adjust panels, the standalone demos and Wix steps (kept), and that comment mode lives at tag `pre-astro`.
 - [ ] **Step 4: Full pass.** `npm run check`, `npm run build`, `npm test`, `npm run test:e2e`, then `node tools/compare.mjs` for both pages. Finish `migration-differences.md`: every visible or behavioral difference, each marked fixed, or open for Nathan with the two screenshots' paths.
 - [ ] **Step 5: Commit** `Astro: old pages removed, redirects, README; migration differences listed`
-- [ ] **Step 6: Hand back to Nathan.** Report test results as they are, the differences file, and how to see it (`npm run dev`, then open the folder in Stacki). Do not push, merge or deploy. Remove the comparison worktree only when he says the comparison is done: `git worktree remove ../NetworkMultiply-legacy`.
+- [ ] **Step 6: Hand back to Nathan.** Report test results as they are, the differences file, and how to see it (`npm run dev`, then open the folder in Stacki). Do not push, merge or deploy. Leave this folder (`../NetworkMultiply-astro`) in place; Nathan decides when to merge and remove it.
