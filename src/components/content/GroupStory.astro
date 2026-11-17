@@ -1,0 +1,111 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import type { ImageMetadata } from "astro";
+import { Image } from "astro:assets";
+
+interface Props extends HTMLAttributes<"figure"> {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+  /** The words, with their quotation marks. */
+  quote: string;
+  /** Who said it, shown in bold before the attribution. */
+  name?: string;
+  /** Who they are, after the name. */
+  attribution: string;
+  /** Photo behind the quote. */
+  photo?: ImageMetadata;
+  /** Describes the photo for screen readers. */
+  photoAlt?: string;
+}
+
+const {
+  render = true,
+  quote,
+  name,
+  attribution,
+  photo,
+  photoAlt = "",
+  class: className,
+  ...rest
+} = Astro.props;
+---
+
+{
+  render && quote && (
+    <figure class:list={["frame group-story_wrap", className]} {...rest}>
+      {photo && (
+        <Image
+          class="group-story_photo"
+          src={photo}
+          alt={photoAlt}
+          widths={[800, 1600, photo.width]}
+          sizes="(max-width: 1180px) 100vw, 1132px"
+          loading="lazy"
+        />
+      )}
+      <blockquote class="group-story_quote">
+        <p class="group-story_text">{quote}</p>
+        <footer class="group-story_by">
+          <span class="glyph" aria-hidden="true" />
+          <span>
+            {name && <strong>{name}</strong>}
+            {name ? `, ${attribution}` : attribution}
+          </span>
+        </footer>
+      </blockquote>
+    </figure>
+  )
+}
+
+<style is:global>
+  @layer components {
+    /* A group member's words over their group's photo */
+    .group-story_wrap {
+      position: relative;
+      isolation: isolate;
+      width: 100%;
+      min-height: 35rem;
+      display: grid;
+      place-items: center;
+      padding: clamp(2.5rem, 7vw, 6rem);
+      &::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        background: rgb(20 20 24 / 0.55);
+      }
+    }
+    .group-story_photo {
+      position: absolute;
+      inset: 0;
+      z-index: -2;
+      object-position: 50% 35%;
+    }
+    .group-story_quote {
+      margin: 0;
+      max-width: 51.25rem;
+      text-align: center;
+      color: #fff;
+    }
+    .group-story_text {
+      margin: 0;
+      font-size: clamp(1.625rem, 3.2vw, 2.625rem);
+      line-height: 1.25;
+      letter-spacing: -0.02em;
+      font-weight: var(--primary-medium);
+      text-wrap: balance;
+    }
+    .group-story_by {
+      margin-top: 1.75rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 1rem;
+      color: rgb(255 255 255 / 0.88);
+      & .glyph {
+        --ring: #2b2b30;
+      }
+    }
+  }
+</style>

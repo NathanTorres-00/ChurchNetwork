@@ -1,0 +1,60 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import type { ImageMetadata } from "astro";
+import { Image } from "astro:assets";
+
+interface Props extends Omit<HTMLAttributes<"li">, "role"> {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+  /** Full name. */
+  name: string;
+  /** Role in the network. */
+  role?: string;
+  /** Portrait. Without one, a placeholder glyph shows in its place. */
+  photo?: ImageMetadata;
+}
+
+const { render = true, name, role, photo, class: className, ...rest } = Astro.props;
+---
+
+{
+  render && name && (
+    <li class:list={["team-member_wrap", className]} {...rest}>
+      <div class="frame team-member_photo">
+        {photo ? (
+          <Image src={photo} alt={name} widths={[300, 600]} sizes="(max-width: 960px) 50vw, 270px" loading="lazy" />
+        ) : (
+          <span class="glyph" aria-hidden="true" />
+        )}
+      </div>
+      <h3 class="team-member_name">{name}</h3>
+      {role && <p class="team-member_role">{role}</p>}
+    </li>
+  )
+}
+
+<style is:global>
+  @layer components {
+    .team-member_photo {
+      aspect-ratio: 4 / 5;
+      display: grid;
+      place-items: center;
+      & .glyph {
+        --g: 1.125rem;
+        --gc: #c9c9cf;
+        --ring: #e9e9ec;
+      }
+    }
+    .team-member_name {
+      margin: 1.125rem 0 0.125rem;
+      font-size: 1.1875rem;
+      font-weight: var(--primary-medium);
+      line-height: 1.6;
+      letter-spacing: -0.01em;
+    }
+    .team-member_role {
+      margin: 0;
+      font-size: 0.9375rem;
+    }
+  }
+</style>

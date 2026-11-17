@@ -1,7 +1,8 @@
 ---
-import { getEntry } from "astro:content";
+import { getCollection, getEntry } from "astro:content";
 import Layout from "@/layouts/BaseLayout.astro";
 import GroupsHero from "@/components/section/GroupsHero.astro";
+import NetworkVideo from "@/components/section/NetworkVideo.astro";
 import Section from "@/components/wrapper/Section.astro";
 import ContentWrapper from "@/components/wrapper/ContentWrapper.astro";
 import Eyebrow from "@/components/typography/Eyebrow.astro";
@@ -10,9 +11,17 @@ import Paragraph from "@/components/typography/Paragraph.astro";
 import Grid from "@/components/wrapper/Grid.astro";
 import GroupCard from "@/components/content/GroupCard.astro";
 import CtaDivided from "@/components/content/CtaDivided.astro";
+import GroupStory from "@/components/content/GroupStory.astro";
+import TeamList from "@/components/content/TeamList.astro";
+import AdjustPanelGroups from "@/components/utility/AdjustPanelGroups.astro";
 
 const groups = (await getEntry("groupsPage", "groups"))!.data;
-const { top, what } = groups;
+const { top, what, video, team } = groups;
+const weeklyVideo = (await getEntry("weeklyVideo", "current"))?.data;
+const story = (await getEntry("groupStories", "church-group-member"))?.data;
+const members = (await getCollection("teamMembers"))
+  .map((entry) => entry.data)
+  .sort((a, b) => a.order - b.order);
 const cardColors = ["churches", "disciples"] as const;
 ---
 
@@ -25,14 +34,16 @@ const cardColors = ["churches", "disciples"] as const;
   <!-- What are Rock Network Groups? -->
   <Section id="what">
     <ContentWrapper>
-      <Eyebrow>{what.eyebrow}</Eyebrow>
-      <Heading>{what.heading}</Heading>
-      <Paragraph variant="large" maxWidth={58}>{what.lead}</Paragraph>
+      <Eyebrow class="reveal">{what.eyebrow}</Eyebrow>
+      <Heading class="reveal" style="--i: 1">{what.heading}</Heading>
+      <Paragraph variant="large" maxWidth={58} class="reveal" style="--i: 2">{what.lead}</Paragraph>
     </ContentWrapper>
     <Grid large={2} id="start">
       {
         what.items.map((item, i) => (
           <GroupCard
+            class="reveal"
+            style={`--i: ${i}`}
             heading={item.heading}
             intro={item.intro}
             traits={item.traits}
@@ -42,6 +53,48 @@ const cardColors = ["churches", "disciples"] as const;
         ))
       }
     </Grid>
-    <CtaDivided text={what.already.body} button={what.already.button} />
+    <CtaDivided class="reveal" text={what.already.body} button={what.already.button} />
   </Section>
+
+  <!-- Network Video: this week's video comes from src/content/weekly-video.json -->
+  <NetworkVideo
+    render={!!weeklyVideo}
+    eyebrow={video.eyebrow}
+    heading={video.heading}
+    playLabel={video.playLabel}
+    youtubeId={weeklyVideo?.youtubeId ?? ""}
+    title={weeklyVideo?.title}
+  />
+
+  <!-- A group member's words -->
+  <Section id="story" render={!!story}>
+    {
+      story && (
+        <GroupStory
+          class="reveal"
+          quote={story.quote}
+          name={story.name}
+          attribution={story.attribution}
+          photo={story.photo}
+          photoAlt={story.photoAlt}
+        />
+      )
+    }
+  </Section>
+
+  <!-- Meet the team -->
+  <Section id="team" class="background-2" render={members.length > 0}>
+    <ContentWrapper class="reveal">
+      <Eyebrow>{team.eyebrow}</Eyebrow>
+      <Heading class="margin-bottom-3">{team.heading}</Heading>
+      <Paragraph variant="large" maxWidth={58}>{team.lead}</Paragraph>
+    </ContentWrapper>
+    <TeamList members={members} />
+  </Section>
+
+  <Fragment slot="after">
+    <AdjustPanelGroups />
+    <script is:inline src="/scripts/groups-panel.js"></script>
+    <script is:inline src="/scripts/groups-page.js"></script>
+  </Fragment>
 </Layout>

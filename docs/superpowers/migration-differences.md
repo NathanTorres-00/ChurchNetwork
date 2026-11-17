@@ -39,5 +39,15 @@ decision Nathan should know about. Each item is marked **fixed**, **accepted** o
 - **Hero photo.** The old page in `../NetworkMultiply` now shows the group photo (`group-gathered.jpg`), but
   that change isn't committed on `main` yet; committed `main` still has the Unsplash photo, which the port
   uses. It will follow once it is committed.
-- **Scroll-in animation** for the What section is not on yet: it arrives with the Groups page script in
-  Task 5. Until then the section shows without rising in.
+- **Scroll-in animation:** back on in Task 5, with the Groups page script.
+
+### Groups: Network Video, the group member's words, Meet the team, Adjust panel (Task 5)
+
+- Compared at 390, 768 and 1440: same positions and sizes (within a pixel), the footer included.
+- **Photos.** `../NetworkMultiply` currently swaps the hero and quote photos (uncommitted work). The port
+  follows committed `main`: Unsplash behind the hero, the gathered group behind the quote.
+- **Adjust panel:** same settings, `?controls=0`, Copy settings and Reset. The hint text and the copied
+  block now name the new file locations (`public/scripts/…`). Choosing the Pins globe shows an empty frame
+  until Task 7 builds `/embed/globe`.
+- **Missing content (new behaviour):** with no weekly video the Network Video section is left out; with no
+  team members, Meet the team is left out; a member without a photo shows the ring glyph.

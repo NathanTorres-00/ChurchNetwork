@@ -1,0 +1,43 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import type { ImageMetadata } from "astro";
+import TeamMember from "@/components/content/TeamMember.astro";
+
+type Member = { name: string; role?: string; photo?: ImageMetadata };
+
+interface Props extends HTMLAttributes<"ul"> {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+  /** People, in the order they show. An empty list leaves the component out. */
+  members: Member[];
+}
+
+const { render = true, members, class: className, ...rest } = Astro.props;
+---
+
+{
+  render && members.length > 0 && (
+    <ul class:list={["team-list_wrap", className]} {...rest}>
+      {members.map((member) => (
+        <TeamMember class="reveal" name={member.name} role={member.role} photo={member.photo} />
+      ))}
+    </ul>
+  )
+}
+
+<style is:global>
+  @layer components {
+    /* Four across, two below 960px with a tighter gap; sits 3.5rem under the heading (the section's gap is 4rem) */
+    .team-list_wrap {
+      margin-top: -0.5rem;
+      width: 100%;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.5rem;
+      @media (max-width: 60em) {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+      }
+    }
+  }
+</style>
