@@ -1,0 +1,69 @@
+{
+  "top": {
+    "lead": "A New Testament Church Network",
+    "title": {
+      "label": "Multiplying disciples, leaders, churches, and movements",
+      "prefix": "Multiplying",
+      "words": ["Disciples", "Leaders", "Churches", "Movements"]
+    },
+    "tagline": "A New Testament Church Network",
+    "body": "A network of disciples, leaders, churches, and movements.",
+    "buttons": [
+      { "label": "Learn more", "href": "#church-network" },
+      { "label": "Start a group", "href": "/groups" }
+    ]
+  },
+  "churchNetwork": {
+    "eyebrow": "What is a New Testament Church Network?",
+    "videoTitle": "Welcome to the Rock Network"
+  },
+  "whatWeDo": {
+    "heading": "What we do",
+    "subtitle": "We are a four-stage ministry",
+    "lead": "We multiply disciples, leaders, churches, and movements.",
+    "photo": {
+      "src": "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=1200&h=1020&fit=crop&q=75&auto=format",
+      "alt": ""
+    },
+    "stats": [
+      { "value": "7,088", "label": "Disciples joined" },
+      { "value": "1,559", "label": "Groups started" },
+      { "value": "25", "label": "Missions workers" },
+      { "value": "3", "label": "Four-Stage Subnetworks" }
+    ]
+  },
+  "how": {
+    "heading": "How we do it",
+    "lead": "Four pieces working together to enable multiplication",
+    "items": [
+      { "heading": "A Clear Process", "body": "to Multiply in each stage", "photo": "1531206715517-5c0ba140b2b8", "button": { "label": "Learn more", "href": "#", "placeholder": true } },
+      { "heading": "Effective Tools", "body": "to use the process", "photo": "1543269865-cbf427effbad", "button": { "label": "Learn more", "href": "#", "placeholder": true } },
+      { "heading": "Available Training", "body": "to Get started and retain momentum", "photo": "1522202176988-66273c2fd55f", "button": { "label": "Learn more", "href": "#", "placeholder": true } },
+      { "heading": "On-going Coaching", "body": "for encouragement and guidance", "photo": "1506869640319-fe1a24fd76dc", "button": { "label": "Learn more", "href": "#", "placeholder": true } }
+    ]
+  },
+  "app": {
+    "logo": { "src": "../../assets/images/jesus-disciple-logo.png", "alt": "Jesus Disciple" },
+    "heading": "A Four-Stage Ministry tool",
+    "lead": "Use the Jesus Disciple App to Launch your own New Testament Network",
+    "university": {
+      "heading": "Jesus Disciple University",
+      "body": "JDU is an online educational training institution that prepares individuals, ministry leaders, and churches to live out, teach, and multiply disciple-making in their own communities.",
+      "photo": "../../assets/images/jdu-banner.jpg",
+      "button": { "label": "Learn more", "href": "#", "placeholder": true }
+    }
+  },
+  "hubs": {
+    "heading": "Find a hub",
+    "lead": "Hubs are where our groups and churches gather locally. Find the one nearest you."
+  },
+  "story": {
+    "heading": "How we got started",
+    "items": [
+      { "when": "Where it began", "heading": "One local church", "body": "A discipleship system for one local church designed to build solid lives." },
+      { "when": "Growing", "heading": "Disciples became leaders", "body": "As people were discipled, they started leading groups of their own, and those groups began to multiply." },
+      { "when": "Multiplying", "heading": "Groups became churches", "body": "Groups grew into new churches and local hubs, each one raising up leaders to send out." },
+      { "when": "Today", "heading": "A global movement", "body": "Today the network connects disciple makers across continents multiplying movements far beyond where it began." }
+    ]
+  }
+}

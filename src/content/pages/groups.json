@@ -1,0 +1,56 @@
+{
+  "top": {
+    "heading": "Church Groups",
+    "tagline": "Multiplying disciples, leaders, churches, and movements",
+    "photo": {
+      "src": "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=2000&h=1200&fit=crop&q=75&auto=format",
+      "alt": ""
+    },
+    "buttons": [
+      { "label": "Start a group", "href": "#start" },
+      { "label": "Learn more", "href": "#what" }
+    ]
+  },
+  "what": {
+    "eyebrow": "Groups",
+    "heading": "What are Rock Network Groups?",
+    "lead": "Rock Network groups are groups of three or more that gather, grow, give and go make disciples.",
+    "items": [
+      {
+        "heading": "Church Groups",
+        "intro": "This group:",
+        "traits": [
+          "Consists of believers",
+          "Is ready to gather, grow, give and go together",
+          "Agrees to meet long term",
+          "Uses the Jesus Disciple App"
+        ],
+        "button": { "label": "Start a church group", "href": "#", "placeholder": true }
+      },
+      {
+        "heading": "Discipleship Groups",
+        "intro": "This group:",
+        "traits": [
+          "Has someone who believes in Jesus leading others who do not",
+          "Agrees to meet together for a set period",
+          "Uses the Jesus Disciple App"
+        ],
+        "button": { "label": "Start a discipleship group", "href": "#", "placeholder": true }
+      }
+    ],
+    "already": {
+      "body": "Already a part of a group?",
+      "button": { "label": "Find resources for you", "href": "#", "placeholder": true }
+    }
+  },
+  "video": {
+    "eyebrow": "Weekly",
+    "heading": "Network Video",
+    "playLabel": "Play this week's network video"
+  },
+  "team": {
+    "eyebrow": "Connect with the Network",
+    "heading": "Meet the team",
+    "lead": "Working together to serve your region."
+  }
+}
