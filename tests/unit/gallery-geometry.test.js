@@ -1,6 +1,6 @@
 // Pure helpers of the Gallery engine: prefixed settings, the hero's quiet centre, and line colours.
 import { describe, expect, test } from 'vitest';
-import { prefixedConfig, quietFactor, clearOfQuiet, inHalo, aboveOrBelow, mixHex } from '../../assets/network-gallery.js';
+import { prefixedConfig, quietFactor, clearOfQuiet, inHalo, aboveOrBelow, mixHex } from '../../public/assets/network-gallery.js';
 
 const q = { cx: 500, cy: 300, rx: 200, ry: 100 };
 

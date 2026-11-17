@@ -1,6 +1,4 @@
 {
-  "buildCommand": "npx convex deploy --cmd 'node scripts/build-static.js'",
-  "outputDirectory": "dist",
   "cleanUrls": true,
-  "rewrites": [{ "source": "/", "destination": "/hero" }]
+  "redirects": [{ "source": "/hero", "destination": "/", "permanent": true }]
 }

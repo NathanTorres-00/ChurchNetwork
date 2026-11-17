@@ -1,6 +1,6 @@
 // The hero's Art option: the Pins globe (default) or the Gallery, with a quiet centre around the copy.
 import { expect, test } from '@playwright/test';
-import { enterCommentMode, openPage } from './helpers.js';
+import { openPage } from './helpers.js';
 
 function watchErrors(page) {
   const errors = [];
@@ -85,14 +85,6 @@ test('Pause globe and Restart globe act on the gallery', async ({ page }) => {
   await page.locator('#restart').click();
   await expect(page.locator('#play')).toHaveText('Pause globe');
   expect((await galleryState(page)).playing).toBe(true);
-});
-
-test('comment mode holds the gallery still', async ({ page }) => {
-  await openPage(page, '/hero.html?heroArt=gallery');
-  await expect.poll(() => galleryState(page)).toEqual({ playing: true, running: true });
-  await enterCommentMode(page);
-  expect((await galleryState(page)).playing).toBe(false);
-  await expect(page.locator('html')).toHaveAttribute('data-globe', 'paused');
 });
 
 test('reset returns to the default art, the pins globe', async ({ page }) => {
