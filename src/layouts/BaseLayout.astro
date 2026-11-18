@@ -16,7 +16,7 @@ const { page, ...seo } = Astro.props;
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="en" class:list={[page === "embed" && "embed-globe"]}>
   <head>
     <BaseHead {...seo} />
     <PageTransition render={page !== "embed"} />

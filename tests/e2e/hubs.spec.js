@@ -3,7 +3,7 @@
 import { expect, test } from '@playwright/test';
 import { openPage } from './helpers.js';
 
-const HUBS = '/hero.html?showHubs=1';           // the section is hidden unless turned on
+const HUBS = '/?showHubs=1';           // the section is hidden unless turned on
 
 const fill = row => row.evaluate(el => getComputedStyle(el, '::before').opacity);
 const ball = page => page.locator('#hub-cursor .ball');
@@ -113,7 +113,7 @@ test.describe('on a touch screen', () => {
 });
 
 test('the Jesus Disciple University banner shows its photo, title and Learn more', async ({ page }) => {
-  await page.goto('/hero.html');
+  await page.goto('/');
   const jdu = page.locator('.jdu');
   await jdu.scrollIntoViewIfNeeded();
   await expect(jdu.getByRole('heading', { name: 'Jesus Disciple University' })).toBeVisible();

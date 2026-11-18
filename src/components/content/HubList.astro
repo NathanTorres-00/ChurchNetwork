@@ -1,0 +1,86 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+type Row = { heading: string; body: string; photo: string; button: { label: string; href: string; placeholder?: boolean } };
+
+interface Props extends HTMLAttributes<"ul"> {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+  /** One wide row each; rows take the four headline colors in turn. */
+  items: Row[];
+  /** Background of the section the list sits on, for the ring around each dot. */
+  ground?: "light" | "tint";
+}
+
+const { render = true, items, ground = "light", class: className, ...rest } = Astro.props;
+---
+
+{
+  render && items.length > 0 && (
+    <ul
+      class:list={["hub-list", className]}
+      style={ground === "tint" ? "--section-bg: var(--background-2)" : undefined}
+      {...rest}
+    >
+      {items.map((item) => (
+        <li>
+          <a
+            class="hub-row"
+            href={item.button.href}
+            data-placeholder={item.button.placeholder ? "" : undefined}
+            data-photo={item.photo}
+          >
+            <span class="glyph" aria-hidden="true" />
+            <span>
+              <h3>{item.heading}</h3>
+              <p>{item.body}</p>
+            </span>
+            <span class="go">{item.button.label}</span>
+          </a>
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+<style is:global>
+  @layer components {
+    /* .hub-list, .hub-row, .go and data-photo keep their old names: public/scripts/home-hubs.js reads them and
+       adds the .hub-dots grid and the hub cursor */
+    /* Find a hub and How we do it: one wide row per hub (or point). Hovering a row fills it with its color, ring-dots
+     ripple in beside the name, and the cursor changes (see the hub cursor below). */
+    .hub-list { list-style: none; margin: -0.5rem 0 0; padding: 0; width: 100%; border-top: 0.0625rem solid #DCDCE0; }
+    .hub-list li:nth-child(1) { --hc: var(--c-disciples); }
+    .hub-list li:nth-child(2) { --hc: var(--c-leaders); }
+    .hub-list li:nth-child(3) { --hc: var(--c-churches); }
+    .hub-list li:nth-child(4) { --hc: var(--c-movements); }
+    .hub-row { position: relative; isolation: isolate; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: clamp(1.25rem, 3vw, 2.25rem); padding: clamp(2rem, 4.4vw, 3.25rem) 0.5rem; border-bottom: 0.0625rem solid #DCDCE0; color: inherit; text-decoration: none; transition: opacity .45s ease; }
+    .hub-list:hover .hub-row:not(:hover) { opacity: .4; }
+    /* the hovered hub stands out */
+    .hub-row .glyph { --g: 0.8125rem; --gc: var(--hc); box-shadow: 0 0 0 calc(var(--g) * .3) var(--section-bg, #fff), 0 0 0 calc(var(--g) * .56) var(--gc); }
+    .hub-row h3 { margin: 0; font-size: clamp(1.875rem, 4.2vw, 3.375rem); line-height: 1.05; font-weight: 500; color: var(--heading); letter-spacing: -0.03em; }
+    .hub-row p { margin: 0.625rem 0 0; font-size: 1.0625rem; }
+    .hub-row .go { font-size: 1rem; font-weight: 500; color: var(--heading); text-decoration: underline; text-underline-offset: 0.3125rem; white-space: nowrap; }
+    .hub-row:focus-visible { outline-offset: -0.125rem; border-radius: 0.75rem; }
+    /* Hovered (or tabbed to), the row fills with its hub's color (the Figma "Hub Row=Hover"). The glyph needs no
+     change: on the fill its dot and outer ring disappear and its light inner ring is what shows. Touch screens
+     keep the plain row. */
+    .hub-row::before { content: ''; position: absolute; inset: 0; z-index: -1; border-radius: 0.75rem; background: var(--hc); opacity: 0; transform: scale(.985); transition: opacity .35s ease, transform .45s cubic-bezier(.22, 1, .36, 1); }
+    .hub-row h3, .hub-row p, .hub-row .go { transition: color .35s ease, text-decoration-color .35s ease; }
+    :is(html.has-hub-cursor .hub-row:hover, .hub-row:focus-visible)::before { opacity: 1; transform: none; }
+    :is(html.has-hub-cursor .hub-row:hover, .hub-row:focus-visible) :is(h3, p) { color: var(--background-2); }
+    :is(html.has-hub-cursor .hub-row:hover, .hub-row:focus-visible) .go { color: #fff; text-decoration-color: transparent; }
+    .hub-row:focus-visible { outline-color: var(--hc); outline-offset: 0.1875rem; }
+    /* Ring-dots beside the name: a 12 x 4 grid set right next to "Get directions". The script fits as many
+     columns as there's room for beside the name (hiding the grid when that's under 4) and sets each dot's
+     delay so they ripple out from where the pointer came in. */
+    .hub-dots { position: absolute; top: 50%; right: var(--dots-right, 0rem); transform: translateY(-50%); pointer-events: none; display: grid; grid-template-columns: repeat(var(--dots-cols, 12), 1.25rem); grid-auto-rows: 1.25rem; gap: 1.375rem 1.6875rem; }
+    .hub-dots[hidden] { display: none; }
+    .hub-dots i { width: 1.25rem; height: 1.25rem; border-radius: 50%; box-shadow: inset 0 0 0 0.21875rem #fff; opacity: 0; transform: scale(.4); transition: opacity .2s ease, transform .2s ease; }
+    :is(html.has-hub-cursor .hub-row:hover, .hub-row:focus-visible) .hub-dots i { opacity: 1; transform: none; transition: opacity .3s ease var(--d, 0ms), transform .45s cubic-bezier(.22, 1, .36, 1) var(--d, 0ms); }
+    @media (max-width: 35em) {
+      .hub-row { grid-template-columns: auto 1fr; row-gap: 0.875rem; }
+      .hub-row .go { grid-column: 2; justify-self: start; }
+    }
+  }
+</style>

@@ -64,3 +64,18 @@ decision Nathan should know about. Each item is marked **fixed**, **accepted** o
 - **Scripts blocked** (d3, topojson or Lenis can't load): the loading screen still gives way after its
   built-in limit (about 10 seconds) and the page can be read, as on the old site. No change needed.
 - The panel's links to the demos and the hint about where to paste settings name the new paths.
+
+### Home: the remaining sections, /embed/globe, and the links between pages (Task 7)
+
+- Compared section by section at 390, 768 and 1440: every section is the same height as before and lines up
+  (measured: all eight sections equal at 390). The whole page at 1440 is the same height to the pixel.
+- **Footer and header, Leadership link (not ported yet).** The old page in `../NetworkMultiply` has a
+  Leadership link in the header and footer and a Leadership section in `groups.html`. That work isn't
+  committed on `main` yet, so the port doesn't have it (the footer is 34px shorter at 390 for this reason).
+  It will follow once it's committed.
+- **`/embed/globe`** replaces `hero.html?embed=globe`: only the globe and its pins, no loading screen, and
+  `noindex`. Groups' Pins globe and the footer's globe frame it, with their settings in the address as before.
+  The footer globe now shows (it showed the 404 page faintly from Task 3 until now).
+- **The Adjust panel's Page settings** (section spacing, corner radius, content width, body text size) still
+  work: the Lumos tokens read the same variables the panel sets.
+- **Find a hub** stays hidden unless turned on, as before.

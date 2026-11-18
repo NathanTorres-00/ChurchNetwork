@@ -4,9 +4,34 @@ import Layout from "@/layouts/BaseLayout.astro";
 import Loader from "@/components/utility/Loader.astro";
 import HomeHero from "@/components/section/HomeHero.astro";
 import AdjustPanelHome from "@/components/utility/AdjustPanelHome.astro";
+import HubCursor from "@/components/utility/HubCursor.astro";
+import Section from "@/components/wrapper/Section.astro";
+import ContentWrapper from "@/components/wrapper/ContentWrapper.astro";
+import Eyebrow from "@/components/typography/Eyebrow.astro";
+import Heading from "@/components/typography/Heading.astro";
+import Paragraph from "@/components/typography/Paragraph.astro";
+import WelcomeVideo from "@/components/content/WelcomeVideo.astro";
+import StatsSplit from "@/components/content/StatsSplit.astro";
+import HubList from "@/components/content/HubList.astro";
+import GroupStory from "@/components/content/GroupStory.astro";
+import JesusDisciple from "@/components/section/JesusDisciple.astro";
+import Timeline from "@/components/content/Timeline.astro";
 
 const home = (await getEntry("homePage", "home"))!.data;
-const { top } = home;
+const { top, churchNetwork, whatWeDo, how, app, hubs, story } = home;
+const testimony = (await getEntry("groupStories", "anastasia"))?.data;
+
+// Find a hub: the hubs stay in code for now (their links are placeholders until each hub has an address)
+const hubRows = [
+  { heading: "Anaheim", photo: "1511632765486-a01980e01a18" },
+  { heading: "Anaheim West", photo: "1517486808906-6ca8b3f04846" },
+  { heading: "jChurch", photo: "1491438590914-bc09fcaaf77a" },
+  { heading: "Iglesia Mi Ciudad", photo: "1488521787991-ed7bbaae773c" },
+].map((hub) => ({
+  ...hub,
+  body: "Meeting times and location coming soon.",
+  button: { label: "Get directions", href: "#", placeholder: true },
+}));
 ---
 
 <Layout page="home">
@@ -24,9 +49,78 @@ const { top } = home;
   <!-- Hero: the multiplying globe with pins -->
   <HomeHero lead={top.lead} title={top.title} tagline={top.tagline} body={top.body} buttons={top.buttons} />
 
+  <!-- What is a New Testament Church Network? -->
+  <Section id="church-network">
+    <ContentWrapper>
+      <Eyebrow>{churchNetwork.eyebrow}</Eyebrow>
+      <WelcomeVideo title={churchNetwork.videoTitle} />
+    </ContentWrapper>
+  </Section>
+
+  <!-- What we do -->
+  <Section id="what-we-do">
+    <StatsSplit
+      heading={whatWeDo.heading}
+      subtitle={whatWeDo.subtitle}
+      lead={whatWeDo.lead}
+      photo={whatWeDo.photo}
+      stats={whatWeDo.stats}
+    />
+  </Section>
+
+  <!-- How we do it -->
+  <Section id="how" class="background-2">
+    <ContentWrapper>
+      <Heading>{how.heading}</Heading>
+      <Paragraph variant="large" maxWidth={58}>{how.lead}</Paragraph>
+    </ContentWrapper>
+    <HubList id="how-list" items={how.items} ground="tint" />
+  </Section>
+
+  <!-- Testimony -->
+  <Section id="testimony" render={!!testimony}>
+    {
+      testimony && (
+        <GroupStory
+          variant="side"
+          quote={testimony.quote}
+          name={testimony.name}
+          attribution={testimony.attribution}
+          photo={testimony.photo}
+          photoAlt={testimony.photoAlt}
+        />
+      )
+    }
+  </Section>
+
+  <!-- Jesus Disciple: the wordmark, video rows and the Jesus Disciple University banner -->
+  <JesusDisciple logo={app.logo} heading={app.heading} lead={app.lead} university={app.university} />
+
+  <!-- Find a hub (hidden unless turned on in the Adjust panel) -->
+  <Section id="hubs">
+    <ContentWrapper>
+      <Heading>{hubs.heading}</Heading>
+      <Paragraph variant="large" maxWidth={58}>{hubs.lead}</Paragraph>
+    </ContentWrapper>
+    <HubList id="hub-list" items={hubRows} />
+  </Section>
+
+  <!-- How we got started: the last section before the footer -->
+  <Section id="story">
+    <ContentWrapper>
+      <Heading>{story.heading}</Heading>
+    </ContentWrapper>
+    <Timeline items={story.items} />
+  </Section>
+
   <Fragment slot="after">
     <AdjustPanelHome />
     <script is:inline src="/scripts/home-lenis.js"></script>
     <script is:inline src="/scripts/home-main.js"></script>
+    <HubCursor />
+    <script is:inline src="/scripts/home-hubs.js"></script>
+    <script is:inline src="/scripts/home-jd-carousels.js"></script>
+    <script is:inline src="/scripts/home-stats.js"></script>
+    <script is:inline src="/scripts/home-welcome-video.js"></script>
   </Fragment>
 </Layout>

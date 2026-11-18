@@ -185,42 +185,47 @@ test('sections rise in as they scroll into view', async ({ page }) => {
   await expect(team).toHaveClass(/is-in/);
 });
 
-// Need Home's hero and loading screen, or /embed/globe: ported in Task 7
-test.describe.fixme('waiting for Home (Task 7)', () => {
-  test('Start a group on the home page opens the Groups page', async ({ page }) => {
-    await openPage(page);
-    await page.locator('.hero-actions').getByRole('link', { name: 'Start a group' }).click();
-    await expect(page).toHaveURL(/\/groups(\.html)?$/);
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Church Groups');
-  });
+test('Start a group on the home page opens the Groups page', async ({ page }) => {
+  await openPage(page);
+  await page.locator('.hero-actions').getByRole('link', { name: 'Start a group' }).click();
+  await expect(page).toHaveURL(/\/groups$/);
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Church Groups');
+});
 
-  test('the Adjust panel switches the hero to the Pins globe and back', async ({ page }) => {
-    const errors = [];
-    page.on('pageerror', e => errors.push(String(e)));
-    await page.goto('/groups.html');
-    await expect(page.locator('#hero-globe iframe')).toHaveCount(0);           // the globe loads only when chosen
-    await page.locator('#adjust').click();
-    await page.locator('.seg[data-key="heroArt"] [data-value="globe"]').click();
-    await expect(page.locator('html')).toHaveAttribute('data-art', 'globe');
-    const frame = page.locator('#hero-globe iframe');
-    await expect(frame).toHaveAttribute('src', /hero\.html\?embed=globe/);
-    // the embedded page shows only its globe, with no loading screen
-    const inner = page.frameLocator('#hero-globe iframe');
-    await expect(inner.locator('#canvas')).toBeVisible();
-    await expect(inner.locator('.hero-copy')).toBeHidden();
-    await expect(inner.locator('#loader')).toHaveCount(0);
-    await page.locator('.seg[data-key="heroShape"] [data-value="full"]').click();
-    await expect(page.locator('html')).toHaveAttribute('data-shape', 'full');
-    await page.locator('.seg[data-key="heroArt"] [data-value="photo"]').click();
-    await expect(frame).toHaveCount(0);
-    expect(errors).toEqual([]);
-  });
+test('the Adjust panel switches the hero to the Pins globe and back', async ({ page }) => {
+  const errors = [];
+  page.on('pageerror', e => errors.push(String(e)));
+  await page.goto('/groups');
+  await expect(page.locator('#hero-globe iframe')).toHaveCount(0);           // the globe loads only when chosen
+  await page.locator('#adjust').click();
+  await page.locator('.seg[data-key="heroArt"] [data-value="globe"]').click();
+  await expect(page.locator('html')).toHaveAttribute('data-art', 'globe');
+  const frame = page.locator('#hero-globe iframe');
+  await expect(frame).toHaveAttribute('src', /^\/embed\/globe\?/);
+  // the embedded page shows only its globe, with no loading screen
+  const inner = page.frameLocator('#hero-globe iframe');
+  await expect(inner.locator('#canvas')).toBeVisible();
+  await expect(inner.locator('.hero-copy')).toBeHidden();
+  await expect(inner.locator('#loader')).toHaveCount(0);
+  await page.locator('.seg[data-key="heroShape"] [data-value="full"]').click();
+  await expect(page.locator('html')).toHaveAttribute('data-shape', 'full');
+  await page.locator('.seg[data-key="heroArt"] [data-value="photo"]').click();
+  await expect(frame).toHaveCount(0);
+  expect(errors).toEqual([]);
+});
 
-  test('arriving at Home from Groups skips the loading screen', async ({ page }) => {
-    await page.goto('/groups.html');
-    await page.locator('.site-nav a', { hasText: 'Our story' }).click();
-    await expect(page).toHaveURL(/hero\.html#story$/);
-    await expect(page.locator('html')).not.toHaveClass(/is-loading/, { timeout: 2000 });
-    await expect(page.locator('#story')).toBeInViewport();
-  });
+test('arriving at Home from Groups skips the loading screen', async ({ page }) => {
+  await page.goto('/groups');
+  await page.locator('.site-nav a', { hasText: 'Our story' }).click();
+  await expect(page).toHaveURL(/\/#story$/);
+  await expect(page.locator('html')).not.toHaveClass(/is-loading/, { timeout: 2000 });
+  await expect(page.locator('#story')).toBeInViewport();
+});
+
+test('the footer globe shows a canvas inside its frame', async ({ page }) => {
+  await page.goto('/groups');
+  await page.evaluate(() => scrollTo({ top: document.body.scrollHeight, behavior: 'instant' }));
+  const inner = page.frameLocator('.footer-anim iframe');
+  await expect(inner.locator('#canvas')).toBeVisible({ timeout: 15_000 });
+  await expect(inner.locator('.site-footer')).toHaveCount(0);
 });

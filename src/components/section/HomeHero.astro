@@ -108,6 +108,7 @@ const looks = ["button-primary", "button-secondary"];
     /* Every value the Adjust panel's Headline and Page groups change is a variable here, so the panel and CONFIG stay in step */
     :root {
       --c-multiplying: #7A7A83;
+      --section-space: 8rem;          /* Home keeps 128px between sections on phones too */
       --h1-size: 4rem;
       --solo-size: 5.75rem;
       --title-size: 4.5rem;
@@ -227,7 +228,7 @@ const looks = ["button-primary", "button-secondary"];
     html.embed-globe .site-header, html.embed-globe main > section:not(.hero), html.embed-globe .site-footer,
   html.embed-globe .hero-copy, html.embed-globe .hero-scrim, html.embed-globe .adjust, html.embed-globe .panel,
   html.embed-globe .hub-cursor { display: none !important; }
-    html.embed-globe .hero { --hero-curve: 0 !important; height: 100vh !important; min-height: 0 !important; }
+    html.embed-globe .hero { --hero-curve: 0rem !important; height: 100vh !important; min-height: 0 !important; }
     html.embed-globe .hero-art { -webkit-mask: none !important; mask: none !important; }
     /* Embedded, only the globe and its photo pins show: everything else on the page (header, hero copy and buttons,
      scrim, sections, footer, panels, comment mode, anything added to the page later) stays hidden */

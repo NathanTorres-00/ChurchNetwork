@@ -16,6 +16,9 @@
   --c-churches: #3f55a8;
   --c-movements: #b23a5b;
 
+  /* Home's Adjust panel overrides --radius, --content-width, --section-space and --body-size on <html>;
+     the tokens below read them, falling back to the site's values */
+
   /* Typography primitives */
   --primary-family: var(--font-geist), system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   --primary-regular: 400;
@@ -48,7 +51,7 @@
 
   /* Radius */
   --radius-small: 0.5rem;
-  --radius-main: 1.5rem;
+  --radius-main: var(--radius, 1.5rem);
   --radius-round: 100vw;
 
   /* Fluid scale range */
@@ -57,7 +60,7 @@
 
   /* Max width */
   --max-width-small: 70rem;
-  --max-width-main: 70.75rem;
+  --max-width-main: calc(var(--content-width, 73.75rem) - 2 * var(--site-margin));
   --max-width-full: 100%;
 
   /* Nav */
@@ -148,7 +151,7 @@
   --h6-font-weight: var(--primary-medium);
   --h6-text-wrap: wrap;
 
-  --text-large: 1.19rem;
+  --text-large: calc(var(--body-size, 1.0625rem) * 1.12);
   --text-large-min: 19.04;
   --text-large-max: 19.04;
   --text-large-line-height: var(--line-height-huge);
@@ -160,7 +163,7 @@
   --text-large-font-weight: var(--primary-regular);
   --text-large-text-wrap: wrap;
 
-  --text-main: 1.0625rem;
+  --text-main: var(--body-size, 1.0625rem);
   --text-main-min: 17;
   --text-main-max: 17;
   --text-main-line-height: var(--line-height-huge);
@@ -224,7 +227,7 @@
   --section-space-small: clamp(var(--section-space-small-min) / 16 * 1rem, ((var(--section-space-small-min) - ((var(--section-space-small-max) - var(--section-space-small-min)) / (var(--viewport-max) - var(--viewport-min)) * var(--viewport-min))) / 16 * 1rem + ((var(--section-space-small-max) - var(--section-space-small-min)) / (var(--viewport-max) - var(--viewport-min))) * 100vw), var(--section-space-small-max) / 16 * 1rem);
   --section-space-small-min: 48;
   --section-space-small-max: 80;
-  --section-space-medium: 8rem;
+  --section-space-medium: var(--section-space, 8rem);
   --section-space-medium-min: 128;
   --section-space-medium-max: 128;
   --section-space-large: clamp(var(--section-space-large-min) / 16 * 1rem, ((var(--section-space-large-min) - ((var(--section-space-large-max) - var(--section-space-large-min)) / (var(--viewport-max) - var(--viewport-min)) * var(--viewport-min))) / 16 * 1rem + ((var(--section-space-large-max) - var(--section-space-large-min)) / (var(--viewport-max) - var(--viewport-min))) * 100vw), var(--section-space-large-max) / 16 * 1rem);
@@ -235,9 +238,10 @@
   --section-space-nav-overlap-max: 224;
 }
 
+/* Phones: 88px between sections (Groups). Home sets its own --section-space, which wins, as on the old site. */
 @media (max-width: 47.5em) {
   :root {
-    --section-space-medium: 5.5rem;
+    --section-space-medium: var(--section-space, 5.5rem);
   }
 }
 
@@ -371,6 +375,11 @@
 
 * {
   margin: 0;
+}
+
+/* hidden means hidden, whatever display a class gives the element (scripts hide sections and controls this way) */
+[hidden]:not([hidden="until-found"]) {
+  display: none !important;
 }
 
 body {

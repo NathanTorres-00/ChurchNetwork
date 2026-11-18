@@ -16,6 +16,8 @@ interface Props extends HTMLAttributes<"figure"> {
   photo?: ImageMetadata;
   /** Describes the photo for screen readers. */
   photoAlt?: string;
+  /** `overlay`: the words over the photo (Groups). `side`: the photo beside the words (Home's testimony). */
+  variant?: "overlay" | "side";
 }
 
 const {
@@ -25,13 +27,14 @@ const {
   attribution,
   photo,
   photoAlt = "",
+  variant = "overlay",
   class: className,
   ...rest
 } = Astro.props;
 ---
 
 {
-  render && quote && (
+  render && quote && variant === "overlay" && (
     <figure class:list={["frame group-story_wrap", className]} {...rest}>
       {photo && (
         <Image
@@ -54,6 +57,34 @@ const {
         </footer>
       </blockquote>
     </figure>
+  )
+}
+{
+  render && quote && variant === "side" && (
+    <div class:list={["group-story_wrap side", className]} {...rest}>
+      {photo && (
+        <div class="frame group-story_frame">
+          <Image
+            class="group-story_photo"
+            src={photo}
+            alt={photoAlt}
+            widths={[500, 1000, photo.width]}
+            sizes="(max-width: 860px) 100vw, 450px"
+            loading="lazy"
+          />
+        </div>
+      )}
+      <blockquote class="group-story_quote">
+        <p class="group-story_text">{quote}</p>
+        <footer class="group-story_by">
+          <span class="glyph" aria-hidden="true" />
+          <span>
+            {name && <strong>{name}</strong>}
+            {name ? `, ${attribution}` : attribution}
+          </span>
+        </footer>
+      </blockquote>
+    </div>
   )
 }
 
@@ -95,6 +126,57 @@ const {
       letter-spacing: -0.02em;
       font-weight: var(--primary-medium);
       text-wrap: balance;
+    }
+    /* Side: the photo beside the words, the words in the page's ink */
+    .group-story_wrap.side {
+      min-height: 0;
+      padding: 0;
+      display: grid;
+      grid-template-columns: 0.8fr 1.2fr;
+      gap: clamp(2rem, 6vw, 5.5rem);
+      align-items: center;
+      place-items: initial;
+      align-items: center;
+      &::after {
+        display: none;
+      }
+      & .group-story_frame {
+        aspect-ratio: 4 / 4.6;
+      }
+      & .group-story_photo {
+        position: static;
+        object-position: 50% 30%;
+      }
+      & .group-story_quote {
+        max-width: none;
+        text-align: start;
+        color: var(--heading);
+      }
+      & .group-story_text {
+        font-weight: var(--primary-regular);
+        font-size: clamp(1.625rem, 2.8vw, 2.375rem);
+        line-height: 1.3;
+        letter-spacing: -0.02em;
+        text-indent: -0.42em;
+        text-wrap: wrap;
+      }
+      & .group-story_by {
+        display: flex;
+        color: var(--text);
+        & .glyph {
+          --ring: #fff;
+        }
+        & strong {
+          color: var(--heading);
+          font-weight: var(--primary-medium);
+        }
+      }
+      @media (max-width: 53.75em) {
+        grid-template-columns: 1fr;
+        & .group-story_frame {
+          aspect-ratio: 4 / 3;
+        }
+      }
     }
     .group-story_by {
       margin-top: 1.75rem;

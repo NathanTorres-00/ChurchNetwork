@@ -1,0 +1,110 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+type Stat = { value: string; label: string };
+
+interface Props extends HTMLAttributes<"div"> {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+  /** Section title. */
+  heading: string;
+  /** Line under the title. */
+  subtitle?: string;
+  /** Paragraph under the subtitle. */
+  lead?: string;
+  /** Photo beside the text. */
+  photo?: { src: string; alt: string };
+  /** Numbers that count up as they scroll into view, each in the next headline color. */
+  stats?: Stat[];
+}
+
+const { render = true, heading, subtitle, lead, photo, stats = [], class: className, ...rest } = Astro.props;
+const colors = ["disciples", "leaders", "churches", "movements"];
+---
+
+{
+  render && heading && (
+    <div class:list={["stats-split_wrap", className]} {...rest}>
+      {photo && (
+        <div class="frame stats-split_photo">
+          <img src={photo.src} alt={photo.alt} loading="lazy" />
+        </div>
+      )}
+      <div>
+        <h2 class="stats-split_title">{heading}</h2>
+        {subtitle && <p class="stats-split_subtitle">{subtitle}</p>}
+        {lead && <p class="stats-split_lead text-style-large">{lead}</p>}
+        {stats.length > 0 && (
+          <div class="stats">
+            {/* public/scripts/home-stats.js counts each [data-count] up from 0; the real number is in the HTML */}
+            {stats.map((stat, i) => (
+              <div class="stats-split_stat">
+                <p class="num" style={`color: var(--c-${colors[i % 4]})`} data-count>
+                  {stat.value}
+                </p>
+                <p class="stats-split_label">{stat.label}</p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+<style is:global>
+  @layer components {
+    /* What we do: a photo beside the title and four numbers */
+    .stats-split_wrap {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1.1fr 1fr;
+      gap: clamp(2rem, 6vw, 5.5rem);
+      align-items: center;
+      @media (max-width: 53.75em) {
+        grid-template-columns: 1fr;
+      }
+    }
+    .stats-split_photo {
+      aspect-ratio: 4 / 3.4;
+    }
+    .stats-split_subtitle {
+      margin: 0.875rem 0 0;
+      font-size: clamp(1.25rem, 2vw, 1.625rem);
+      line-height: 1.25;
+      font-weight: var(--primary-medium);
+      color: var(--heading);
+      letter-spacing: -0.015em;
+    }
+    .stats-split_lead {
+      margin: 1.125rem 0 0;
+      max-width: 58ch;
+    }
+    .stats {
+      display: grid;
+      gap: 1.75rem;
+      margin: 2.75rem 0 0;
+    }
+    .stats-split_stat {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      align-items: baseline;
+      gap: 1.25rem;
+      padding-top: 1.5rem;
+      border-top: var(--border-width) solid var(--border);
+      & .num {
+        margin: 0;
+        font-size: clamp(2.75rem, 5vw, 4rem);
+        line-height: 1;
+        font-weight: var(--primary-medium);
+        letter-spacing: -0.03em;
+        font-variant-numeric: tabular-nums;
+      }
+    }
+    .stats-split_label {
+      margin: 0;
+      font-size: 1.125rem;
+      color: var(--heading);
+    }
+  }
+</style>
