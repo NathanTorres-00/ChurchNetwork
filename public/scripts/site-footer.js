@@ -1,4 +1,4 @@
-/* Site footer, shared by hero.html and groups.html. Load it in <head> (not deferred) so the footer's look is set
+/* Site footer, shared by Home and Groups. Load it in <head> (not deferred) so the footer's look is set
    before it draws.
    Settings come from either page's Adjust panel ([data-footer-key] controls) and are kept in localStorage, so both
    pages match. DEFAULT is what a first visit sees:
@@ -76,7 +76,7 @@
       animBox.replaceChildren();
       if (!want) return;
       const frame = document.createElement('iframe');
-      frame.name = 'rn-embed:' + want.split('?')[1];   // hero.html restores its settings from this if the address loses them
+      frame.name = 'rn-embed:' + want.split('?')[1];   // /embed/globe restores its settings from this if the address loses them
       frame.src = want; frame.tabIndex = -1; frame.title = ''; frame.setAttribute('aria-hidden', 'true');
       animBox.appendChild(frame);
     }, animSrc && want ? 250 : 0);

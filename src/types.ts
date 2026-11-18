@@ -4,7 +4,7 @@ export interface SeoProps {
   title?: string;
   /** Page and social description. Defaults to `SITE_DESCRIPTION`. */
   description?: string;
-  /** Social image. Defaults to `/og-image.jpg`. */
+  /** Social image. None by default (the site has no share image yet). */
   image?: string;
   /** Open Graph type. */
   type?: "website" | "article";

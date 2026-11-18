@@ -114,3 +114,9 @@ test('Home keeps 128px between sections on a phone', async ({ page }) => {
   await openPage(page, '/');
   expect(await page.locator('#how').evaluate(el => getComputedStyle(el).paddingTop)).toBe('128px');
 });
+
+test('/#app scrolls the Jesus Disciple section into view', async ({ page }) => {
+  await page.goto('/groups');
+  await page.goto('/#app');
+  await expect(page.locator('#app')).toBeInViewport({ timeout: 10_000 });
+});

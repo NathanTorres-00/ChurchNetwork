@@ -1,4 +1,5 @@
 // The content collections hold every piece of copy an admin will later edit, taken word for word from the old pages.
+import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { JSDOM } from 'jsdom';
 import { describe, expect, test } from 'vitest';
@@ -17,7 +18,8 @@ function strings(value) {
   return [];
 }
 
-const oldPage = (file) => new JSDOM(readFileSync(new URL(`../../${file}`, import.meta.url), 'utf8')).window.document;
+// The old pages, as they were when the migration began (they're deleted from this branch; tag pre-astro keeps them)
+const oldPage = (file) => new JSDOM(execFileSync('git', ['show', `pre-astro:${file}`], { encoding: 'utf8' })).window.document;
 const clean = (text) => text.replace(/\s+/g, ' ').trim();
 
 describe('content collections', () => {

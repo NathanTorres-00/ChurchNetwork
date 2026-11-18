@@ -9,7 +9,7 @@ type Props = SeoProps;
 const {
   title,
   description = SITE_DESCRIPTION,
-  image = "/og-image.jpg",
+  image,
   type = "website",
   noindex,
 } = Astro.props;
@@ -18,7 +18,7 @@ const isNoindex = noindex ?? isNoindexRoute(Astro.url.pathname);
 
 const pageTitle = title ? `${title} | ${SITE_NAME}` : SITE_NAME;
 const canonical = new URL(Astro.url.pathname, Astro.site);
-const socialImage = new URL(image, Astro.site);
+const socialImage = image ? new URL(image, Astro.site) : undefined;
 ---
 
 <meta charset="utf-8" />
@@ -37,13 +37,12 @@ const socialImage = new URL(image, Astro.site);
 <meta property="og:title" content={pageTitle} />
 <meta property="og:description" content={description} />
 <meta property="og:url" content={canonical} />
-<meta property="og:image" content={socialImage} />
+{socialImage && <meta property="og:image" content={socialImage} />}
 
-<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:card" content={socialImage ? "summary_large_image" : "summary"} />
 <meta name="twitter:title" content={pageTitle} />
 <meta name="twitter:description" content={description} />
-<meta name="twitter:image" content={socialImage} />
+{socialImage && <meta name="twitter:image" content={socialImage} />}
 
 <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-<link rel="icon" href="/favicon.ico" />
 <meta name="generator" content={Astro.generator} />
