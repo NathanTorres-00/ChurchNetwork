@@ -101,6 +101,32 @@ test('How we do it shows its four points with the same rows and cursor', async (
   await expect.poll(() => page.locator('#hub-cursor').evaluate(el => el.style.getPropertyValue('--s'))).toBe('1');
 });
 
+for (const style of ['circle', 'photo']) {
+  test(`How we do it shows local photos with the ${style} cursor`, async ({ page }) => {
+    await page.route('**/images.unsplash.com/**', route => route.abort());
+    await openPage(page, `/hero.html?hubCursor=${style}&smoothScroll=0`);
+    const cursor = page.locator('#hub-cursor');
+    const sources = new Set();
+    for (const row of await page.locator('#how-list .hub-row').all()) {
+      await row.evaluate(el => el.scrollIntoView({ block: 'center' }));
+      await row.locator('h3').hover();
+      const source = await row.getAttribute('data-photo');
+      expect(source).toMatch(/^assets\/network-photos\/.+\.webp$/);
+      sources.add(source);
+      if (style === 'circle') {
+        const pin = cursor.locator('.pin-photo');
+        await expect(pin).toHaveAttribute('href', source);
+        await expect(pin).toHaveCSS('opacity', '1');
+      } else {
+        const photo = cursor.locator(`.photo img[src="${source}"]`);
+        await expect(photo).toHaveCSS('opacity', '1');
+        expect(await photo.evaluate(img => img.naturalWidth)).toBeGreaterThan(0);
+      }
+    }
+    expect(sources.size).toBe(4);
+  });
+}
+
 test.describe('on a touch screen', () => {
   test.use({ hasTouch: true, isMobile: true, viewport: { width: 390, height: 844 } });
   test('rows stay plain', async ({ page }) => {

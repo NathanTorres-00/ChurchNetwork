@@ -999,7 +999,7 @@
       <p class="lead">Four pieces working together to enable multiplication</p>
       <ul class="hub-list" id="how-list">
           <li>
-            <a class="hub-row" href="#" data-placeholder data-photo="1531206715517-5c0ba140b2b8">
+            <a class="hub-row" href="#" data-placeholder data-photo="assets/network-photos/globe/house-church-living-room.webp">
               <span class="glyph" aria-hidden="true"></span>
               <span>
                 <h3>A Clear Process</h3>
@@ -1009,7 +1009,7 @@
             </a>
           </li>
           <li>
-            <a class="hub-row" href="#" data-placeholder data-photo="1543269865-cbf427effbad">
+            <a class="hub-row" href="#" data-placeholder data-photo="assets/network-photos/outdoor-group-study.webp">
               <span class="glyph" aria-hidden="true"></span>
               <span>
                 <h3>Effective Tools</h3>
@@ -1019,7 +1019,7 @@
             </a>
           </li>
           <li>
-            <a class="hub-row" href="#" data-placeholder data-photo="1522202176988-66273c2fd55f">
+            <a class="hub-row" href="#" data-placeholder data-photo="assets/network-photos/globe/january-gathering.webp">
               <span class="glyph" aria-hidden="true"></span>
               <span>
                 <h3>Available Training</h3>
@@ -1029,7 +1029,7 @@
             </a>
           </li>
           <li>
-            <a class="hub-row" href="#" data-placeholder data-photo="1506869640319-fe1a24fd76dc">
+            <a class="hub-row" href="#" data-placeholder data-photo="assets/network-photos/table-discussion.webp">
               <span class="glyph" aria-hidden="true"></span>
               <span>
                 <h3>On-going Coaching</h3>
@@ -1899,12 +1899,23 @@ function heroGalleryGroups(GALLERY_CONTROLS) {
     setLocalProjection(site);
   }
 
+  /* Where the networks sit depends only on the seed, the spacing and the land, and working it out (thousands of
+     points tested against the coastline) takes most of a second, so a replay with the same settings reuses it */
+  let siteLayout = null;
   function buildSites() {
+    const useLand = cfg.landOnly && landFeature;
+    const key = [cfg.seed, cfg.siteSpacing, !!cfg.landOnly].join();
+    if (!siteLayout || siteLayout.key !== key || siteLayout.land !== useLand) {
+      siteLayout = { key, land: useLand, sites: placeSites(useLand) };
+    }
+    sites = siteLayout.sites.map(s => ({ ...s, state: 'dormant', start: 0, out: 0, nodes: null }));
+    sites.forEach(makeTree);
+  }
+  function placeSites(useLand) {
     const rng = mulberry32(cfg.seed);
     const sp = cfg.siteSpacing * DEG;
     const N = Math.round(clamp(4 * Math.PI / (sp * sp) * 6, 600, 4000));
     const golden = Math.PI * (3 - Math.sqrt(5));
-    const useLand = cfg.landOnly && landFeature;
     const cands = [];
     for (let i = 0; i < N; i++) {
       const y = 1 - (i + 0.5) * 2 / N;
@@ -1921,11 +1932,7 @@ function heroGalleryGroups(GALLERY_CONTROLS) {
     const picked = [];
     for (const c of cands) if (picked.every(p => d3.geoDistance(p, c) >= sp)) picked.push(c);
 
-    sites = picked.map(ll => ({
-      ll, seed: (rng() * 1e9) | 0, angle: rng() * 360,
-      state: 'dormant', start: 0, out: 0, nodes: null,
-    }));
-    sites.forEach(makeTree);
+    return picked.map(ll => ({ ll, seed: (rng() * 1e9) | 0, angle: rng() * 360 }));
   }
 
   function resetSite(site) {
@@ -2011,7 +2018,9 @@ function heroGalleryGroups(GALLERY_CONTROLS) {
 
   function resize() {
     const r = stage.getBoundingClientRect();
-    view.dpr = Math.min(window.devicePixelRatio || 1, 2);
+    // ?dpr=1: a faint background copy (the site footer's) draws at 1x; on a Retina screen that's a quarter of the
+    // pixels, and since it shares the page's main thread, that keeps the page's own scrolling smooth
+    view.dpr = Math.min(+new URLSearchParams(location.search).get('dpr') || window.devicePixelRatio || 1, 2);
     view.w = r.width; view.h = r.height;
     for (const c of [canvas, layer]) {
       c.width = Math.round(r.width * view.dpr);
@@ -2090,6 +2099,7 @@ function heroGalleryGroups(GALLERY_CONTROLS) {
   const statusEl = showControls ? document.getElementById('status') : null;
 
   function draw() {
+    if (!layer.width || !layer.height) return;   // hidden (the Gallery is showing): nothing to draw on yet
     const W = view.w, H = view.h, dpr = view.dpr;
     const E = EASE[cfg.easing] || EASE.sine;
     const T = siteTiming();
@@ -2778,6 +2788,9 @@ function heroGalleryGroups(GALLERY_CONTROLS) {
     buildSites();
     setPlaying(true);
   }
+  // Embedded (the site footer's globe): the host page replays the growth each time it scrolls back into view,
+  // instead of reloading the whole page in its frame
+  if (new URLSearchParams(location.search).get('embed') === 'globe') window.rnGlobe = { restart };
 
   function syncInput(key) {
     const el = inputs[key];
@@ -3260,8 +3273,9 @@ function heroGalleryGroups(GALLERY_CONTROLS) {
   const cursor = document.getElementById('hub-cursor');
   const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
   const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const photoUrl = id => `https://images.unsplash.com/photo-${id}?w=640&h=484&fit=crop&q=70&auto=format`;
-  const tallUrl = id => `https://images.unsplash.com/photo-${id}?w=360&h=480&fit=crop&q=70&auto=format`;   // the Photo cursor
+  const photoUrl = (source, width = 640, height = 484) => source.startsWith('assets/') ? source
+    : `https://images.unsplash.com/photo-${source}?w=${width}&h=${height}&fit=crop&q=70&auto=format`;
+  const tallUrl = source => photoUrl(source, 360, 480);
 
   // The pin: the same artwork as the globe's pins, with its own clip path id
   const pin = document.getElementById('pin-template').content.firstElementChild.cloneNode(true);
@@ -3273,10 +3287,11 @@ function heroGalleryGroups(GALLERY_CONTROLS) {
   // Load each hub's photos up front (the pin's crop and the Photo cursor's) so neither ever opens empty
   const loaded = new Set();
   rows.forEach(row => {
+    const source = row.dataset.photo, pinUrl = photoUrl(source), tall = tallUrl(source);
     const img = new Image();
-    img.onload = () => loaded.add(row.dataset.photo);
-    img.src = photoUrl(row.dataset.photo);
-    new Image().src = tallUrl(row.dataset.photo);
+    img.onload = () => loaded.add(source);
+    img.src = pinUrl;
+    if (tall !== pinUrl) new Image().src = tall;
   });
 
   // The Photo cursor's two layers: a new hub's photo fades in over the last one
@@ -3342,7 +3357,11 @@ function heroGalleryGroups(GALLERY_CONTROLS) {
     showTall(row.dataset.photo);
     const url = photoUrl(row.dataset.photo);
     photo.style.opacity = 0;                                 // quick crossfade to the new hub's photo
-    const swap = () => { photo.setAttribute('href', url); photo.style.opacity = 1; };
+    const swap = () => {
+      if (current !== row) return;
+      photo.setAttribute('href', url);
+      photo.style.opacity = 1;
+    };
     loaded.has(row.dataset.photo) ? setTimeout(swap, 120) : Object.assign(new Image(), { onload: swap, src: url });
     cursor.style.setProperty('--s', finePointer ? 1 : 0);
     cursor.style.setProperty('--p', 1);

@@ -46,7 +46,8 @@ shape.
   - **Colors:** Light (default), Grey (with **Grey shade**; dark shades switch the text to light) or Inverted (the dark of
     the site's headings).
   - **Animation:** Pins globe (the Home hero's globe, `hero.html?embed=globe` recoloured to the footer with `?bg=`,
-    loaded only while the footer is near the screen so it grows again each time; its pins avoid the footer's
+    drawn at 1x with `?dpr=1` since it's faint; it loads once in idle time after the page opens, rests off screen and
+    replays its growth each time the footer comes back into view, without reloading; its pins avoid the footer's
     text) or Off, with **Animation strength** (default 20%).
   - **Top edge:** Flat or Curved (default): the last section above the footer ends in the Home hero's downward arc, with
     the footer showing past its sides. **Curve depth** sets it (in vw, like the hero's Bottom curve).
