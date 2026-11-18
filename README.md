@@ -31,9 +31,9 @@ shape.
       browser's cross-document View Transitions (`assets/page-transition.css` and `.js`, loaded on both pages), so
       it plays in Chrome, Edge and Safari 18.2+; the choice is kept in this browser (`localStorage`) for both pages.
 - **`leadership.html`**: the directory starts with the **Rock Groups Leadership Team**, followed by **Regional
-  Overseers** (by region and by ministry or online), **Sub-Networks**, and **The Rock Leaders**. The hero orbit
-  links to each leader once, even when they appear under multiple assignments. Keep one anchored
-  `<li class="person">` per leader for the orbit; repeat assignments do not need an ID. Web portraits are
+  Overseers** (by region and by ministry or online) and **Sub-Networks**. **The Rock Leaders** roster is hidden.
+  The hero orbit links once to each leader with an anchored Groups card, including Jerry Dirmann as Director.
+  Leave repeat assignments and directory-only entries without an ID. Web portraits are
   480px square crops in `assets/leaders/`; the roster reference and source photos are in `Leadership/`.
   Home and Groups link to Leadership in their headers and footers.
 - **Site footer** (Home and Groups; `assets/site-footer.css` and `.js`): tagline, social links, a newsletter form
@@ -292,7 +292,7 @@ turning into view, which is what carries the sense of how big the network is.
    - **Phones** (≤ 640 px): photos open only above and below the copy, or not at all
      (`galleryPhoneOpenings: 'off'`). A touch that moves is a scroll, not a tap.
    - **Reduced motion:** a still view; hovering still opens dots.
-2. **What is a New Testament Church Network?:** rounded video box with the **Welcome to the Rock Network** video (`assets/welcome-to-the-rock-network.mp4`, an H.264 copy of the original, about 15 MB). Its poster is the "What is a New Testament Church Network?" thumbnail (`assets/what-is-a-new-testament-church-network.jpg`), shown undimmed, with a dark play button under the poster's title on its left edge so it doesn't cover the words. Nothing downloads until the play button is pressed; then it plays with the browser's controls, and pauses when scrolled out of view.
+2. **What is it?** Rounded video box with the **Welcome to the Rock Network** video (`assets/welcome-to-the-rock-network.mp4`, an H.264 copy of the original, about 15 MB). Its poster is the "What is a New Testament Church Network?" thumbnail (`assets/what-is-a-new-testament-church-network.jpg`), shown undimmed, with a dark play button under the poster's title on its left edge so it doesn't cover the words. Nothing downloads until the play button is pressed; then it plays with the browser's controls, and pauses when scrolled out of view.
 3. **What we do:** image, the line "We are a four-stage ministry", and stats (7,088 Disciples joined, 1,559 Groups started, 25 Missions workers, 3 Four-Stage Subnetworks) that count up from 0 as they scroll into view (once; straight to the numbers with reduced motion).
 4. **How we do it:** four rows, **A Clear Process**, **Effective Tools**, **Available Training** and **On-going Coaching** (links are
    placeholders), built and behaving exactly like the Find a hub rows: the same hover fill, ring-dots and cursor.

@@ -1,4 +1,4 @@
-// Leadership page: a directory by assignment and two orbits with one dot per roster entry.
+// Leadership page: a directory by assignment and a Groups leadership orbit.
 import { expect, test } from '@playwright/test';
 
 test('lists leaders by team, assignment, and sub-network, with working portraits', async ({ page }) => {
@@ -7,8 +7,11 @@ test('lists leaders by team, assignment, and sub-network, with working portraits
   await page.goto('/leadership.html');
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Leadership');
   await expect(page.getByRole('main').getByRole('heading', { level: 2 })).toHaveText([
-    'Rock Groups Leadership Team', 'Regional Overseers', 'The Rock Leaders', 'Lead a group with us',
+    'Rock Groups Leadership Team', 'Regional Overseers', 'Lead a group with us',
   ]);
+  await expect(page.locator('#network-leaders')).toBeHidden();
+  await expect(page.getByRole('link', { name: 'The Rock Leaders', exact: true })).toHaveCount(0);
+  await expect(page.locator('.orbit-key')).not.toContainText('The Rock Leaders');
   await expect(page.locator('#groups-leadership .person')).toHaveText([
     /Jerry Dirmann\s*Director/, /Tina Shubin\s*Asst\. Director/,
     /Eryne Nevarez\s*Operations/, /Crissy Shubin\s*Admin Asst\./,
@@ -33,37 +36,34 @@ test('lists leaders by team, assignment, and sub-network, with working portraits
     await expect(card.locator('.person-name')).toHaveText(names);
   }
   await expect(page.locator('#sub-networks .person')).toHaveCount(3);
-  await expect(page.locator('.people-network .person')).toHaveCount(9);
-  for (const img of await page.locator('.person img').all()) {
+  for (const img of await page.locator('.person img:visible').all()) {
     await img.scrollIntoViewIfNeeded();
     await expect.poll(() => img.evaluate(i => i.complete && i.naturalWidth)).toBeGreaterThan(0);
   }
-  await expect(page.locator('.people-network')).toContainText("Jose & Isabel O'Neill");
   expect(errors).toEqual([]);
 });
 
-test('the orbits hold each person once, network leaders inside, and link to their place in the list', async ({ page }) => {
+test('the Groups orbit excludes The Rock Leaders except for Jerry and links to his Director card', async ({ page }) => {
   await page.goto('/leadership.html');
-  await expect(page.locator('.node.is-network')).toHaveCount(9);
-  await expect(page.locator('.node.is-group')).toHaveCount(17);
-  const names = await page.locator('.node').evaluateAll(ns => ns.map(n => n.getAttribute('aria-label')));
+  await expect(page.locator('#orbit circle')).toHaveCount(1);
+  await expect(page.locator('#orbit .node')).toHaveCount(18);
+  const names = await page.locator('#orbit .node').evaluateAll(nodes => nodes.map(node => node.getAttribute('aria-label')));
+  expect(names).toEqual(expect.arrayContaining(['Jerry Dirmann', 'Tina Shubin', 'Ben Flores']));
   expect(new Set(names).size).toBe(names.length);
+  for (const name of [
+    'Kimberly Dirmann', 'Jonathan Dirmann', 'Carl McAulay', 'Corey Theetge', 'Jim Scott',
+    "Jose & Isabel O'Neill", 'Manny & Andrea Orozco', 'Tristan Fenholt',
+  ]) expect(names).not.toContain(name);
   const linksResolve = await page.locator('.node').evaluateAll(nodes => nodes.every(node =>
     document.getElementById(node.hash.slice(1))?.querySelector('.person-name').textContent === node.getAttribute('aria-label')
   ));
   expect(linksResolve).toBe(true);
-  // inner orbit is closer to the center than the outer one
-  const dist = sel => page.locator(sel).first().evaluate(n => {
-    const o = n.parentElement.getBoundingClientRect(), r = n.getBoundingClientRect();
-    return Math.hypot(r.x + r.width / 2 - (o.x + o.width / 2), r.y + r.height / 2 - (o.y + o.height / 2)) / o.width;
-  });
-  expect(await dist('.node.is-network')).toBeLessThan(await dist('.node.is-group'));
-  const node = page.locator('.node', { hasText: 'Corey Theetge' });
+  const node = page.locator('#orbit').getByRole('link', { name: 'Jerry Dirmann', exact: true });
   await node.hover();
   await expect(node.locator('.node-name')).toBeVisible();
   await node.click();
-  await expect(page).toHaveURL(/#p-corey-theetge$/);
-  await expect(page.locator('#p-corey-theetge')).toBeInViewport();
+  await expect(page).toHaveURL(/#p-jerry-dirmann$/);
+  await expect(page.locator('#groups-leadership #p-jerry-dirmann')).toBeInViewport();
 });
 
 test('the regional directory fits a narrow screen and can be reached from the hero', async ({ page }) => {

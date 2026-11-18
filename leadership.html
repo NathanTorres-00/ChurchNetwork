@@ -82,7 +82,7 @@
   }
   .lead { margin: 18px 0 0; max-width: 52ch; font-size: calc(var(--body-size) * 1.12); }
 
-  /* ---------- 1. Hero: the network, with its leaders on two orbits around The Rock Network ---------- */
+  /* ---------- 1. Hero: the Groups leaders around The Rock Network ---------- */
   .lead-hero { padding: clamp(48px, 7vw, 88px) 0 clamp(72px, 9vw, 120px); }
   .lead-hero h1 {
     margin: 0; color: var(--heading); font-weight: 600; letter-spacing: -0.04em; line-height: 1;
@@ -93,10 +93,8 @@
   .directory-nav a { color: var(--heading); font-size: 15px; text-underline-offset: 4px; }
   .directory-nav a:hover { color: var(--c-network); }
 
-  /* The orbits: a square whose people sit on two circles (site-wide positions are set by the script below from the
-     lists further down, so the two always match). --node is each ring-dot's diameter. */
+  /* --node is each ring-dot's diameter. */
   .orbit {
-    --inner: 27%; --outer: 45%;
     position: relative; width: min(100%, 780px); aspect-ratio: 1; margin: clamp(40px, 6vw, 72px) auto 0;
     container-type: inline-size;
   }
@@ -108,21 +106,19 @@
   }
   .orbit-center .logo { --logo-h: auto; width: 100%; height: auto; }
   .node {
-    --node: 11.8cqi;
+    --node: 8.2cqi; --gap: 2px; --ring-w: 1.5px;
     position: absolute; left: var(--x); top: var(--y); width: var(--node); height: var(--node); margin: calc(var(--node) / -2) 0 0 calc(var(--node) / -2);
     border-radius: 50%; text-decoration: none; color: var(--heading); z-index: 1;
   }
-  .node.is-group { --node: 8.2cqi; }
   .node img, .person img {
     width: 100%; height: 100%; border-radius: 50%; object-fit: cover; background: #E9E9EC;
     box-shadow: 0 0 0 var(--gap, 3px) #fff, 0 0 0 calc(var(--gap, 3px) + var(--ring-w, 2px)) var(--ring);
   }
   .is-network { --ring: var(--c-network); }
   .is-group { --ring: var(--c-group); }
-  .node.is-group { --gap: 2px; --ring-w: 1.5px; }
   /* the name shows under a ring-dot on hover or focus */
   .node-name {
-    position: absolute; left: 50%; top: calc(100% + 10px); translate: -50% 0; white-space: nowrap; pointer-events: none;
+    position: absolute; left: 50%; top: calc(100% + 10px); translate: var(--name-offset, -50%) 0; white-space: nowrap; pointer-events: none;
     padding: 6px 12px; border-radius: 999px; background: var(--heading); color: #fff; font-size: 14px; line-height: 1.2;
     opacity: 0; transform: translateY(-4px); transition: opacity .18s ease, transform .18s ease;
   }
@@ -136,12 +132,10 @@
     box-shadow: 0 0 0 2.7px #fff, 0 0 0 5px var(--ring);
   }
 
-  /* The one moment of motion: on load the orbits draw and the leaders grow out from the center, the network's
-     leaders first, then its group leaders, as the site's networks multiply */
+  /* The orbit draws and the leaders grow out from the center. */
   @media (prefers-reduced-motion: no-preference) {
     .orbit:not(.is-growing) .node, .orbit:not(.is-growing) .orbit-center, .orbit:not(.is-growing) circle { opacity: 0; }
     .orbit.is-growing circle { stroke-dasharray: 1 1; stroke-dashoffset: 1; animation: orbit-draw 1.1s cubic-bezier(.65, 0, .35, 1) forwards; }
-    .orbit.is-growing circle + circle { animation-delay: .35s; }
     .orbit.is-growing .orbit-center { animation: node-in .7s cubic-bezier(.2, .7, .2, 1) both; }
     .orbit.is-growing .node { animation: node-out .9s cubic-bezier(.2, .8, .2, 1) both; animation-delay: calc(.25s + var(--i) * 45ms); }
   }
@@ -214,20 +208,18 @@
   <section class="lead-hero">
     <div class="wrap">
       <h1>Leadership</h1>
-      <p class="lead">The people leading The Rock Network, and the leaders of its church groups.</p>
+      <p class="lead">Meet the people leading and supporting church groups across The Rock Network.</p>
       <nav class="directory-nav" aria-label="On this page">
         <a href="#groups-leadership">Groups Leadership Team</a>
         <a href="#group-leaders">Regional Overseers</a>
         <a href="#sub-networks">Sub-Networks</a>
-        <a href="#network-leaders">The Rock Leaders</a>
       </nav>
       <div class="orbit" id="orbit">
-        <svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="27" pathLength="1"/><circle cx="50" cy="50" r="45" pathLength="1"/></svg>
+        <svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="45" pathLength="1"/></svg>
         <span class="orbit-center"><span class="logo" role="img" aria-label="The Rock Network"></span></span>
         <!-- the people's ring-dots are added here from the lists below -->
       </div>
       <ul class="orbit-key">
-        <li class="is-network">The Rock Leaders</li>
         <li class="is-group">Groups Leadership &amp; Overseers</li>
       </ul>
     </div>
@@ -240,7 +232,7 @@
         <p class="lead">From homes to parks, schools to workplaces, our discipleship and church groups are engaging with Jesus Disciple and training disciples to become disciple-makers.</p>
         <p class="lead">We have a group of faithful people who have committed themselves to the vision and to providing practical and prayer support to our groups.</p>
         <ul class="people people-group team-people">
-          <li class="person is-group"><img src="assets/leaders/jerry-dirmann.jpg" alt="" width="480" height="480" loading="lazy"><div class="person-label"><span class="person-name">Jerry Dirmann</span><span class="person-role">Director</span></div></li>
+          <li class="person is-group" id="p-jerry-dirmann"><img src="assets/leaders/jerry-dirmann.jpg" alt="" width="480" height="480" loading="lazy"><div class="person-label"><span class="person-name">Jerry Dirmann</span><span class="person-role">Director</span></div></li>
           <li class="person is-group" id="p-tina-shubin"><img src="assets/leaders/tina-shubin.jpg" alt="" width="480" height="480" loading="lazy"><div class="person-label"><span class="person-name">Tina Shubin</span><span class="person-role">Asst. Director</span></div></li>
           <li class="person is-group" id="p-eryne-nevarez"><img src="assets/leaders/eryne-nevarez.jpg" alt="" width="480" height="480" loading="lazy"><div class="person-label"><span class="person-name">Eryne Nevarez</span><span class="person-role">Operations</span></div></li>
           <li class="person is-group" id="p-crissy-shubin"><img src="assets/leaders/crissy-shubin.jpg" alt="" width="480" height="480" loading="lazy"><div class="person-label"><span class="person-name">Crissy Shubin</span><span class="person-role">Admin Asst.</span></div></li>
@@ -357,11 +349,11 @@
     </div>
   </section>
 
-  <section class="section section-tint" id="network-leaders">
+  <section class="section section-tint" id="network-leaders" hidden>
     <div class="wrap">
       <h2 class="section-title">The Rock Leaders</h2>
       <ul class="people people-network">
-        <li class="person is-network" id="p-jerry-dirmann"><img src="assets/leaders/jerry-dirmann.jpg" alt="" width="480" height="480" loading="lazy"><span class="person-name">Jerry Dirmann</span></li>
+        <li class="person is-network"><img src="assets/leaders/jerry-dirmann.jpg" alt="" width="480" height="480" loading="lazy"><span class="person-name">Jerry Dirmann</span></li>
         <li class="person is-network" id="p-kimberly-dirmann"><img src="assets/leaders/kimberly-dirmann.jpg" alt="" width="480" height="480" loading="lazy"><span class="person-name">Kimberly Dirmann</span></li>
         <li class="person is-network" id="p-jonathan-dirmann"><img src="assets/leaders/jonathan-dirmann.jpg" alt="" width="480" height="480" loading="lazy"><span class="person-name">Jonathan Dirmann</span></li>
         <li class="person is-network" id="p-carl-mcaulay"><img src="assets/leaders/carl-mcaulay.jpg" alt="" width="480" height="480" loading="lazy"><span class="person-name">Carl McAulay</span></li>
@@ -428,28 +420,24 @@
 </footer>
 
 <script>
-  /* The orbits use the directory's anchored cards: Rock Leaders inside, other Groups leaders outside.
-     Repeat assignments stay in the directory without creating a second dot for the same person. */
+  /* The orbit uses anchored Groups cards. Unanchored assignments stay in the directory only. */
   (() => {
     const orbit = document.getElementById('orbit');
-    const inner = [...document.querySelectorAll('.people-network .person')];
-    const outer = [...document.querySelectorAll('.people-group .person[id]')];
-    let i = 0;
-    const place = (people, r, cls, turn) => people.forEach((li, k) => {
-      const a = (k / people.length + turn) * 2 * Math.PI - Math.PI / 2;
-      const x = 50 + r * Math.cos(a), y = 50 + r * Math.sin(a);
-      const name = li.querySelector('.person-name').textContent;
+    const people = document.querySelectorAll('.people-group .person[id]');
+    people.forEach((person, index) => {
+      const angle = index / people.length * 2 * Math.PI - Math.PI / 2;
+      const x = 50 + 45 * Math.cos(angle), y = 50 + 45 * Math.sin(angle);
+      const name = person.querySelector('.person-name').textContent;
       const node = document.createElement('a');
-      node.className = 'node ' + cls;
-      node.href = '#' + li.id;
+      node.className = 'node is-group';
+      node.href = '#' + person.id;
       node.setAttribute('aria-label', name);
-      node.style.cssText = `--x:${x}%;--y:${y}%;--i:${i++};--fx:${(50 - x).toFixed(2)}cqi;--fy:${(50 - y).toFixed(2)}cqi`;
-      node.innerHTML = `<img src="${li.querySelector('img').getAttribute('src')}" alt=""><span class="node-name" aria-hidden="true"></span>`;
+      node.style.cssText = `--x:${x}%;--y:${y}%;--i:${index};--fx:${(50 - x).toFixed(2)}cqi;--fy:${(50 - y).toFixed(2)}cqi`;
+      if (x < 25 || x > 75) node.style.setProperty('--name-offset', x < 25 ? '0%' : '-100%');
+      node.innerHTML = `<img src="${person.querySelector('img').getAttribute('src')}" alt=""><span class="node-name" aria-hidden="true"></span>`;
       node.querySelector('.node-name').textContent = name;
       orbit.appendChild(node);
     });
-    place(inner, 27, 'is-network', 0);
-    place(outer, 45, 'is-group', 1 / 30);
     // grow once, when the orbit is first on screen
     new IntersectionObserver(([e], io) => { if (e.isIntersecting) { orbit.classList.add('is-growing'); io.disconnect(); } }, { threshold: 0.2 }).observe(orbit);
   })();
