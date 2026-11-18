@@ -37,10 +37,10 @@ for (const path of ['/hero.html', '/hero.html?heroArt=gallery', '/network-globe-
   });
 }
 
-test('What we do loads the local house church photo', async ({ page }) => {
+test('What we do loads the smiling Iglesia Mi Ciudad group photo', async ({ page }) => {
   await openPage(page);
   const photo = page.locator('#what-we-do img');
-  await expect(photo).toHaveAttribute('src', 'assets/network-photos/house-church-gathering.webp');
+  await expect(photo).toHaveAttribute('src', 'assets/network-photos/globe/iglesia-mi-ciudad-group.webp');
   await photo.scrollIntoViewIfNeeded();
   await expect.poll(() => photo.evaluate(img => img.naturalWidth)).toBeGreaterThan(0);
 });

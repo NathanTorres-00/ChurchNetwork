@@ -447,6 +447,7 @@
   .subtitle { margin: 14px 0 0; font-size: clamp(20px, 2vw, 26px); line-height: 1.25; font-weight: 500; color: var(--heading); letter-spacing: -0.015em; }
   /* Jesus Disciple: the app's own wordmark as the heading, with what it is underneath */
   .jd-heading { display: flex; flex-direction: column; align-items: flex-start; gap: clamp(14px, 1.6vw, 20px); }
+  .jd-heading + .subtitle { font-weight: 700; }
   .jd-logo { display: block; width: clamp(240px, 34vw, 420px); height: auto; }
   .eyebrow { margin: 0 0 20px; font-size: 16px; font-weight: 500; color: var(--c-disciples); }
 
@@ -554,7 +555,7 @@
   }
   .jdu-body { max-width: 36rem; }
   .jdu-title {
-    margin: 0; font-size: clamp(40px, 5.6vw, 76px); line-height: 1; font-weight: 500; letter-spacing: -0.035em;
+    margin: 0; font-size: clamp(40px, 5.6vw, 76px); line-height: 1; font-weight: 700; letter-spacing: -0.035em;
     color: #fff; text-wrap: balance;
   }
   .jdu-text { margin: 22px 0 0; max-width: 36ch; font-size: clamp(18px, 1.6vw, 22px); line-height: 1.45; color: rgba(255,255,255,.78); }
@@ -571,7 +572,7 @@
     .jdu::after { display: none; }
   }
   .reel-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; }
-  .reel-title { margin: 0; font-size: clamp(24px, 2.6vw, 34px); line-height: 1.15; font-weight: 500; color: var(--heading); letter-spacing: -0.02em; }
+  .reel-title { margin: 0; font-size: clamp(24px, 2.6vw, 34px); line-height: 1.15; font-weight: 700; color: var(--heading); letter-spacing: -0.02em; }
   .reel-nav { display: flex; gap: 10px; }
   .reel-group.is-static .reel-nav { visibility: hidden; }        /* every card fits: nothing to scroll */
   .reel-btn {
@@ -945,7 +946,7 @@
   <section class="section" id="what-we-do">
     <div class="wrap split">
       <div class="frame">
-        <img src="assets/network-photos/house-church-gathering.webp" width="1440" height="810" alt="A house church gathered in a living room" loading="lazy">
+        <img src="assets/network-photos/globe/iglesia-mi-ciudad-group.webp" width="640" height="484" alt="A smiling group at Iglesia Mi Ciudad" loading="lazy">
       </div>
       <div>
         <h2 class="section-title">What we do</h2>
@@ -1028,6 +1029,7 @@
   <section class="section section-tint" id="app">
     <div class="wrap">
       <h2 class="section-title jd-heading"><img class="jd-logo" src="assets/jesus-disciple-logo.png" width="1200" height="194" alt="Jesus Disciple"><span>A Four-Stage Ministry tool</span></h2>
+      <h3 class="subtitle">Are you a Pastor?</h3>
       <p class="lead">Use the Jesus Disciple App to Launch your own New Testament Network</p>
     </div>
       <div class="reel-group">
@@ -1082,7 +1084,7 @@
                sizes="(max-width: 1180px) 100vw, 1180px" alt="" loading="lazy">
           <div class="jdu-body">
             <h3 class="jdu-title">Jesus Disciple University</h3>
-            <p class="jdu-text">JDU is an online educational training institution that prepares individuals, ministry leaders, and churches to live out, teach, and multiply disciple-making in their own communities.</p>
+            <p class="jdu-text">JDU provides online training for disciple-makers, leaders, pastors, and missionaries from churches and ministries globally.</p>
             <a class="button button-primary" href="#" data-placeholder>Learn more</a>
           </div>
         </div>
@@ -1146,27 +1148,27 @@
       <ol class="timeline">
         <li class="step">
           <div class="node"><span class="glyph" aria-hidden="true"></span></div>
-          <p class="when">Where it began</p>
+          <p class="when">Multiplied disciples</p>
           <h3>One local church</h3>
-          <p>A discipleship system for one local church designed to build solid lives.</p>
+          <p>began making disciples who make disciples</p>
         </li>
         <li class="step">
           <div class="node"><span class="glyph" aria-hidden="true"></span></div>
-          <p class="when">Growing</p>
+          <p class="when">Multiplied leaders</p>
           <h3>Disciples became leaders</h3>
-          <p>As people were discipled, they started leading groups of their own, and those groups began to multiply.</p>
+          <p>that started new groups</p>
         </li>
         <li class="step">
           <div class="node"><span class="glyph" aria-hidden="true"></span></div>
-          <p class="when">Multiplying</p>
+          <p class="when">Multiplied churches</p>
           <h3>Groups became churches</h3>
-          <p>Groups grew into new churches and local hubs, each one raising up leaders to send out.</p>
+          <p>forming a network</p>
         </li>
         <li class="step">
           <div class="node"><span class="glyph" aria-hidden="true"></span></div>
-          <p class="when">Today</p>
-          <h3>A global movement</h3>
-          <p>Today the network connects disciple makers across continents multiplying movements far beyond where it began.</p>
+          <p class="when">Multiplied movements</p>
+          <h3>Network sent missionaries</h3>
+          <p>to repeat the process</p>
         </li>
       </ol>
     </div>
