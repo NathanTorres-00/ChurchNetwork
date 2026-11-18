@@ -31,6 +31,13 @@ const { top } = (await getEntry("homePage", "home"))!.data;
   <Fragment slot="after">
     <AdjustPanelHome />
     <script is:inline src="/scripts/home-lenis.js"></script>
+    <script is:inline src="/assets/network-globe-photos.js"></script>
+    <script is:inline>
+      // The shared photo list (also used by the Wix demos) holds addresses relative to the site root; make them
+      // absolute so /embed/globe, one folder down, finds the photos too
+      if (typeof NETWORK_GLOBE_PHOTOS !== "undefined")
+        NETWORK_GLOBE_PHOTOS.forEach((url, i, list) => { list[i] = new URL(url, location.origin + "/").href; });
+    </script>
     <script is:inline src="/scripts/home-main.js"></script>
   </Fragment>
 </Layout>

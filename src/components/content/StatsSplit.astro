@@ -1,5 +1,7 @@
 ---
 import type { HTMLAttributes } from "astro/types";
+import type { ImageMetadata } from "astro";
+import { Image } from "astro:assets";
 
 type Stat = { value: string; label: string };
 
@@ -13,7 +15,7 @@ interface Props extends HTMLAttributes<"div"> {
   /** Paragraph under the subtitle. */
   lead?: string;
   /** Photo beside the text. */
-  photo?: { src: string; alt: string };
+  photo?: { src: ImageMetadata; alt: string };
   /** Numbers that count up as they scroll into view, each in the next headline color. */
   stats?: Stat[];
 }
@@ -27,7 +29,7 @@ const colors = ["disciples", "leaders", "churches", "movements"];
     <div class:list={["stats-split_wrap", className]} {...rest}>
       {photo && (
         <div class="frame stats-split_photo">
-          <img src={photo.src} alt={photo.alt} loading="lazy" />
+          <Image src={photo.src} alt={photo.alt} widths={[720, 1440]} sizes="(max-width: 860px) 100vw, 600px" loading="lazy" />
         </div>
       )}
       <div>

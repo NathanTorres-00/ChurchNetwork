@@ -2,19 +2,6 @@
    opening into photos. Shared by the Gallery tab (network-gallery.html) and the hero (hero.html).
    d3 and d3-geo-projection are globals from the CDN; nothing here touches the DOM until createGallery() runs. */
 
-// Placeholder landscapes (Unsplash). Later: photos of house churches and campuses in the network.
-export const PHOTO_IDS = [
-  '1506905925346-21bda4d32df4', '1501785888041-af3ef285b470', '1470071459604-3b5ec3a7fe05',
-  '1441974231531-c6227db76b6e', '1472214103451-9374bd1c798e', '1469474968028-56623f02e42e',
-  '1447752875215-b2761acb3c5d', '1433086966358-54859d0ed716', '1500534314209-a25ddb2bd429',
-  '1464822759023-fed622ff2c3b', '1426604966848-d7adac402bff', '1418065460487-3e41a6c84dc5',
-  '1505765050516-f72dcac9c60e', '1501854140801-50d01698950b', '1476514525535-07fb3b4ae5f1',
-  '1439066615861-d1af74d74000', '1454496522488-7a8e488e8606', '1500382017468-9049fed747ef',
-  '1507525428034-b723cf961d3e', '1475924156734-496f6cac6ec1', '1465146344425-f00d5f5c8f07',
-  '1490750967868-88aa4486c946', '1482192505345-5655af888cc4', '1444464666168-49d633b86797',
-];
-export const photoUrl = id => `https://images.unsplash.com/photo-${id}?w=640&h=640&fit=crop&q=70&auto=format`;
-
 const pct = v => Math.round(v * 100) + '%';
 const sec = v => v.toFixed(1) + 's';
 const times = v => '×' + v.toFixed(2);

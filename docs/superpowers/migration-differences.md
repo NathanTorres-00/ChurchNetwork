@@ -79,3 +79,12 @@ decision Nathan should know about. Each item is marked **fixed**, **accepted** o
 - **The Adjust panel's Page settings** (section spacing, corner radius, content width, body text size) still
   work: the Lumos tokens read the same variables the panel sets.
 - **Find a hub** stays hidden unless turned on, as before.
+
+## Ported from main after the plan was written
+
+- **Rock Network photos on Home and the globe** (ported from main 6ce0d33): the globe's photo pins and the
+  Gallery use the network's own photos (`public/assets/network-photos/globe/`, listed in
+  `public/assets/network-globe-photos.js`), and What we do shows the house church photo (now content:
+  `whatWeDo.photo`). The four Wix demos and the gallery engine are updated to match `main` byte for byte.
+  Home and `/embed/globe` make the shared list's addresses absolute after loading it, so the embed (one folder
+  down) finds the photos too.

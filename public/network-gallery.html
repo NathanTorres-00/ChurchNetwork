@@ -201,8 +201,9 @@
   </div>
 </aside>
 
+<script src="assets/network-globe-photos.js"></script>
 <script type="module">
-import { createGallery, GALLERY_CONTROLS, PHOTO_IDS, photoUrl } from './assets/network-gallery.js';
+import { createGallery, GALLERY_CONTROLS } from './assets/network-gallery.js';
 
 /* =========================================================================
    CONFIG: every parameter the panel controls. Paste "Copy settings" output here.
@@ -294,7 +295,7 @@ const gallery = createGallery({
   canvas,
   stage: document.getElementById('stage'),
   cfg,
-  photos: PHOTO_IDS.map(photoUrl),
+  photos: NETWORK_GLOBE_PHOTOS,
   // The open panel covers the right side (desktop) or the bottom (phones); the globe centers in what's left
   insets: () => {
     const open = panel && panel.classList.contains('is-open');

@@ -71,7 +71,7 @@ const homePage = defineCollection({
         heading: z.string(),
         subtitle: z.string(),
         lead: z.string(),
-        photo: remotePhoto,
+        photo: z.object({ src: image(), alt: z.string() }),
         stats: z.array(z.object({ value: z.string(), label: z.string() })).length(4),
       }),
       how: z.object({
