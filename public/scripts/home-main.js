@@ -492,12 +492,23 @@ function heroGalleryGroups(GALLERY_CONTROLS) {
     setLocalProjection(site);
   }
 
+  /* Where the networks sit depends only on the seed, the spacing and the land, and working it out (thousands of
+     points tested against the coastline) takes most of a second, so a replay with the same settings reuses it */
+  let siteLayout = null;
   function buildSites() {
+    const useLand = cfg.landOnly && landFeature;
+    const key = [cfg.seed, cfg.siteSpacing, !!cfg.landOnly].join();
+    if (!siteLayout || siteLayout.key !== key || siteLayout.land !== useLand) {
+      siteLayout = { key, land: useLand, sites: placeSites(useLand) };
+    }
+    sites = siteLayout.sites.map(s => ({ ...s, state: 'dormant', start: 0, out: 0, nodes: null }));
+    sites.forEach(makeTree);
+  }
+  function placeSites(useLand) {
     const rng = mulberry32(cfg.seed);
     const sp = cfg.siteSpacing * DEG;
     const N = Math.round(clamp(4 * Math.PI / (sp * sp) * 6, 600, 4000));
     const golden = Math.PI * (3 - Math.sqrt(5));
-    const useLand = cfg.landOnly && landFeature;
     const cands = [];
     for (let i = 0; i < N; i++) {
       const y = 1 - (i + 0.5) * 2 / N;
@@ -514,11 +525,7 @@ function heroGalleryGroups(GALLERY_CONTROLS) {
     const picked = [];
     for (const c of cands) if (picked.every(p => d3.geoDistance(p, c) >= sp)) picked.push(c);
 
-    sites = picked.map(ll => ({
-      ll, seed: (rng() * 1e9) | 0, angle: rng() * 360,
-      state: 'dormant', start: 0, out: 0, nodes: null,
-    }));
-    sites.forEach(makeTree);
+    return picked.map(ll => ({ ll, seed: (rng() * 1e9) | 0, angle: rng() * 360 }));
   }
 
   function resetSite(site) {
@@ -604,7 +611,9 @@ function heroGalleryGroups(GALLERY_CONTROLS) {
 
   function resize() {
     const r = stage.getBoundingClientRect();
-    view.dpr = Math.min(window.devicePixelRatio || 1, 2);
+    // ?dpr=1: a faint background copy (the site footer's) draws at 1x; on a Retina screen that's a quarter of the
+    // pixels, and since it shares the page's main thread, that keeps the page's own scrolling smooth
+    view.dpr = Math.min(+new URLSearchParams(location.search).get('dpr') || window.devicePixelRatio || 1, 2);
     view.w = r.width; view.h = r.height;
     for (const c of [canvas, layer]) {
       c.width = Math.round(r.width * view.dpr);
@@ -683,6 +692,7 @@ function heroGalleryGroups(GALLERY_CONTROLS) {
   const statusEl = showControls ? document.getElementById('status') : null;
 
   function draw() {
+    if (!layer.width || !layer.height) return;   // hidden (the Gallery is showing): nothing to draw on yet
     const W = view.w, H = view.h, dpr = view.dpr;
     const E = EASE[cfg.easing] || EASE.sine;
     const T = siteTiming();
@@ -1367,6 +1377,9 @@ function heroGalleryGroups(GALLERY_CONTROLS) {
     buildSites();
     setPlaying(true);
   }
+  // Embedded (the site footer's globe): the host page replays the growth each time it scrolls back into view,
+  // instead of reloading the whole page in its frame
+  if (new URLSearchParams(location.search).get('embed') === 'globe') window.rnGlobe = { restart };
 
   function syncInput(key) {
     const el = inputs[key];

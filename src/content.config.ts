@@ -77,7 +77,7 @@ const homePage = defineCollection({
           z.object({
             heading: z.string(),
             body: z.string(),
-            /** Unsplash photo id shown on hover. */
+            /** Photo shown on hover: a file under assets/ (as `assets/network-photos/…`), or an Unsplash photo id. */
             photo: z.string(),
             button,
           }),

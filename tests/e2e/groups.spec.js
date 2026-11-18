@@ -133,13 +133,21 @@ test('footer can be grey, and plays the Pins globe behind it when it comes into 
   await page.locator('#c-footerGrey').fill('0.4');
   await expect(page.locator('html')).toHaveAttribute('data-footer-ink', 'light');   // dark grey: light text
   await page.locator('#close').click();
-  // the globe loads only once the footer is near the screen, on the footer's grey
-  await expect(page.locator('.footer-anim iframe')).toHaveCount(0);
+  // the globe loads ahead of time (once the page is idle), on the footer's grey, at 1x so it stays light
   await page.evaluate(() => scrollTo({ top: document.body.scrollHeight, behavior: 'instant' }));
   const frame = page.locator('.footer-anim iframe');
   await expect(frame).toHaveCount(1);
+  const bgNow = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--footer-bg').trim());
+  await expect(frame).toHaveAttribute('src', new RegExp('bg=' + bgNow.slice(1)));   // rebuilt on the grey
+  // coming back to the footer replays the same frame instead of reloading it
+  const handle = await frame.elementHandle();
+  await page.evaluate(() => scrollTo({ top: 0, behavior: 'instant' }));
+  await page.waitForTimeout(300);
+  await page.evaluate(() => scrollTo({ top: document.body.scrollHeight, behavior: 'instant' }));
+  expect(await handle.evaluate(el => el.isConnected)).toBe(true);
   const src = await frame.getAttribute('src');
   expect(src).toContain('embed=globe');
+  expect(src).toContain('dpr=1');
   const bg = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--footer-bg').trim());
   expect(src).toContain('bg=' + bg.slice(1));
   // its pins keep clear of the footer's text

@@ -55,11 +55,15 @@
   }
 
   /* ---------- Animation: the Home hero's Pins globe, recoloured to the footer ---------- */
-  let animBox = null, animSrc = '', near = false, animTimer = 0;
+  /* The frame loads the whole Home page (then shows only its globe), which holds up the page for most of a second
+     on load. So it loads once, in idle time after the page has loaded (or straight away if the footer is reached
+     first), and stays: each time the footer comes back into view the globe replays its growth (rnGlobe.restart)
+     instead of reloading. It sits still while off screen (the globe rests when it isn't visible). */
+  let animBox = null, animSrc = '', near = false, ready = false, animTimer = 0;
   function animUrl() {
     const bg = bgHex(), ink = darkBg() ? '#FFFFFF' : '#000000';
     const q = new URLSearchParams({
-      embed: 'globe', controls: '0', smoothScroll: '0', heroArt: 'pins', showPins: '1',
+      embed: 'globe', controls: '0', smoothScroll: '0', heroArt: 'pins', showPins: '1', dpr: '1',
       bg: bg.slice(1), oceanColor: bg.slice(1), landColor: mix(bg, ink, 0.05), gridColor: mix(bg, ink, 0.1),
       lineColor: mix(bg, ink, 0.24), dotColor: mix(bg, ink, 0.28), newbornColor: mix(bg, ink, 0.38), pinColor: mix(bg, ink, 0.16),
     });
@@ -67,7 +71,7 @@
   }
   function syncAnim() {
     if (!animBox) return;
-    const want = f.anim === 'pins' && near && !matchMedia('(prefers-reduced-motion: reduce)').matches ? animUrl() : '';
+    const want = f.anim === 'pins' && (near || ready) && !matchMedia('(prefers-reduced-motion: reduce)').matches ? animUrl() : '';
     if (want === animSrc) return;
     clearTimeout(animTimer);
     // colour changes from the panel come in quick bursts: rebuild the globe once they settle
@@ -151,7 +155,20 @@
       animBox.setAttribute('aria-hidden', 'true');
       footer.prepend(animBox);
       // the globe runs only while the footer is on or near the screen
-      new IntersectionObserver(([e]) => { near = e.isIntersecting; syncAnim(); }, { rootMargin: '200px 0px' }).observe(footer);
+      new IntersectionObserver(([e]) => {
+        const back = e.isIntersecting && !near;
+        near = e.isIntersecting;
+        if (near) ready = true;              // once loaded, it stays
+        syncAnim();
+        if (back) { const fr = animBox.querySelector('iframe'); try { fr && fr.contentWindow.rnGlobe && fr.contentWindow.rnGlobe.restart(); } catch {} }
+      }, { rootMargin: '200px 0px' }).observe(footer);
+      // (not while Home's loading screen is still playing: it would stall)
+      const preload = () => {
+        if (root.classList.contains('is-loading')) return setTimeout(idle, 500);
+        ready = true; syncAnim();
+      };
+      const idle = () => (window.requestIdleCallback ? requestIdleCallback(preload, { timeout: 4000 }) : setTimeout(preload, 1500));
+      document.readyState === 'complete' ? idle() : addEventListener('load', idle, { once: true });
       const prev = window.rnHeroTextRects;
       window.rnHeroTextRects = frame => (animBox.contains(frame) ? footerTextRects(frame) : prev ? prev(frame) : []);
       addEventListener('scroll', onScroll, { passive: true });

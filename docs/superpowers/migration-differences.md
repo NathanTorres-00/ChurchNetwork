@@ -100,3 +100,7 @@ decision Nathan should know about. Each item is marked **fixed**, **accepted** o
 - **Groups' quote photo** ("Three friends laughing around a table") is now a local copy of the Unsplash photo
   `main` uses, so Astro can size it like the other content images.
 - Comment mode on Groups and Leadership (main d98a379) is not ported: comment mode stays at tag `pre-astro`.
+- **How we do it hover photos and the footer globe** (ported from main cc651fc): the four How we do it rows show
+  the network's own photos on hover; the footer's globe loads once in idle time after the page loads and replays
+  its growth each time the footer comes back into view (instead of reloading), at 1x pixel density; the globe
+  reuses its network layout on replay.

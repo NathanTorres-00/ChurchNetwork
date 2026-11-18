@@ -1,0 +1,724 @@
+/* Feedback pins, in Stacki's look: calm, like a comments sidebar.
+ *
+ * At rest the panel is a header row, the tabs and the list; everything else
+ * opens from an icon. Every value is a kit token (`--stacki-*`, docs/apps.md,
+ * "Look and feel"), so Stacki's design reaches this app with each release.
+ * Stacki's rules for our own markup: controls are fills, never outlines; one 1px
+ * line between major sections; secondary text muted; menu checks on the right;
+ * the accent only for the main action, the pressed state and focus. */
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--stacki-bg-panel);
+  color: var(--stacki-text);
+  font-family: var(--stacki-font);
+  font-size: var(--stacki-font-size);
+  color-scheme: dark;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+/* --- Header: file context and two icons, then the tabs ------------------------ */
+
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--stacki-space-3);
+  padding: var(--stacki-space-4) var(--stacki-space-4) var(--stacki-space-3);
+  border-bottom: 1px solid var(--stacki-bg-active);
+}
+
+.head-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+}
+
+.file-icon {
+  flex: none;
+  display: inline-flex;
+  margin-right: var(--stacki-space-2);
+  color: var(--stacki-text-faint);
+}
+
+/* The file dropdown (this page or all pages): as wide as its label, the rest of the row stays free. */
+.file-name {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 220px;
+  margin-right: auto;
+}
+
+.tabs-row .tabs {
+  flex: 1;
+  min-width: 0;
+  margin-right: var(--stacki-space-1);
+}
+
+/* Icon buttons: the kit's ghost button, square. Pressed is a fill and the accent, never an outline. */
+.app .icon-button {
+  position: relative;
+  flex: none;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border-radius: var(--stacki-radius-control);
+  color: var(--stacki-text-faint);
+}
+
+.app .icon-button:hover:not(:disabled) {
+  color: var(--stacki-text);
+}
+
+.app .icon-button[aria-pressed='true'],
+.app .icon-button[aria-expanded='true'] {
+  background: var(--stacki-bg-active);
+  color: var(--stacki-text);
+}
+
+/* The kit's icon buttons have no pressed state yet: the app marks the host, and fills the button. */
+.app stacki-button[data-pressed] button {
+  background: var(--stacki-bg-active);
+  color: var(--stacki-text);
+}
+
+.app stacki-button.pin-mode[data-pressed] button {
+  color: var(--stacki-accent);
+}
+
+.app stacki-menu {
+  flex: none;
+}
+
+/* A filter that is not the default: a small accent dot, the reset label's cue. */
+.dot {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 6px;
+  height: 6px;
+  border-radius: var(--stacki-radius-round);
+  background: var(--stacki-accent);
+}
+
+/* --- Popovers: the ⋯ menu and the filters, in the kit's menu look --------------- */
+
+.anchor {
+  position: relative;
+  display: flex;
+}
+
+.popover {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + var(--stacki-space-1));
+  right: 0;
+  min-width: 200px;
+  padding: var(--stacki-space-1);
+  border-radius: var(--stacki-radius);
+  background: var(--stacki-bg-popover);
+  box-shadow: var(--stacki-shadow-popover);
+}
+
+.filters {
+  display: flex;
+  flex-direction: column;
+  gap: var(--stacki-space-3);
+  min-width: 240px;
+  padding: var(--stacki-space-3) var(--stacki-space-4) var(--stacki-space-4);
+}
+
+.popover-title {
+  color: var(--stacki-text-muted);
+  font-weight: var(--stacki-font-weight-strong);
+}
+
+.popover-field {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+  align-items: center;
+  gap: var(--stacki-space-3);
+  color: var(--stacki-text-muted);
+}
+
+.search-row {
+  padding-top: var(--stacki-space-1);
+}
+
+/* --- The list ---------------------------------------------------------------------- */
+
+.threads {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  padding: var(--stacki-space-2) var(--stacki-space-2) var(--stacki-space-4);
+}
+
+.compose {
+  display: flex;
+  flex-direction: column;
+  gap: var(--stacki-space-3);
+  margin-bottom: var(--stacki-space-2);
+  padding: var(--stacki-space-3);
+  border-radius: var(--stacki-radius);
+  background: var(--stacki-bg-hover);
+}
+
+.compose-target {
+  display: flex;
+  gap: var(--stacki-space-2);
+  margin: 0;
+  color: var(--stacki-text-faint);
+  font-size: var(--stacki-font-size-small);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--stacki-space-2);
+}
+
+.actions.end {
+  justify-content: flex-end;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.empty {
+  margin: 0;
+  padding: var(--stacki-space-4) var(--stacki-space-3);
+  color: var(--stacki-text-faint);
+  line-height: 1.5;
+}
+
+.file-title {
+  display: flex;
+  align-items: center;
+  gap: var(--stacki-space-2);
+  padding: var(--stacki-space-4) var(--stacki-space-3) var(--stacki-space-1);
+  color: var(--stacki-text-faint);
+  font-size: var(--stacki-font-size-small);
+  font-weight: var(--stacki-font-weight-strong);
+}
+
+.file-title-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-title-count {
+  color: var(--stacki-text-faint);
+  font-weight: normal;
+}
+
+.file-title:first-child {
+  padding-top: var(--stacki-space-1);
+}
+
+.thread {
+  border-radius: var(--stacki-radius);
+}
+
+.thread + .thread {
+  margin-top: 2px;
+}
+
+.thread.is-active {
+  background: var(--stacki-bg-hover);
+}
+
+/* A row is one button over its summary; its fill is the hover state, not the kit's button fill. */
+.app .thread-head {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--stacki-space-1);
+  width: 100%;
+  padding: var(--stacki-space-3);
+  border: 0;
+  border-radius: var(--stacki-radius);
+  background: transparent;
+  color: var(--stacki-text);
+  font-weight: 400;
+  text-align: left;
+}
+
+.app .thread:not(.is-active) .thread-head:hover,
+.app .thread.is-hovered:not(.is-active) .thread-head {
+  background: var(--stacki-bg-hover);
+}
+
+.app .thread.is-active .thread-head:hover {
+  background: transparent;
+}
+
+.byline {
+  display: flex;
+  align-items: center;
+  gap: var(--stacki-space-2);
+  min-width: 0;
+}
+
+.who-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: var(--stacki-font-weight-medium);
+}
+
+.time {
+  flex: none;
+  color: var(--stacki-text-faint);
+  font-size: var(--stacki-font-size-small);
+  font-variant-numeric: tabular-nums;
+}
+
+.unread {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  margin-left: auto;
+  border-radius: var(--stacki-radius-round);
+  background: var(--stacki-accent);
+}
+
+.preview {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  padding-left: 26px;
+  color: var(--stacki-text);
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.thread.is-resolved .preview,
+.thread.is-resolved .who-name {
+  color: var(--stacki-text-muted);
+}
+
+/* A block, not flex: the spaces around its separators must survive. */
+.meta-line {
+  display: block;
+  min-width: 0;
+  text-overflow: ellipsis;
+  padding-left: 26px;
+  overflow: hidden;
+  color: var(--stacki-text-faint);
+  font-size: var(--stacki-font-size-small);
+  white-space: nowrap;
+}
+
+.meta-line .is-missing {
+  color: var(--stacki-danger);
+}
+
+.meta-line .resolved-mark {
+  color: var(--stacki-success);
+}
+
+.avatar {
+  position: relative;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--stacki-radius-round);
+  background: var(--stacki-bg-input);
+  color: var(--stacki-text-muted);
+  font-size: var(--stacki-font-size-tiny);
+  font-weight: var(--stacki-font-weight-strong);
+  overflow: hidden;
+}
+
+/* The picture covers the initial once it loads. */
+.avatar img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* --- An open thread ------------------------------------------------------------------ */
+
+.thread-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--stacki-space-4);
+  padding: var(--stacki-space-1) var(--stacki-space-3) var(--stacki-space-3);
+}
+
+.snapshot {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--stacki-radius-control);
+  background: var(--stacki-bg-input);
+}
+
+.comment {
+  display: flex;
+  flex-direction: column;
+  gap: var(--stacki-space-1);
+}
+
+.comment-text {
+  padding-left: 26px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.comment .reactions,
+.comment .edit {
+  padding-left: 26px;
+}
+
+.edited {
+  color: var(--stacki-text-faint);
+  font-size: var(--stacki-font-size-tiny);
+}
+
+.comment-actions {
+  display: flex;
+  gap: 2px;
+  margin-left: auto;
+  opacity: 0;
+  transition: opacity 0.12s;
+}
+
+.comment:hover .comment-actions,
+.comment:focus-within .comment-actions {
+  opacity: 1;
+}
+
+.comment-actions + .time {
+  margin-left: 0;
+}
+
+.mention {
+  color: var(--stacki-accent);
+  font-weight: var(--stacki-font-weight-medium);
+}
+
+.mention.is-me {
+  padding: 0 2px;
+  border-radius: 3px;
+  background: var(--stacki-accent-soft);
+}
+
+.reactions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--stacki-space-1);
+}
+
+.reactions:empty {
+  display: none;
+}
+
+.app .reaction {
+  height: 22px;
+  padding: 0 var(--stacki-space-2);
+  border: 0;
+  border-radius: var(--stacki-radius-round);
+  background: var(--stacki-bg-input);
+  color: var(--stacki-text-muted);
+  font-size: var(--stacki-font-size-small);
+  font-weight: 400;
+  gap: var(--stacki-space-1);
+}
+
+.app .reaction:hover:not(:disabled) {
+  background: var(--stacki-bg-active);
+}
+
+.app .reaction.is-mine {
+  background: var(--stacki-accent-soft);
+  color: var(--stacki-text);
+}
+
+.app .reaction.add {
+  opacity: 0;
+}
+
+.comment:hover .reaction.add,
+.reaction.add:focus-visible {
+  opacity: 1;
+}
+
+.reaction-picker {
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: var(--stacki-radius-round);
+  background: var(--stacki-bg-input);
+}
+
+.app .reaction-picker button {
+  width: 24px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--stacki-radius-round);
+  background: transparent;
+}
+
+.app .reaction-picker button:hover {
+  background: var(--stacki-bg-active);
+}
+
+.edit {
+  display: flex;
+  flex-direction: column;
+  gap: var(--stacki-space-2);
+}
+
+.note {
+  display: flex;
+  align-items: center;
+  gap: var(--stacki-space-3);
+  margin: 0;
+  color: var(--stacki-text-faint);
+  font-size: var(--stacki-font-size-small);
+  line-height: 1.4;
+}
+
+.note p {
+  flex: 1;
+  margin: 0;
+}
+
+.reply {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--stacki-space-2);
+}
+
+.field-wrap {
+  position: relative;
+}
+
+/* --- The mention picker: the kit's menu look, for our own rows ---------------------- */
+
+.mention-menu {
+  position: absolute;
+  z-index: 10;
+  left: 0;
+  right: 0;
+  margin-top: var(--stacki-space-1);
+  padding: var(--stacki-space-1);
+  border-radius: var(--stacki-radius);
+  background: var(--stacki-bg-popover);
+  box-shadow: var(--stacki-shadow-popover);
+}
+
+.mention-option {
+  display: flex;
+  align-items: center;
+  gap: var(--stacki-space-2);
+  height: var(--stacki-row-height);
+  padding: 0 var(--stacki-space-3);
+  border-radius: var(--stacki-radius-option);
+  cursor: pointer;
+}
+
+.mention-option .avatar {
+  width: 16px;
+  height: 16px;
+  font-size: 9px;
+}
+
+.mention-option.is-highlighted {
+  background: var(--stacki-accent);
+  color: var(--stacki-accent-text);
+}
+
+.mention-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mention-handle {
+  margin-left: auto;
+  color: var(--stacki-text-faint);
+  font-size: var(--stacki-font-size-small);
+}
+
+.mention-option.is-highlighted .mention-handle {
+  color: inherit;
+  opacity: 0.8;
+}
+
+/* --- Sheets --------------------------------------------------------------------------- */
+
+.sheet {
+  width: min(400px, calc(100vw - 32px));
+  padding: var(--stacki-space-4);
+  border: 0;
+  border-radius: var(--stacki-radius);
+  background: var(--stacki-bg-popover);
+  color: var(--stacki-text);
+  box-shadow: var(--stacki-shadow-popover);
+}
+
+.sheet[open] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--stacki-space-4);
+}
+
+.sheet::backdrop {
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.sheet-title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: var(--stacki-font-weight-strong);
+}
+
+.sheet-note {
+  margin: 0;
+  color: var(--stacki-text-muted);
+  line-height: 1.5;
+}
+
+.keys {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--stacki-space-2) var(--stacki-space-4);
+  margin: 0;
+  color: var(--stacki-text-muted);
+}
+
+.keys dt,
+.keys dd {
+  margin: 0;
+}
+
+kbd {
+  display: inline-block;
+  min-width: 18px;
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: var(--stacki-bg-input);
+  color: var(--stacki-text);
+  font-family: var(--stacki-font);
+  font-size: var(--stacki-font-size-small);
+  text-align: center;
+}
+
+.chip {
+  flex: none;
+  margin-right: var(--stacki-space-1);
+  padding: 1px var(--stacki-space-2);
+  border-radius: var(--stacki-radius-round);
+  background: var(--stacki-bg-input);
+  color: var(--stacki-text-faint);
+  font-size: var(--stacki-font-size-tiny);
+}
+
+/* The AI badge beside an agent's name: a sparkle and the agent's name, on a soft accent fill. */
+.agent-badge {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 6px;
+  border-radius: var(--stacki-radius-round);
+  background: var(--stacki-accent-soft);
+  color: var(--stacki-accent);
+  font-size: var(--stacki-font-size-tiny);
+  font-weight: var(--stacki-font-weight-medium);
+  white-space: nowrap;
+}
+
+.meta-line .outside-mark {
+  color: var(--stacki-text-muted);
+  font-style: italic;
+}
+
+.invalid-note {
+  padding: var(--stacki-space-2) var(--stacki-space-3);
+}
+
+/* Delete icons stay quiet until the pointer is on them, then take the danger colour. */
+.app stacki-button.delete-button button:hover:not(:disabled),
+.app stacki-button.delete-button button:focus-visible {
+  color: var(--stacki-danger);
+}
+
+/* Placing a pin again (Move, Re-attach): one quiet line, so the click on the canvas is expected. */
+.move-hint {
+  margin: 0 0 var(--stacki-space-2);
+  padding: var(--stacki-space-2) var(--stacki-space-3);
+  border-radius: var(--stacki-radius-control);
+  background: var(--stacki-bg-hover);
+  color: var(--stacki-text-muted);
+  font-size: var(--stacki-font-size-small);
+}
+
+.compose-scope {
+  max-width: 100%;
+}
+
+/* --- The in-app confirm (confirm.js) ------------------------------------------------
+   Never the browser's dialogs: a popover fill beside the control that asked. */
+
+.confirm-popover {
+  position: fixed;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  gap: var(--stacki-space-1);
+  width: 232px;
+  padding: var(--stacki-space-3) var(--stacki-space-4) var(--stacki-space-4);
+  border-radius: var(--stacki-radius);
+  background: var(--stacki-bg-popover);
+  box-shadow: var(--stacki-shadow-popover);
+  color: var(--stacki-text);
+  font-size: var(--stacki-font-size);
+}
+
+.confirm-title {
+  font-weight: var(--stacki-font-weight-strong);
+}
+
+.confirm-message {
+  color: var(--stacki-text-muted);
+  line-height: 1.45;
+}
+
+.confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--stacki-space-2);
+  margin-top: var(--stacki-space-3);
+}

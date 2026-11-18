@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Feedback pins</title>
+    <!-- Stacki's UI kit, served from the app's own origin: relative paths work in Desktop and Studio alike. -->
+    <link rel="stylesheet" href="__stacki/ui.css" />
+    <link rel="stylesheet" href="app.css" />
+    <script src="stacki-sdk.js"></script>
+    <script src="__stacki/ui.js"></script>
+  </head>
+  <body>
+    <div class="stacki-ui app">
+      <!-- At rest: this header row, the tabs and the list. Everything else opens from an icon. -->
+      <header class="head">
+        <div class="head-row">
+          <span id="file-icon" class="file-icon" aria-hidden="true"></span>
+          <!-- Which threads the list shows: this file's, or every page's. Remembered per person (prefs/view). -->
+          <stacki-dropdown id="file-name" class="file-name" value="file" label="Which pages">
+            <option value="file">No page open</option>
+            <option value="all">All pages</option>
+          </stacki-dropdown>
+          <span id="view-only" class="chip" hidden>View only</span>
+          <stacki-button id="pin-mode" class="pin-mode" variant="ghost" icon="pin" aria-label="Comment mode is off"></stacki-button>
+          <!-- Select an element (Navigator or canvas, inside a component too), then comment on it. -->
+          <stacki-button id="comment-selection" variant="ghost" icon="plus" aria-label="Comment on selection (C)" disabled></stacki-button>
+          <stacki-menu id="more" label="More">
+            <button value="pins" checked="true">Show pins</button>
+            <button value="outline" checked="false">Outline pinned elements</button>
+            <button value="next">Next unresolved</button>
+            <button value="export" icon="upload">Export…</button>
+            <button value="import">Import…</button>
+            <button value="shortcuts" icon="help">Keyboard shortcuts</button>
+          </stacki-menu>
+        </div>
+        <div class="head-row tabs-row">
+          <stacki-tabs id="filter" class="tabs" value="open" label="Threads">
+            <button value="open">Open</button>
+            <button value="resolved">Resolved</button>
+            <button value="all">All</button>
+          </stacki-tabs>
+          <stacki-button id="search-toggle" class="search-toggle" variant="ghost" icon="search" aria-label="Search comments (/)"></stacki-button>
+          <div class="anchor">
+            <button id="filters-toggle" class="ghost icon-button" type="button" aria-label="Filters" aria-haspopup="dialog" aria-expanded="false" title="Filters">
+              <span id="filters-dot" class="dot" hidden></span>
+            </button>
+            <div id="filters" class="popover filters" role="dialog" aria-label="Filters" hidden>
+              <div class="popover-title">
+                <stacki-reset-label id="filters-reset">Filters</stacki-reset-label>
+              </div>
+              <div class="popover-field">
+                <span>People</span>
+                <stacki-dropdown id="who" value="everyone" label="Whose threads">
+                  <option value="everyone">Everyone</option>
+                  <option value="mine">Mine</option>
+                  <option value="mentions">Mentions me</option>
+                  <option value="agents">Left by agents</option>
+                </stacki-dropdown>
+              </div>
+              <div class="popover-field">
+                <span>Sort</span>
+                <stacki-dropdown id="sort" value="page" label="Sort">
+                  <option value="page">Page order</option>
+                  <option value="newest">Newest</option>
+                  <option value="oldest">Oldest</option>
+                </stacki-dropdown>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div id="search-row" class="search-row" hidden>
+          <stacki-search id="search" label="Search comments" placeholder="Search comments"></stacki-search>
+        </div>
+      </header>
+
+      <main id="threads" class="threads" aria-live="polite">
+        <p id="move-hint" class="move-hint" hidden>Click the new spot · Esc to cancel</p>
+        <section id="compose" class="compose" hidden>
+          <p class="compose-target"><span id="compose-target"></span><span id="compose-viewport"></span></p>
+          <div class="field-wrap">
+            <stacki-textarea id="compose-body" rows="3" label="Comment" placeholder="Add a comment… @ to mention"></stacki-textarea>
+          </div>
+          <div class="actions">
+            <stacki-button id="compose-submit" variant="primary" label="Comment" disabled></stacki-button>
+            <stacki-button id="compose-cancel" variant="ghost" label="Cancel"></stacki-button>
+          </div>
+        </section>
+        <div id="list"></div>
+      </main>
+
+      <dialog id="name-sheet" class="sheet">
+        <h2 class="sheet-title">Your name</h2>
+        <p class="sheet-note">Stacki has no name for you, so comments are signed with this. It stays on this computer.</p>
+        <stacki-input id="name" label="Your name" placeholder="Your name"></stacki-input>
+        <div class="actions end">
+          <stacki-button id="name-done" variant="primary" label="Done"></stacki-button>
+        </div>
+      </dialog>
+
+      <dialog id="keys-sheet" class="sheet">
+        <h2 class="sheet-title">Keyboard shortcuts</h2>
+        <dl class="keys">
+          <dt><kbd>C</kbd></dt><dd>Comment on the selected element</dd>
+          <dt><kbd>J</kbd> <kbd>K</kbd></dt><dd>Next or previous thread</dd>
+          <dt><kbd>↵</kbd></dt><dd>Go to the thread’s pin</dd>
+          <dt><kbd>R</kbd></dt><dd>Reply</dd>
+          <dt><kbd>E</kbd></dt><dd>Resolve or reopen</dd>
+          <dt><kbd>⌘</kbd> <kbd>↵</kbd></dt><dd>Send a comment or reply</dd>
+          <dt><kbd>⌘⌥⇧</kbd> <kbd>1</kbd></dt><dd>New comment, from anywhere in Stacki</dd>
+          <dt><kbd>⌘⌥⇧</kbd> <kbd>2</kbd></dt><dd>Show or hide pins</dd>
+          <dt><kbd>⌘⌥⇧</kbd> <kbd>3</kbd></dt><dd>Next unresolved thread</dd>
+        </dl>
+        <div class="actions end">
+          <stacki-button id="keys-done" label="Close"></stacki-button>
+        </div>
+      </dialog>
+
+      <dialog id="export-sheet" class="sheet">
+        <h2 class="sheet-title">Export feedback</h2>
+        <p class="sheet-note">Every thread in the project. Save writes a file into the project; Copy and Download need no file access.</p>
+        <div class="popover-field">
+          <span>Format</span>
+          <stacki-dropdown id="export-format" value="markdown" label="Format">
+            <option value="markdown">Markdown</option>
+            <option value="csv">CSV</option>
+            <option value="json">JSON (for Import)</option>
+          </stacki-dropdown>
+        </div>
+        <div class="popover-field">
+          <span>Save to</span>
+          <stacki-input id="export-path" label="Project path" value="feedback/feedback.md"></stacki-input>
+        </div>
+        <div class="actions end">
+          <stacki-button id="export-copy" variant="ghost" label="Copy"></stacki-button>
+          <stacki-button id="export-download" variant="ghost" label="Download"></stacki-button>
+          <span class="spacer"></span>
+          <stacki-button id="export-cancel" label="Cancel"></stacki-button>
+          <stacki-button id="export-save" variant="primary" label="Save"></stacki-button>
+        </div>
+      </dialog>
+
+      <dialog id="import-sheet" class="sheet">
+        <h2 class="sheet-title">Import feedback</h2>
+        <p class="sheet-note">Paste the JSON an export made. A thread with the same id is replaced.</p>
+        <stacki-textarea id="import-body" rows="10" label="Export JSON" placeholder='{ "version": 1, "threads": [ … ] }'></stacki-textarea>
+        <div class="actions end">
+          <stacki-button id="import-cancel" label="Cancel"></stacki-button>
+          <stacki-button id="import-run" variant="primary" label="Import"></stacki-button>
+        </div>
+      </dialog>
+
+      <a id="download" hidden></a>
+    </div>
+
+    <script src="util.js"></script>
+    <script src="store.js"></script>
+    <script src="mentions.js"></script>
+    <script src="confirm.js"></script>
+    <script src="export.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

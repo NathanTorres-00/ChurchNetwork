@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "apps": [
+    {
+      "id": "cloudflare-analytics",
+      "version": "1.0.5",
+      "sha256": "620369be66ecef6149cd62f4855731a59d8cedcf054abe109f2921f3b3b6cded",
+      "installedAt": "2026-11-18T16:37:31.494Z",
+      "source": {
+        "kind": "marketplace",
+        "id": "cloudflare-analytics",
+        "version": "1.0.5"
+      },
+      "autoUpdate": false
+    },
+    {
+      "id": "feedback-pins",
+      "version": "1.8.1",
+      "sha256": "ea0f6a19859229f16fd7c81fda00a50926c70a49b3edf72f66bdecba55e9109d",
+      "installedAt": "2026-11-18T16:37:35.426Z",
+      "source": {
+        "kind": "marketplace",
+        "id": "feedback-pins",
+        "version": "1.8.1"
+      },
+      "autoUpdate": false
+    },
+    {
+      "id": "lumos-fluid-builder",
+      "version": "1.1.0",
+      "sha256": "40a43f414b397a2c7b496a3cf7154730d2d2dc3f2f74137cae181180808f0169",
+      "installedAt": "2026-11-18T16:37:25.113Z",
+      "source": {
+        "kind": "marketplace",
+        "id": "lumos-fluid-builder",
+        "version": "1.1.0"
+      },
+      "autoUpdate": false
+    }
+  ]
+}

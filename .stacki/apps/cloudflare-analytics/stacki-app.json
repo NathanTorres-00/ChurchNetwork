@@ -1,0 +1,48 @@
+{
+  "manifestVersion": 1,
+  "id": "cloudflare-analytics",
+  "name": "Cloudflare Analytics",
+  "version": "1.0.5",
+  "entry": "index.html",
+  "icon": "icon.svg",
+  "settings": [
+    {
+      "id": "cloudflare-token",
+      "label": "Cloudflare API token",
+      "description": "Create a custom token with Zone > Analytics > Read for this zone (dash.cloudflare.com > My Profile > API Tokens).",
+      "kind": "secret",
+      "required": true,
+      "placeholder": "Your API token"
+    },
+    {
+      "id": "zone-id",
+      "label": "Zone ID",
+      "description": "Cloudflare dashboard > your domain > Overview > API > Zone ID.",
+      "kind": "text",
+      "required": true,
+      "placeholder": "32 character zone id"
+    },
+    {
+      "id": "account-id",
+      "label": "Account ID",
+      "description": "Needed for page views and visits (Web Analytics). Cloudflare dashboard > Account home > the three dots next to your account > Copy account ID. The token also needs Account > Account Analytics > Read.",
+      "kind": "text",
+      "required": false,
+      "placeholder": "32 character account id"
+    },
+    {
+      "id": "hostnames",
+      "label": "Hostnames",
+      "description": "Optional. Comma separated, e.g. uebersaxsamuel.ch,www.uebersaxsamuel.ch. Limits the data to these hosts and hides your own site from the referrers.",
+      "kind": "text",
+      "advanced": true,
+      "placeholder": "example.com,www.example.com"
+    }
+  ],
+  "network": [
+    {
+      "host": "api.cloudflare.com",
+      "purpose": "Read traffic from the Cloudflare GraphQL Analytics API"
+    }
+  ]
+}

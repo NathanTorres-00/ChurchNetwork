@@ -4,8 +4,9 @@
   const cursor = document.getElementById('hub-cursor');
   const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
   const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const photoUrl = id => `https://images.unsplash.com/photo-${id}?w=640&h=484&fit=crop&q=70&auto=format`;
-  const tallUrl = id => `https://images.unsplash.com/photo-${id}?w=360&h=480&fit=crop&q=70&auto=format`;   // the Photo cursor
+  const photoUrl = (source, width = 640, height = 484) => source.startsWith('assets/') ? source
+    : `https://images.unsplash.com/photo-${source}?w=${width}&h=${height}&fit=crop&q=70&auto=format`;
+  const tallUrl = source => photoUrl(source, 360, 480);
 
   // The pin: the same artwork as the globe's pins, with its own clip path id
   const pin = document.getElementById('pin-template').content.firstElementChild.cloneNode(true);
@@ -17,10 +18,11 @@
   // Load each hub's photos up front (the pin's crop and the Photo cursor's) so neither ever opens empty
   const loaded = new Set();
   rows.forEach(row => {
+    const source = row.dataset.photo, pinUrl = photoUrl(source), tall = tallUrl(source);
     const img = new Image();
-    img.onload = () => loaded.add(row.dataset.photo);
-    img.src = photoUrl(row.dataset.photo);
-    new Image().src = tallUrl(row.dataset.photo);
+    img.onload = () => loaded.add(source);
+    img.src = pinUrl;
+    if (tall !== pinUrl) new Image().src = tall;
   });
 
   // The Photo cursor's two layers: a new hub's photo fades in over the last one
@@ -85,7 +87,11 @@
     showTall(row.dataset.photo);
     const url = photoUrl(row.dataset.photo);
     photo.style.opacity = 0;                                 // quick crossfade to the new hub's photo
-    const swap = () => { photo.setAttribute('href', url); photo.style.opacity = 1; };
+    const swap = () => {
+      if (current !== row) return;
+      photo.setAttribute('href', url);
+      photo.style.opacity = 1;
+    };
     loaded.has(row.dataset.photo) ? setTimeout(swap, 120) : Object.assign(new Image(), { onload: swap, src: url });
     cursor.style.setProperty('--s', finePointer ? 1 : 0);
     cursor.style.setProperty('--p', 1);
