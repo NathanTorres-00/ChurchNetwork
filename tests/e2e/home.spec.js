@@ -56,13 +56,13 @@ test('the hero copy comes from the Home content', async ({ page }) => {
   await expect(page.locator('.hero-actions .button').nth(1)).toHaveAttribute('href', '/groups');
 });
 
-test('Home has its sections in the order hero.html had them', async ({ page }) => {
+test('Home has its sections in the order the old Home page had them', async ({ page }) => {
   await openPage(page, '/');
   expect(await page.locator('main > section').evaluateAll(els => els.map(el => el.id)))
     .toEqual(['top', 'church-network', 'what-we-do', 'how', 'testimony', 'app', 'hubs', 'story']);
   await expect(page.locator('#hubs')).toBeHidden();              // Find a hub is off unless turned on
   await expect(page.locator('#testimony blockquote')).toContainText('pour into others');
-  await expect(page.locator('#story h3')).toHaveText(['One local church', 'Disciples became leaders', 'Groups became churches', 'A global movement']);
+  await expect(page.locator('#story h3')).toHaveText(['One local church', 'Disciples became leaders', 'Groups became churches', 'Network sent missionaries']);
 });
 
 test('Home does not scroll sideways on a phone', async ({ page }) => {

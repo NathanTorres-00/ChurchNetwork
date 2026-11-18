@@ -237,3 +237,10 @@ test('the footer globe shows a canvas inside its frame', async ({ page }) => {
   await expect(inner.locator('#canvas')).toBeVisible({ timeout: 15_000 });
   await expect(inner.locator('.site-footer')).toHaveCount(0);
 });
+
+test('the What lead keeps its 58-character measure alongside its scroll-in delay', async ({ page }) => {
+  await page.goto('/groups');
+  const lead = page.locator('#what .text');
+  expect(await lead.evaluate(el => getComputedStyle(el).maxWidth)).not.toBe('none');
+  expect(await lead.evaluate(el => getComputedStyle(el).getPropertyValue('--i').trim())).toBe('2');
+});

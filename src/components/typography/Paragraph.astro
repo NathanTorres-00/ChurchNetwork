@@ -37,8 +37,12 @@ const {
   variant = "inherit",
   maxWidth,
   class: className,
+  style,
   ...rest
 } = Astro.props;
+
+// a style passed in (say a delay for an animation) adds to the measure rather than replacing it
+const styles = [maxWidth && `--_mw: ${maxWidth}ch;`, style].filter(Boolean).join(" ") || undefined;
 
 const content = await slotContent(Astro.slots);
 ---
@@ -50,7 +54,7 @@ const content = await slotContent(Astro.slots);
       variant !== "inherit" && `text-style-${variant}`,
       className,
     ]}
-    style={maxWidth ? `--_mw: ${maxWidth}ch;` : undefined}
+    style={styles}
     {...rest}
   >
     <Fragment set:html={content} />
