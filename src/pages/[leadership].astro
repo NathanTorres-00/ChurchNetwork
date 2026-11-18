@@ -1,0 +1,60 @@
+---
+import { getEntries, getEntry } from "astro:content";
+import Layout from "@/layouts/BaseLayout.astro";
+import LeadershipHero from "@/components/section/LeadershipHero.astro";
+import Section from "@/components/wrapper/Section.astro";
+import ContentWrapper from "@/components/wrapper/ContentWrapper.astro";
+import Heading from "@/components/typography/Heading.astro";
+import PeopleList from "@/components/content/PeopleList.astro";
+import CtaPhoto from "@/components/content/CtaPhoto.astro";
+import { showLeadership } from "@/utils/leadership.ts";
+
+// /leadership is built only while Leadership is shown (see src/utils/leadership.ts): production leaves it out
+export function getStaticPaths() {
+  return showLeadership() ? [{ params: { leadership: "leadership" } }] : [];
+}
+
+const page = (await getEntry("leadershipPage", "leadership"))!.data;
+const network = await getEntries(page.network.people);
+const group = await getEntries(page.group.people);
+const onNetwork = new Set(network.map((p) => p.id));
+// each person is anchored once: network leaders in their list; the group list anchors only the others
+const people = (entries: typeof network, anchorAll: boolean) =>
+  entries.map((p) => ({ id: p.id, name: p.data.name, photo: p.data.photo, anchor: anchorAll || !onNetwork.has(p.id) }));
+---
+
+<Layout title={page.top.heading} page="leadership">
+  <!-- The network and its leaders, on two orbits -->
+  <LeadershipHero heading={page.top.heading} lead={page.top.lead} key={page.top.key} />
+
+  <!-- Network leaders -->
+  <Section id="network-leaders" class="background-2">
+    <ContentWrapper>
+      <Heading>{page.network.heading}</Heading>
+    </ContentWrapper>
+    <PeopleList variant="network" people={people(network, true)} />
+  </Section>
+
+  <!-- Group leaders -->
+  <Section id="group-leaders">
+    <ContentWrapper>
+      <Heading>{page.group.heading}</Heading>
+    </ContentWrapper>
+    <PeopleList variant="group" people={people(group, false)} />
+  </Section>
+
+  <!-- Lead a group -->
+  <Section class="background-2">
+    <CtaPhoto
+      heading={page.join.heading}
+      lead={page.join.lead}
+      photo={page.join.photo}
+      photoAlt={page.join.photoAlt}
+      button={page.join.button}
+    />
+  </Section>
+
+  <Fragment slot="after">
+    <script is:inline src="/scripts/leadership-orbit.js"></script>
+  </Fragment>
+</Layout>

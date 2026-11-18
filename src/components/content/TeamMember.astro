@@ -8,9 +8,9 @@ interface Props extends Omit<HTMLAttributes<"li">, "role"> {
   render?: boolean;
   /** Full name. */
   name: string;
-  /** Role in the network. */
+  /** Role in the network, under the name. */
   role?: string;
-  /** Portrait. Without one, a placeholder glyph shows in its place. */
+  /** Portrait, shown as a ring-dot. Without one, a placeholder glyph shows in its place. */
   photo?: ImageMetadata;
 }
 
@@ -20,13 +20,13 @@ const { render = true, name, role, photo, class: className, ...rest } = Astro.pr
 {
   render && name && (
     <li class:list={["team-member_wrap", className]} {...rest}>
-      <div class="frame team-member_photo">
-        {photo ? (
-          <Image src={photo} alt={name} widths={[300, 600]} sizes="(max-width: 960px) 50vw, 270px" loading="lazy" />
-        ) : (
+      {photo ? (
+        <Image class="team-member_photo" src={photo} alt="" widths={[180, 360]} sizes="180px" loading="lazy" />
+      ) : (
+        <span class="team-member_photo is-empty">
           <span class="glyph" aria-hidden="true" />
-        )}
-      </div>
+        </span>
+      )}
       <h3 class="team-member_name">{name}</h3>
       {role && <p class="team-member_role">{role}</p>}
     </li>
@@ -35,25 +35,43 @@ const { render = true, name, role, photo, class: className, ...rest } = Astro.pr
 
 <style is:global>
   @layer components {
-    .team-member_photo {
-      aspect-ratio: 4 / 5;
+    /* A leader as a ring-dot: their photo in a circle with a green ring, their name under it */
+    .team-member_wrap {
       display: grid;
-      place-items: center;
-      & .glyph {
-        --g: 1.125rem;
-        --gc: #c9c9cf;
-        --ring: #e9e9ec;
+      justify-items: center;
+      gap: 1.125rem;
+      text-align: center;
+    }
+    .team-member_photo {
+      width: min(100%, 11.25rem);
+      height: auto;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #e9e9ec;
+      box-shadow:
+        0 0 0 0.25rem var(--background-2),
+        0 0 0 0.40625rem var(--c-disciples);
+      &.is-empty {
+        display: grid;
+        place-items: center;
+        & .glyph {
+          --g: 1.125rem;
+          --gc: #c9c9cf;
+          --ring: #e9e9ec;
+        }
       }
     }
     .team-member_name {
-      margin: 1.125rem 0 0.125rem;
-      font-size: 1.1875rem;
+      margin: 0;
+      font-size: 1.125rem;
       font-weight: var(--primary-medium);
-      line-height: 1.6;
+      line-height: 1.3;
       letter-spacing: -0.01em;
+      text-wrap: balance;
     }
     .team-member_role {
-      margin: 0;
+      margin: -0.75rem 0 0;
       font-size: 0.9375rem;
     }
   }

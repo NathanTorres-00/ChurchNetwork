@@ -25,7 +25,7 @@ from Lumos components; a custom component only when it owns CSS or a script).
 
 | What | Where |
 |---|---|
-| Pages | `src/pages/index.astro` (Home), `src/pages/groups.astro`, `src/pages/embed/globe.astro`, `src/pages/404.astro` |
+| Pages | `src/pages/index.astro` (Home), `src/pages/groups.astro`, `src/pages/[leadership].astro`, `src/pages/embed/globe.astro`, `src/pages/404.astro` |
 | Page sections | `src/components/section/` (sections with their own CSS or script), `src/components/content/` (smaller blocks) |
 | Header, footer | `src/components/global/SiteHeader.astro`, `SiteFooter.astro` |
 | Loading screen, Adjust panels, hub cursor | `src/components/utility/` |
@@ -41,14 +41,22 @@ Everything an admin will edit is in `src/content/` as JSON, with its shape decla
 
 - **This week's Network Video:** `src/content/weekly-video.json`. Change `youtubeId` to the part after
   `youtu.be/` (and the `title`), each week. Without a `youtubeId` the section is left out.
-- **Team:** one file per person in `src/content/team/` (`name`, `role`, `order`, and an optional `photo`
-  next to the other images in `src/assets/images/`). No photo shows the ring placeholder.
+- **Leaders:** one file per person in `src/content/leaders/` (`name` and a `photo` from
+  `src/assets/images/leaders/`). Pages list them by file name: the four on Groups in `groups.json`
+  (`team.people`), and the Leadership page's two lists in `pages/leadership.json`. Someone can be in both lists.
 - **Group stories:** `src/content/group-stories/` (the quote on Groups, Anastasia's on Home).
 - **Page copy:** `src/content/pages/home.json` and `groups.json`, one object per section.
 - **Footer:** `src/content/footer.json`.
 
 The hubs and the Jesus Disciple video rows are still in code (`src/pages/index.astro` and
 `src/components/section/JesusDisciple.astro`).
+
+## Leadership (hidden on the live site for now)
+
+`/leadership` shows the network's leaders on two orbits and in two lists. Like `main`, production builds leave
+it out, along with the Leadership links in the header and footer and the Leadership section on Groups; local and
+preview builds keep it. To show it on the live site, make `showLeadership()` in `src/utils/leadership.ts` return
+`true` and redeploy.
 
 ## Adjust panels
 

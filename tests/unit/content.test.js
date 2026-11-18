@@ -18,8 +18,9 @@ function strings(value) {
   return [];
 }
 
-// The old pages, as they were when the migration began (they're deleted from this branch; tag pre-astro keeps them)
-const oldPage = (file) => new JSDOM(execFileSync('git', ['show', `pre-astro:${file}`], { encoding: 'utf8' })).window.document;
+// The old pages as main holds them now (deleted from this branch; the port follows main, so new copy there shows
+// up here as a failure until it's carried over)
+const oldPage = (file) => new JSDOM(execFileSync('git', ['show', `main:${file}`], { encoding: 'utf8' })).window.document;
 const clean = (text) => text.replace(/\s+/g, ' ').trim();
 
 describe('content collections', () => {
@@ -27,10 +28,14 @@ describe('content collections', () => {
     expect(readJson('weekly-video.json').youtubeId).toBe('qo52gy0Gq74');
   });
 
-  test('the team has four members, each in its own place', () => {
-    const team = jsonFiles('team/').map((f) => readJson(`team/${f}`));
-    expect(team).toHaveLength(4);
-    expect(new Set(team.map((m) => m.order)).size).toBe(4);
+  test('Groups shows four leaders, and every leader the pages list has an entry', () => {
+    const leaders = new Set(jsonFiles('leaders/').map((f) => f.replace(/\.json$/, '')));
+    const groups = readJson('pages/groups.json');
+    const leadership = readJson('pages/leadership.json');
+    expect(groups.team.people).toHaveLength(4);
+    for (const id of [...groups.team.people, ...leadership.network.people, ...leadership.group.people]) expect(leaders).toContain(id);
+    expect(leadership.network.people).toHaveLength(9);
+    expect(leadership.group.people).toHaveLength(18);
   });
 
   test('group stories hold Anastasia (Home) and the church group member (Groups)', () => {
@@ -39,7 +44,7 @@ describe('content collections', () => {
 
   test('every Groups heading is in the Groups page copy', () => {
     const copy = strings(readJson('pages/groups.json'));
-    for (const heading of ['Church Groups', 'What are Rock Network Groups?', 'Discipleship Groups', 'Network Video', 'Meet the team']) {
+    for (const heading of ['Church Groups', 'What are Rock Network Groups?', 'Discipleship Groups', 'Network Video', 'Leadership']) {
       expect(copy).toContain(heading);
     }
   });

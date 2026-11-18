@@ -88,3 +88,15 @@ decision Nathan should know about. Each item is marked **fixed**, **accepted** o
   `whatWeDo.photo`). The four Wix demos and the gallery engine are updated to match `main` byte for byte.
   Home and `/embed/globe` make the shared list's addresses absolute after loading it, so the embed (one folder
   down) finds the photos too.
+- **Leadership page and Groups' Leadership section** (ported from main 5f3b046 and bbadf7e): `/leadership`
+  with the orbit and the two lists; Groups' "Meet the team" becomes "Leadership" (four leaders as ring-dots and
+  "See all our leaders"); a Leadership link in the header and footer; the Groups hero and quote photos swap.
+  Hidden in production builds, shown locally and on previews, as on `main`. Leaders are now content
+  (`src/content/leaders/`), listed by reference, which replaces the placeholder team entries.
+  Compared at 390 and 1440: the headline, orbit and every list section sit where the old page had them. The
+  Leadership hero now includes the header's height, because the shared header sits over the page (on the old
+  Leadership page it was in the flow above it). **Fixed:** the orbit's hidden name tags made the new page scroll
+  sideways at 390 and 768; the hero now clips them.
+- **Groups' quote photo** ("Three friends laughing around a table") is now a local copy of the Unsplash photo
+  `main` uses, so Astro can size it like the other content images.
+- Comment mode on Groups and Leadership (main d98a379) is not ported: comment mode stays at tag `pre-astro`.

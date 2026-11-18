@@ -1,6 +1,6 @@
-// Content an admin edits: the weekly video, the team, group stories, page copy and the footer.
+// Content an admin edits: the weekly video, the leaders, group stories, page copy and the footer.
 // Each collection is read from local JSON for now; a later project swaps the loaders for Sanity and keeps these shapes.
-import { defineCollection } from "astro:content";
+import { defineCollection, reference } from "astro:content";
 import { glob } from "astro/loaders";
 import { z } from "astro/zod";
 
@@ -14,9 +14,6 @@ const button = z.object({
   placeholder: z.boolean().default(false),
 });
 
-/** A photo hosted elsewhere (Unsplash today), kept as an address. */
-const remotePhoto = z.object({ src: z.url(), alt: z.string() });
-
 const weeklyVideo = defineCollection({
   loader: one("weekly-video.json", "current"),
   schema: z.object({
@@ -25,14 +22,13 @@ const weeklyVideo = defineCollection({
   }),
 });
 
-const teamMembers = defineCollection({
-  loader: glob({ pattern: "*.json", base: "./src/content/team" }),
+/** The network's leaders, one entry each (the file name is the id the pages list them by). */
+const leaders = defineCollection({
+  loader: glob({ pattern: "*.json", base: "./src/content/leaders" }),
   schema: ({ image }) =>
     z.object({
       name: z.string(),
-      role: z.string(),
       photo: image().optional(),
-      order: z.number(),
     }),
 });
 
@@ -111,11 +107,11 @@ const homePage = defineCollection({
 
 const groupsPage = defineCollection({
   loader: one("pages/groups.json", "groups"),
-  schema: z.object({
+  schema: ({ image }) => z.object({
     top: z.object({
       heading: z.string(),
       tagline: z.string(),
-      photo: remotePhoto,
+      photo: z.object({ src: image(), alt: z.string() }),
       buttons: z.array(button),
     }),
     what: z.object({
@@ -141,8 +137,33 @@ const groupsPage = defineCollection({
       eyebrow: z.string(),
       heading: z.string(),
       lead: z.string(),
+      /** Leaders shown on Groups, in order. */
+      people: z.array(reference("leaders")),
+      button: button.optional(),
     }),
   }),
+});
+
+const leadershipPage = defineCollection({
+  loader: one("pages/leadership.json", "leadership"),
+  schema: ({ image }) =>
+    z.object({
+      top: z.object({
+        heading: z.string(),
+        lead: z.string(),
+        /** Labels of the two rings under the orbit. */
+        key: z.object({ network: z.string(), group: z.string() }),
+      }),
+      network: z.object({ heading: z.string(), people: z.array(reference("leaders")) }),
+      group: z.object({ heading: z.string(), people: z.array(reference("leaders")) }),
+      join: z.object({
+        heading: z.string(),
+        lead: z.string(),
+        photo: image(),
+        photoAlt: z.string(),
+        button,
+      }),
+    }),
 });
 
 const footer = defineCollection({
@@ -166,4 +187,4 @@ const footer = defineCollection({
   }),
 });
 
-export const collections = { weeklyVideo, teamMembers, groupStories, homePage, groupsPage, footer };
+export const collections = { weeklyVideo, leaders, groupStories, homePage, groupsPage, leadershipPage, footer };

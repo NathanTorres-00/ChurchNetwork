@@ -3,12 +3,18 @@
     "heading": "Church Groups",
     "tagline": "Multiplying disciples, leaders, churches, and movements",
     "photo": {
-      "src": "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=2000&h=1200&fit=crop&q=75&auto=format",
+      "src": "../../assets/images/group-gathered.jpg",
       "alt": ""
     },
     "buttons": [
-      { "label": "Start a group", "href": "#start" },
-      { "label": "Learn more", "href": "#what" }
+      {
+        "label": "Start a group",
+        "href": "#start"
+      },
+      {
+        "label": "Learn more",
+        "href": "#what"
+      }
     ]
   },
   "what": {
@@ -25,7 +31,11 @@
           "Agrees to meet long term",
           "Uses the Jesus Disciple App"
         ],
-        "button": { "label": "Start a church group", "href": "#", "placeholder": true }
+        "button": {
+          "label": "Start a church group",
+          "href": "#",
+          "placeholder": true
+        }
       },
       {
         "heading": "Discipleship Groups",
@@ -35,12 +45,20 @@
           "Agrees to meet together for a set period",
           "Uses the Jesus Disciple App"
         ],
-        "button": { "label": "Start a discipleship group", "href": "#", "placeholder": true }
+        "button": {
+          "label": "Start a discipleship group",
+          "href": "#",
+          "placeholder": true
+        }
       }
     ],
     "already": {
       "body": "Already a part of a group?",
-      "button": { "label": "Find resources for you", "href": "#", "placeholder": true }
+      "button": {
+        "label": "Find resources for you",
+        "href": "#",
+        "placeholder": true
+      }
     }
   },
   "video": {
@@ -50,7 +68,17 @@
   },
   "team": {
     "eyebrow": "Connect with the Network",
-    "heading": "Meet the team",
-    "lead": "Working together to serve your region."
+    "heading": "Leadership",
+    "lead": "Working together to serve your region.",
+    "people": [
+      "jerry-dirmann",
+      "kimberly-dirmann",
+      "jose-isabel-oneill",
+      "manny-andrea-orozco"
+    ],
+    "button": {
+      "label": "See all our leaders",
+      "href": "/leadership"
+    }
   }
 }

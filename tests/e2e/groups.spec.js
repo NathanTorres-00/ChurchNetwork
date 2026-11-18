@@ -8,13 +8,13 @@ test('the Groups page has its sections in order and no errors', async ({ page })
   await page.goto('/groups');
   expect(await page.locator('main > section').evaluateAll(els => els.map(el => el.id))).toEqual(['top', 'what', 'video', 'story', 'team']);
   const headings = await page.locator('main h1, main h2').allTextContents();
-  expect(headings).toEqual(['Church Groups', 'What are Rock Network Groups?', 'Network Video', 'Meet the team']);
+  expect(headings).toEqual(['Church Groups', 'What are Rock Network Groups?', 'Network Video', 'Leadership']);
   await expect(page.locator('.group-card_wrap h3')).toHaveText(['Church Groups', 'Discipleship Groups']);
   await expect(page.locator('.group-card_wrap').first().locator('.group-card_item')).toHaveCount(4);
   await expect(page.locator('.group-card_wrap').nth(1).locator('.group-card_item')).toHaveCount(3);
   await expect(page.getByText('Already a part of a group?')).toBeVisible();
   await expect(page.locator('#story blockquote')).toContainText('closest thing to family');
-  await expect(page.locator('#team .team-member_wrap')).toHaveCount(4);
+  await expect(page.locator('#team .team-member_wrap')).toHaveCount(4);   // four leaders (main 5f3b046)
 
   // the hero's Start a group jumps to the two kinds of group
   await page.locator('.hero-card').getByRole('link', { name: 'Start a group' }).click();

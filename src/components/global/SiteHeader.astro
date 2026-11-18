@@ -1,11 +1,12 @@
 ---
 import type { HTMLAttributes } from "astro/types";
+import { showLeadership } from "@/utils/leadership.ts";
 
 interface Props extends HTMLAttributes<"header"> {
   /** Set to `false` to omit the component. */
   render?: boolean;
   /** The page the header sits on. Home links to its own sections; other pages link back to them. */
-  page: "home" | "groups" | "embed" | "other";
+  page: "home" | "groups" | "leadership" | "embed" | "other";
 }
 
 const { render = true, page, class: className, ...rest } = Astro.props;
@@ -19,6 +20,7 @@ const links = [
   { label: "Find a hub", href: "#hubs", render: onHome },
   { label: "Our story", href: `${home}#story` },
   { label: "Groups", href: "/groups", current: page === "groups" },
+  { label: "Leadership", href: "/leadership", current: page === "leadership", render: showLeadership() },
 ].filter((link) => link.render !== false);
 ---
 
@@ -92,6 +94,9 @@ const links = [
       @media (max-width: 62.5em) {
         --logo-h: 2.75rem;
       }
+      @media (max-width: 56.25em) {
+        --logo-h: 2.375rem;
+      }
     }
     .site-nav {
       display: flex;
@@ -100,12 +105,18 @@ const links = [
       @media (max-width: 62.5em) {
         gap: 1.125rem;
       }
+      /* six links still fit on one line */
+      @media (max-width: 56.25em) {
+        gap: 0.875rem;
+        font-size: 0.875rem;
+      }
       @media (max-width: 47.5em) {
         display: none;
       }
       & a {
         text-decoration: none;
         color: var(--text);
+        white-space: nowrap;
         &:hover,
         &[aria-current="page"] {
           color: var(--heading);

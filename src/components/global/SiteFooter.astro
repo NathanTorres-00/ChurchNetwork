@@ -1,12 +1,13 @@
 ---
 import type { HTMLAttributes } from "astro/types";
 import { getEntry } from "astro:content";
+import { showLeadership } from "@/utils/leadership.ts";
 
 interface Props extends HTMLAttributes<"footer"> {
   /** Set to `false` to omit the component. */
   render?: boolean;
   /** The page the footer sits on. Home's links point at its own sections. */
-  page: "home" | "groups" | "embed" | "other";
+  page: "home" | "groups" | "leadership" | "embed" | "other";
 }
 
 const { render = true, page, class: className, ...rest } = Astro.props;
@@ -67,7 +68,7 @@ const href = (to: string) => {
               <div>
                 <h2 class="footer-label">{column.label}</h2>
                 <ul>
-                  {column.links.map((link) => (
+                  {column.links.filter((link) => showLeadership() || link.href !== "/leadership").map((link) => (
                     <li>
                       <a
                         href={href(link.href)}

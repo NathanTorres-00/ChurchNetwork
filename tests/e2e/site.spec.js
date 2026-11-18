@@ -16,10 +16,11 @@ for (const demo of ['network-multiply', 'network-globe', 'network-globe-pins', '
   });
 }
 
-// The header's links, as the old hero.html and groups.html had them (Home also lists Find a hub)
+// The header's links, as the old pages had them (Home also lists Find a hub; Leadership from main 5f3b046)
 const NAV = {
-  '/': ['What we do', 'How we do it', 'App', 'Find a hub', 'Our story', 'Groups'],
-  '/groups': ['What we do', 'How we do it', 'App', 'Our story', 'Groups'],
+  '/': ['What we do', 'How we do it', 'App', 'Find a hub', 'Our story', 'Groups', 'Leadership'],
+  '/groups': ['What we do', 'How we do it', 'App', 'Our story', 'Groups', 'Leadership'],
+  '/leadership': ['What we do', 'How we do it', 'App', 'Our story', 'Groups', 'Leadership'],
 };
 
 for (const [path, links] of Object.entries(NAV)) {

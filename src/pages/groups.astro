@@ -1,5 +1,6 @@
 ---
-import { getCollection, getEntry } from "astro:content";
+import { getEntries, getEntry } from "astro:content";
+import { showLeadership } from "@/utils/leadership.ts";
 import Layout from "@/layouts/BaseLayout.astro";
 import GroupsHero from "@/components/section/GroupsHero.astro";
 import NetworkVideo from "@/components/section/NetworkVideo.astro";
@@ -19,9 +20,7 @@ const groups = (await getEntry("groupsPage", "groups"))!.data;
 const { top, what, video, team } = groups;
 const weeklyVideo = (await getEntry("weeklyVideo", "current"))?.data;
 const story = (await getEntry("groupStories", "church-group-member"))?.data;
-const members = (await getCollection("teamMembers"))
-  .map((entry) => entry.data)
-  .sort((a, b) => a.order - b.order);
+const members = (await getEntries(team.people)).map((entry) => entry.data);
 const cardColors = ["churches", "disciples"] as const;
 ---
 
@@ -82,14 +81,14 @@ const cardColors = ["churches", "disciples"] as const;
     }
   </Section>
 
-  <!-- Meet the team -->
-  <Section id="team" class="background-2" render={members.length > 0}>
+  <!-- Leadership: four of the network's leaders, and a link to all of them (hidden on the live site for now) -->
+  <Section id="team" class="background-2" render={showLeadership() && members.length > 0}>
     <ContentWrapper class="reveal">
       <Eyebrow>{team.eyebrow}</Eyebrow>
       <Heading class="margin-bottom-3">{team.heading}</Heading>
       <Paragraph variant="large" maxWidth={58}>{team.lead}</Paragraph>
     </ContentWrapper>
-    <TeamList members={members} />
+    <TeamList members={members} button={team.button} />
   </Section>
 
   <Fragment slot="after">

@@ -1,5 +1,7 @@
 ---
 import type { HTMLAttributes } from "astro/types";
+import type { ImageMetadata } from "astro";
+import { Image } from "astro:assets";
 
 type HeroButton = { label: string; href: string; placeholder?: boolean };
 
@@ -13,7 +15,7 @@ interface Props extends HTMLAttributes<"section"> {
   /** Up to two links: the first is the light button, the second the outlined one. */
   buttons?: HeroButton[];
   /** Photo behind the title. */
-  photo: { src: string; alt: string };
+  photo: { src: ImageMetadata; alt: string };
 }
 
 const {
@@ -34,7 +36,7 @@ const looks = ["button-light", "button-ghost"];
     <section class:list={["groups-hero", className]} id="top" {...rest}>
       <div class="groups-hero_layout">
         <div class="frame hero-card" data-enter style="--i: 1">
-          <img src={photo.src} alt={photo.alt} />
+          <Image src={photo.src} alt={photo.alt} widths={[800, 1600, 2400]} sizes="100vw" loading="eager" fetchpriority="high" />
           <div class="hero-globe" id="hero-globe" />
           <div>
             <h1 data-enter style="--i: 2">
