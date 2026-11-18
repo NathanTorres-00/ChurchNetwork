@@ -107,3 +107,13 @@ decision Nathan should know about. Each item is marked **fixed**, **accepted** o
 - **Homepage copy, group photo and footer** (ported from main 722c2bf): Jesus Disciple gains "Are you a Pastor?"
   and bold row titles, the University banner and the How we got started steps have new copy, What we do shows the
   smiling Iglesia Mi Ciudad group, and the footer's social links are hidden.
+- **Homepage ministry copy** (ported from main 9f0b25e): "Subnetworks", "Four ingredients…", "to get started…".
+- **Leadership is shown on the live site again** (ported from main 49ae49e): production builds include
+  `/leadership` and its links. Groups' section is now the **Rock Groups Leadership Team**: Jerry Dirmann
+  (Director), Tina Shubin (Asst. Director), Eryne Nevarez (Operations) and Crissy Shubin (Admin Asst.), on gold
+  rings, with each role in the Groups content. Leaders' full names from `main` are in their entries.
+- **Open for Nathan: the Leadership page's new layout is not ported yet.** main 49ae49e reorganised
+  `leadership.html` (the Leadership Team with roles and photo, Regional Overseers by region and by ministry,
+  Sub-Networks, The Rock Leaders, a short "Start a group" row), and the live folder holds more uncommitted edits
+  to it. The Astro page still has the earlier layout (orbit, Network leaders, Group leaders, Lead a group). Once
+  the page settles on `main`, it can be ported in one go.

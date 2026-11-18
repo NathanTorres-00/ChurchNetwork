@@ -51,12 +51,11 @@ Everything an admin will edit is in `src/content/` as JSON, with its shape decla
 The hubs and the Jesus Disciple video rows are still in code (`src/pages/index.astro` and
 `src/components/section/JesusDisciple.astro`).
 
-## Leadership (hidden on the live site for now)
+## Leadership
 
-`/leadership` shows the network's leaders on two orbits and in two lists. Like `main`, production builds leave
-it out, along with the Leadership links in the header and footer and the Leadership section on Groups; local and
-preview builds keep it. To show it on the live site, make `showLeadership()` in `src/utils/leadership.ts` return
-`true` and redeploy.
+`/leadership` shows the network's leaders on two orbits and in lists; Groups shows the Rock Groups Leadership Team
+(leaders and their roles in `groups.json`). It's on everywhere, the live site included. To hide it on the live
+site again, change `showLeadership()` in `src/utils/leadership.ts` as its comment says.
 
 ## Adjust panels
 

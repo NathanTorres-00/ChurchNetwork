@@ -139,8 +139,8 @@ const groupsPage = defineCollection({
       eyebrow: z.string(),
       heading: z.string(),
       lead: z.string(),
-      /** Leaders shown on Groups, in order. */
-      people: z.array(reference("leaders")),
+      /** Leaders shown on Groups, in order, each with their role on the team. */
+      people: z.array(z.object({ leader: reference("leaders"), role: z.string().optional() })),
       button: button.optional(),
     }),
   }),

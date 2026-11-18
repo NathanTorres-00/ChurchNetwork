@@ -1,5 +1,5 @@
-// Leadership is hidden on the live site for now (as on main since bbadf7e): production leaves out the page and
-// every link and section that leads to it; local and preview builds keep them.
+// Leadership is on the live site again (main 49ae49e, after bbadf7e had hidden it): production builds the page
+// and every link and section that leads to it.
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -8,10 +8,10 @@ import { afterAll, beforeAll, describe, expect, test } from 'vitest';
 import { showLeadership } from '../../src/utils/leadership.ts';
 
 describe('showLeadership', () => {
-  test('is on locally and on previews, off in production', () => {
+  test('is on everywhere, production included', () => {
     expect(showLeadership({})).toBe(true);
     expect(showLeadership({ VERCEL_ENV: 'preview' })).toBe(true);
-    expect(showLeadership({ VERCEL_ENV: 'production' })).toBe(false);
+    expect(showLeadership({ VERCEL_ENV: 'production' })).toBe(true);
   });
 });
 
@@ -27,16 +27,14 @@ describe('a production build', () => {
   }, 180_000);
   afterAll(() => out && rmSync(out, { recursive: true, force: true }));
 
-  test('has no Leadership page', () => {
-    expect(existsSync(join(out, 'leadership'))).toBe(false);
-    expect(existsSync(join(out, 'index.html'))).toBe(true);
+  test('has the Leadership page', () => {
+    expect(existsSync(join(out, 'leadership', 'index.html'))).toBe(true);
   });
 
-  test('Home and Groups have no Leadership link or section', () => {
+  test('Home and Groups link to Leadership, and Groups shows its leadership team', () => {
     for (const page of ['index.html', 'groups/index.html']) {
-      const html = readFileSync(join(out, page), 'utf8');
-      expect(html).not.toContain('/leadership');
-      expect(html).not.toContain('See all our leaders');
+      expect(readFileSync(join(out, page), 'utf8')).toContain('/leadership');
     }
+    expect(readFileSync(join(out, 'groups/index.html'), 'utf8')).toContain('Rock Groups Leadership Team');
   });
 });

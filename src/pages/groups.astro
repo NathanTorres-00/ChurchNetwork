@@ -20,7 +20,8 @@ const groups = (await getEntry("groupsPage", "groups"))!.data;
 const { top, what, video, team } = groups;
 const weeklyVideo = (await getEntry("weeklyVideo", "current"))?.data;
 const story = (await getEntry("groupStories", "church-group-member"))?.data;
-const members = (await getEntries(team.people)).map((entry) => entry.data);
+const leaders = await getEntries(team.people.map((person) => person.leader));
+const members = leaders.map((entry, i) => ({ ...entry.data, role: team.people[i].role }));
 const cardColors = ["churches", "disciples"] as const;
 ---
 

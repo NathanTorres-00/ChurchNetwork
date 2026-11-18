@@ -8,7 +8,7 @@ test('the Groups page has its sections in order and no errors', async ({ page })
   await page.goto('/groups');
   expect(await page.locator('main > section').evaluateAll(els => els.map(el => el.id))).toEqual(['top', 'what', 'video', 'story', 'team']);
   const headings = await page.locator('main h1, main h2').allTextContents();
-  expect(headings).toEqual(['Church Groups', 'What are Rock Network Groups?', 'Network Video', 'Leadership']);
+  expect(headings).toEqual(['Church Groups', 'What are Rock Network Groups?', 'Network Video', 'Rock Groups Leadership Team']);
   await expect(page.locator('.group-card_wrap h3')).toHaveText(['Church Groups', 'Discipleship Groups']);
   await expect(page.locator('.group-card_wrap').first().locator('.group-card_item')).toHaveCount(4);
   await expect(page.locator('.group-card_wrap').nth(1).locator('.group-card_item')).toHaveCount(3);
@@ -243,4 +243,11 @@ test('the What lead keeps its 58-character measure alongside its scroll-in delay
   const lead = page.locator('#what .text');
   expect(await lead.evaluate(el => getComputedStyle(el).maxWidth)).not.toBe('none');
   expect(await lead.evaluate(el => getComputedStyle(el).getPropertyValue('--i').trim())).toBe('2');
+});
+
+test('the Rock Groups Leadership Team shows each person with their role (main 49ae49e)', async ({ page }) => {
+  await page.goto('/groups');
+  const team = page.locator('#team .team-member_wrap');
+  await expect(team.locator('h3')).toHaveText(['Jerry Dirmann', 'Tina Shubin', 'Eryne Nevarez', 'Crissy Shubin']);
+  await expect(team.locator('.team-member_role')).toHaveText(['Director', 'Asst. Director', 'Operations', 'Admin Asst.']);
 });

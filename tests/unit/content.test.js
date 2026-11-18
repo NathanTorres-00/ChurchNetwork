@@ -33,7 +33,7 @@ describe('content collections', () => {
     const groups = readJson('pages/groups.json');
     const leadership = readJson('pages/leadership.json');
     expect(groups.team.people).toHaveLength(4);
-    for (const id of [...groups.team.people, ...leadership.network.people, ...leadership.group.people]) expect(leaders).toContain(id);
+    for (const id of [...groups.team.people.map((p) => p.leader), ...leadership.network.people, ...leadership.group.people]) expect(leaders).toContain(id);
     expect(leadership.network.people).toHaveLength(9);
     expect(leadership.group.people).toHaveLength(18);
   });
@@ -44,7 +44,7 @@ describe('content collections', () => {
 
   test('every Groups heading is in the Groups page copy', () => {
     const copy = strings(readJson('pages/groups.json'));
-    for (const heading of ['Church Groups', 'What are Rock Network Groups?', 'Discipleship Groups', 'Network Video', 'Leadership']) {
+    for (const heading of ['Church Groups', 'What are Rock Network Groups?', 'Discipleship Groups', 'Network Video', 'Rock Groups Leadership Team']) {
       expect(copy).toContain(heading);
     }
   });

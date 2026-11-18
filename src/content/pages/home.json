@@ -51,13 +51,13 @@
       },
       {
         "value": "3",
-        "label": "Four-Stage Subnetworks"
+        "label": "Subnetworks"
       }
     ]
   },
   "how": {
     "heading": "How we do it",
-    "lead": "Four pieces working together to enable multiplication",
+    "lead": "Four ingredients working together to enable multiplication",
     "items": [
       {
         "heading": "A Clear Process",
@@ -81,7 +81,7 @@
       },
       {
         "heading": "Available Training",
-        "body": "to Get started and retain momentum",
+        "body": "to get started and retain momentum",
         "photo": "assets/network-photos/globe/january-gathering.webp",
         "button": {
           "label": "Learn more",

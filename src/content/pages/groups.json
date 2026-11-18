@@ -68,13 +68,25 @@
   },
   "team": {
     "eyebrow": "Connect with the Network",
-    "heading": "Leadership",
-    "lead": "Working together to serve your region.",
+    "heading": "Rock Groups Leadership Team",
+    "lead": "Providing practical and prayer support to our groups.",
     "people": [
-      "jerry-dirmann",
-      "kimberly-dirmann",
-      "jose-isabel-oneill",
-      "manny-andrea-orozco"
+      {
+        "leader": "jerry-dirmann",
+        "role": "Director"
+      },
+      {
+        "leader": "tina-shubin",
+        "role": "Asst. Director"
+      },
+      {
+        "leader": "eryne-nevarez",
+        "role": "Operations"
+      },
+      {
+        "leader": "crissy-shubin",
+        "role": "Admin Asst."
+      }
     ],
     "button": {
       "label": "See all our leaders",
