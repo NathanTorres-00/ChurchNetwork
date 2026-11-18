@@ -14,7 +14,7 @@ test('the Groups page has its sections in order and no errors', async ({ page })
   page.on('pageerror', e => errors.push(String(e)));
   await page.goto('/groups.html');
   const headings = await page.locator('main h1, main h2').allTextContents();
-  expect(headings).toEqual(['Church Groups', 'What are Rock Network Groups?', 'Network Video', 'Meet the team']);
+  expect(headings).toEqual(['Church Groups', 'What are Rock Network Groups?', 'Network Video', 'Leadership']);
   await expect(page.locator('.group-type h3')).toHaveText(['Church Groups', 'Discipleship Groups']);
   await expect(page.locator('.group-type').first().locator('.traits li')).toHaveCount(4);
   await expect(page.locator('.group-type').nth(1).locator('.traits li')).toHaveCount(3);

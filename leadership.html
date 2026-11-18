@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Leadership · The Rock Network</title>
+<meta name="description" content="The people leading The Rock Network and its church groups.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='7' fill='%232F7D6D'/%3E%3Ccircle cx='16' cy='16' r='12.5' fill='none' stroke='%232F7D6D' stroke-width='3'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/page-transition.css">
+<script src="assets/page-transition.js"></script>
+<link rel="stylesheet" href="assets/site-footer.css">
+<script src="assets/site-footer.js"></script>
+<style>
+  /* Leadership: the whole leadership of The Rock Network. The site's design system (as on hero.html and groups.html):
+     Geist, the headline colors, soft gray surfaces, pill buttons and ring-dots. Every person is a ring-dot: green
+     rings for the network's leaders, gold for its group leaders (the site's disciples and leaders colors). */
+  :root {
+    --font: 'Geist', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    --c-disciples: #2F7D6D;
+    --c-leaders: #C2861A;
+    --c-network: var(--c-disciples);
+    --c-group: var(--c-leaders);
+    --section-space: 128px;
+    --radius: 24px;
+    --content-width: 1180px;
+    --body-size: 17px;
+    --heading: #1F1F23;
+    --text: #52525B;
+    --surface: #F5F5F6;
+    --line: #E4E4E7;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  body {
+    margin: 0; font-family: var(--font); -webkit-font-smoothing: antialiased;
+    font-size: var(--body-size); line-height: 1.6; color: var(--text); background: #fff;
+  }
+  img { display: block; max-width: 100%; }
+  a { color: inherit; }
+  .wrap { max-width: var(--content-width); margin: 0 auto; padding: 0 24px; }
+
+  /* ---------- Header (as on Groups) ---------- */
+  .site-header .wrap { display: flex; align-items: center; justify-content: space-between; height: 76px; }
+  .brand { display: inline-flex; align-items: center; color: var(--heading); text-decoration: none; }
+  .logo {
+    --logo-h: 52px;
+    display: block; height: var(--logo-h); aspect-ratio: 960 / 202; background: currentColor;
+    -webkit-mask: url("assets/the-rock-network.png") center / contain no-repeat;
+            mask: url("assets/the-rock-network.png") center / contain no-repeat;
+  }
+  @media (max-width: 1000px) { .site-header .logo { --logo-h: 44px; } }
+  .site-nav { display: flex; gap: 28px; font-size: 15px; }
+  .site-nav a { text-decoration: none; color: var(--text); white-space: nowrap; }
+  .site-nav a:hover, .site-nav a[aria-current="page"] { color: var(--heading); }
+  .site-nav a[aria-current="page"] { font-weight: 500; }
+  @media (max-width: 1000px) { .site-nav { gap: 18px; } }
+  @media (max-width: 900px) { .site-nav { gap: 14px; font-size: 14px; } .site-header .logo { --logo-h: 38px; } }   /* six links still fit on one line */
+  @media (max-width: 760px) { .site-nav { display: none; } }
+
+  .button {
+    display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+    font: 500 15px/1 var(--font); text-decoration: none; cursor: pointer;
+    padding: 15px 24px; border-radius: 999px; border: 1px solid transparent;
+    transition: background .25s ease, border-color .25s ease, color .25s ease;
+  }
+  .button-primary { background: var(--heading); color: #fff; }
+  .button-primary:hover { background: #3A3A40; }
+  .button-secondary { background: #fff; color: var(--heading); border-color: #D4D4D8; }
+  .button-secondary:hover { border-color: #A1A1AA; }
+  .button:focus-visible, .site-nav a:focus-visible, .brand:focus-visible { outline: 2px solid var(--heading); outline-offset: 3px; }
+
+  .section { padding: var(--section-space) 0; }
+  .section-tint { background: var(--surface); }
+  .section-title {
+    margin: 0; text-wrap: balance; color: var(--heading); font-weight: 500;
+    font-size: clamp(32px, 4.2vw, 50px); line-height: 1.08; letter-spacing: -0.025em;
+  }
+  .lead { margin: 18px 0 0; max-width: 52ch; font-size: calc(var(--body-size) * 1.12); }
+
+  /* ---------- 1. Hero: the network, with its leaders on two orbits around The Rock Network ---------- */
+  .lead-hero { padding: clamp(48px, 7vw, 88px) 0 clamp(72px, 9vw, 120px); }
+  .lead-hero h1 {
+    margin: 0; color: var(--heading); font-weight: 600; letter-spacing: -0.04em; line-height: 1;
+    font-size: clamp(52px, 8vw, 112px);
+  }
+  .lead-hero .lead { margin-top: 20px; font-size: clamp(19px, 1.9vw, 24px); line-height: 1.4; color: var(--text); letter-spacing: -0.01em; }
+
+  /* The orbits: a square whose people sit on two circles (site-wide positions are set by the script below from the
+     lists further down, so the two always match). --node is each ring-dot's diameter. */
+  .orbit {
+    --inner: 27%; --outer: 45%;
+    position: relative; width: min(100%, 780px); aspect-ratio: 1; margin: clamp(40px, 6vw, 72px) auto 0;
+    container-type: inline-size;
+  }
+  .orbit svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  .orbit circle { fill: none; stroke: #D9D9DE; stroke-width: .14; }
+  .orbit-center {
+    position: absolute; left: 50%; top: 50%; width: 30%; translate: -50% -50%;
+    display: grid; justify-items: center; gap: 10px; color: var(--heading); text-decoration: none;
+  }
+  .orbit-center .logo { --logo-h: auto; width: 100%; height: auto; }
+  .node {
+    --node: 11.8cqi;
+    position: absolute; left: var(--x); top: var(--y); width: var(--node); height: var(--node); margin: calc(var(--node) / -2) 0 0 calc(var(--node) / -2);
+    border-radius: 50%; text-decoration: none; color: var(--heading); z-index: 1;
+  }
+  .node.is-group { --node: 8.2cqi; }
+  .node img, .person img {
+    width: 100%; height: 100%; border-radius: 50%; object-fit: cover; background: #E9E9EC;
+    box-shadow: 0 0 0 var(--gap, 3px) #fff, 0 0 0 calc(var(--gap, 3px) + var(--ring-w, 2px)) var(--ring);
+  }
+  .is-network { --ring: var(--c-network); }
+  .is-group { --ring: var(--c-group); }
+  .node.is-group { --gap: 2px; --ring-w: 1.5px; }
+  /* the name shows under a ring-dot on hover or focus */
+  .node-name {
+    position: absolute; left: 50%; top: calc(100% + 10px); translate: -50% 0; white-space: nowrap; pointer-events: none;
+    padding: 6px 12px; border-radius: 999px; background: var(--heading); color: #fff; font-size: 14px; line-height: 1.2;
+    opacity: 0; transform: translateY(-4px); transition: opacity .18s ease, transform .18s ease;
+  }
+  .node:hover, .node:focus-visible { z-index: 3; }
+  .node:hover .node-name, .node:focus-visible .node-name { opacity: 1; transform: none; }
+  .node:focus-visible { outline: 2px solid var(--heading); outline-offset: 6px; }
+  .orbit-key { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px 28px; margin: 28px 0 0; padding: 0; list-style: none; font-size: 15px; }
+  .orbit-key li { display: inline-flex; align-items: center; gap: 10px; }
+  .orbit-key li::before {
+    content: ''; width: 9px; height: 9px; border-radius: 50%; background: var(--ring); margin: 5px;
+    box-shadow: 0 0 0 2.7px #fff, 0 0 0 5px var(--ring);
+  }
+
+  /* The one moment of motion: on load the orbits draw and the leaders grow out from the center, the network's
+     leaders first, then its group leaders, as the site's networks multiply */
+  @media (prefers-reduced-motion: no-preference) {
+    .orbit:not(.is-growing) .node, .orbit:not(.is-growing) .orbit-center, .orbit:not(.is-growing) circle { opacity: 0; }
+    .orbit.is-growing circle { stroke-dasharray: 1 1; stroke-dashoffset: 1; animation: orbit-draw 1.1s cubic-bezier(.65, 0, .35, 1) forwards; }
+    .orbit.is-growing circle + circle { animation-delay: .35s; }
+    .orbit.is-growing .orbit-center { animation: node-in .7s cubic-bezier(.2, .7, .2, 1) both; }
+    .orbit.is-growing .node { animation: node-out .9s cubic-bezier(.2, .8, .2, 1) both; animation-delay: calc(.25s + var(--i) * 45ms); }
+  }
+  @keyframes orbit-draw { to { stroke-dashoffset: 0; } }
+  @keyframes node-in { from { opacity: 0; scale: .9; } }
+  @keyframes node-out { from { opacity: 0; transform: translate(var(--fx), var(--fy)) scale(.2); } }
+
+  /* ---------- 2 and 3. The lists ---------- */
+  .people { list-style: none; margin: 56px 0 0; padding: 0; display: grid; gap: 48px 32px; }
+  .people-network { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
+  .people-group { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 40px 24px; }
+  .person { display: grid; justify-items: center; gap: 18px; text-align: center; scroll-margin-top: 120px; }
+  .person img { width: min(100%, 180px); height: auto; aspect-ratio: 1; --gap: 4px; --ring-w: 2.5px; }
+  .people-group .person img { width: min(100%, 132px); --gap: 3px; --ring-w: 2px; }
+  .person-name { color: var(--heading); font-size: 18px; font-weight: 500; line-height: 1.3; letter-spacing: -0.01em; text-wrap: balance; }
+  .people-group .person-name { font-size: 16px; }
+  /* arriving from the orbit, the person's ring pulses once so you can find them */
+  .person:target img { animation: found 1.4s ease-out 1; }
+  @keyframes found { 0%, 100% { scale: 1; } 30% { scale: 1.06; } }
+
+  /* ---------- 4. Lead a group: the team outside The Rock ---------- */
+  .join { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: clamp(32px, 6vw, 88px); align-items: center; }
+  .join-photo { border-radius: var(--radius); overflow: hidden; aspect-ratio: 4 / 5; background: #E9E9EC; }
+  .join-photo img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 40%; }
+  .join .button { margin-top: 32px; }
+  @media (max-width: 860px) { .join { grid-template-columns: 1fr; } .join-photo { aspect-ratio: 4 / 3; } }
+
+  @media (max-width: 640px) {
+    :root { --section-space: 88px; }
+    .people { gap: 36px 16px; }
+    .people-network { grid-template-columns: repeat(2, 1fr); }
+    .people-group { grid-template-columns: repeat(3, 1fr); gap: 28px 12px; }
+    .person-name { font-size: 16px; }
+    .people-group .person-name { font-size: 14px; }
+    .node-name { font-size: 13px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="wrap">
+    <a class="brand" href="hero.html" aria-label="The Rock Network, home"><span class="logo" aria-hidden="true"></span></a>
+    <nav class="site-nav" aria-label="Site">
+      <a href="hero.html#what-we-do">What we do</a>
+      <a href="hero.html#how">How we do it</a>
+      <a href="hero.html#app">App</a>
+      <a href="hero.html#story">Our story</a>
+      <a href="groups.html">Groups</a>
+      <a href="leadership.html" aria-current="page">Leadership</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <!-- 1. The network and its leaders -->
+  <section class="lead-hero">
+    <div class="wrap">
+      <h1>Leadership</h1>
+      <p class="lead">The people leading The Rock Network, and the leaders of its church groups.</p>
+      <div class="orbit" id="orbit">
+        <svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="27" pathLength="1"/><circle cx="50" cy="50" r="45" pathLength="1"/></svg>
+        <span class="orbit-center"><span class="logo" role="img" aria-label="The Rock Network"></span></span>
+        <!-- the people's ring-dots are added here from the lists below -->
+      </div>
+      <ul class="orbit-key">
+        <li class="is-network">Network leaders</li>
+        <li class="is-group">Group leaders</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 2. Network leaders -->
+  <section class="section section-tint" id="network-leaders">
+    <div class="wrap">
+      <h2 class="section-title">Network leaders</h2>
+      <ul class="people people-network">
+        <li class="person is-network" id="p-jerry-dirmann"><img src="assets/leaders/jerry-dirmann.jpg" alt="" width="480" height="480" loading="lazy"><span class="person-name">Jerry Dirmann</span></li>
+        <li class="person is-network" id="p-kimberly-dirmann"><img src="assets/leaders/kimberly-dirmann.jpg" alt="" width="480" height="480" loading="lazy"><span class="person-name">Kimberly Dirmann</span></li>
+        <li class="person is-network" id="p-jonathan-dirmann"><img src="assets/leaders/jonathan-dirmann.jpg" alt="" width="480" height="480" loading="lazy"><span class="person-name">Jonathan Dirmann</span></li>
+        <li class="person is-network" id="p-carl-mcaulay"><img src="assets/leaders/carl-mcaulay.jpg" alt="" width="480" height="480" loading="lazy"><span class="person-name">Carl McAulay</span></li>
+        <li class="person is-network" id="p-corey-theetge"><img src="assets/leaders/corey-theetge.jpg" alt="" width="480" height="480" loading="lazy"><span class="person-name">Corey Theetge</span></li>
+        <li class="person is-network" id="p-jim-scott"><img src="assets/leaders/jim-scott.jpg" alt="" width="480" height="480" loading="lazy"><span class="person-name">Jim Scott</span></li>
+        <li class="person is-network" id="p-jose-isabel-oneill"><img src="assets/leaders/jose-isabel-oneill.jpg" alt="" width="480" height="480" loading="lazy"><span class="person-name">Jose &amp; Isabel O&#x27;Neill</span></li>
+        <li class="person is-network" id="p-manny-andrea-orozco"><img src="assets/leaders/manny-andrea-orozco.jpg" alt="" width="480" height="480" loading="lazy"><span class="person-name">Manny &amp; Andrea Orozco</span></li>
+        <li class="person is-network" id="p-tristan-fenholt"><img src="assets/leaders/tristan-fenholt.jpg" alt="" width="480" height="480" loading="lazy"><span class="person-name">Tristan Fenholt</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 3. Group leaders -->
+  <section class="section" id="group-leaders">
+    <div class="wrap">
+      <h2 class="section-title">Group leaders</h2>
+      <ul class="people people-group">
+        <li class="person is-group" id="p-alex"><img src="assets/leaders/alex.jpg" alt="" width="480" height="480" loading="lazy"><span class="person-name">Alex</span></li>
+        <li class="person is-group" id="p-ben-flores"><img src="assets/leaders/ben-flores.jpg" alt="" width="480" height="480" loading="lazy"><span class="person-name">Ben Flores</span></li>
+        <li class="person is-group" id="p-brian-palacios"><img src="assets/leaders/brian-palacios.jpg" alt="" width="480" height="480" loading="lazy"><span class="person-name">Brian Palacios</span></li>
+        <li class="person is-group" id="p-christine-chen"><img src="assets/leaders/christine-chen.jpg" alt="" width="480" height="480" loading="lazy"><span class="person-name">Christine Chen</span></li>
+        <li class="person is-group" id="p-christy"><img src="assets/leaders/christy.jpg" alt="" width="480" height="480" loading="lazy"><span class="person-name">Christy</span></li>
+        <li class="person is-group" id="p-david-paulina-cadena"><img src="assets/leaders/david-paulina-cadena.jpg" alt="" width="480" height="480" loading="lazy"><span class="person-name">David &amp; Paulina Cadena</span></li>
+        <li class="person is-group" id="p-david-roxy"><img src="assets/leaders/david-roxy.jpg" alt="" width="480" height="480" loading="lazy"><span class="person-name">David &amp; Roxy</span></li>
+        <li class="person is-group" id="p-helen"><img src="assets/leaders/helen.jpg" alt="" width="480" height="480" loading="lazy"><span class="person-name">Helen</span></li>
+        <li class="person is-group" id="p-jared"><img src="assets/leaders/jared.jpg" alt="" width="480" height="480" loading="lazy"><span class="person-name">Jared</span></li>
+        <li class="person is-group" id="p-jeff-jennifer-little"><img src="assets/leaders/jeff-jennifer-little.jpg" alt="" width="480" height="480" loading="lazy"><span class="person-name">Jeff &amp; Jennifer Little</span></li>
+        <li class="person is-group"><img src="assets/leaders/jerry-dirmann.jpg" alt="" width="480" height="480" loading="lazy"><span class="person-name">Jerry Dirmann</span></li>
+        <li class="person is-group"><img src="assets/leaders/jose-isabel-oneill.jpg" alt="" width="480" height="480" loading="lazy"><span class="person-name">Jose &amp; Isabel O&#x27;Neill</span></li>
+        <li class="person is-group"><img src="assets/leaders/manny-andrea-orozco.jpg" alt="" width="480" height="480" loading="lazy"><span class="person-name">Manny &amp; Andrea Orozco</span></li>
+        <li class="person is-group" id="p-marylee"><img src="assets/leaders/marylee.jpg" alt="" width="480" height="480" loading="lazy"><span class="person-name">MaryLee</span></li>
+        <li class="person is-group" id="p-michael-gomez"><img src="assets/leaders/michael-gomez.jpg" alt="" width="480" height="480" loading="lazy"><span class="person-name">Michael Gomez</span></li>
+        <li class="person is-group" id="p-michael-jaimes"><img src="assets/leaders/michael-jaimes.jpg" alt="" width="480" height="480" loading="lazy"><span class="person-name">Michael Jaimes</span></li>
+        <li class="person is-group" id="p-misti"><img src="assets/leaders/misti.jpg" alt="" width="480" height="480" loading="lazy"><span class="person-name">Misti</span></li>
+        <li class="person is-group" id="p-nicole"><img src="assets/leaders/nicole.jpg" alt="" width="480" height="480" loading="lazy"><span class="person-name">Nicole</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 4. Lead a group -->
+  <section class="section section-tint">
+    <div class="wrap join">
+      <div class="join-photo"><img src="assets/leaders/team-at-the-rock.jpg" alt="Members of The Rock Network team standing outside The Rock" width="1400" height="2100" loading="lazy"></div>
+      <div>
+        <h2 class="section-title">Lead a group with us</h2>
+        <p class="lead">A church group gathers, grows, gives and goes together, using the Jesus Disciple App.</p>
+        <a class="button button-primary" href="groups.html#start">Start a group</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="footer-top">
+      <div>
+        <p class="footer-tagline">A New Testament Church Network returning to the original model.</p>
+        <ul class="footer-social" aria-label="Social">
+          <li><a href="#" data-placeholder>Facebook</a></li>
+          <li><a href="#" data-placeholder>Instagram</a></li>
+          <li><a href="#" data-placeholder>YouTube</a></li>
+        </ul>
+        <div class="footer-signup">
+          <h2 class="footer-label" id="signup-label">Stay in the loop</h2>
+          <form novalidate aria-labelledby="signup-label">
+            <div class="signup-row">
+              <input type="email" name="email" required placeholder="Enter your email" aria-label="Email address" autocomplete="email">
+              <button class="button button-primary" type="submit">Subscribe</button>
+            </div>
+            <p class="signup-note" role="status"></p>
+          </form>
+        </div>
+      </div>
+      <nav class="footer-cols" aria-label="Footer">
+        <div>
+          <h2 class="footer-label">Explore</h2>
+          <ul><li><a href="hero.html">Home</a></li><li><a href="groups.html">Groups</a></li><li><a href="leadership.html" aria-current="page">Leadership</a></li></ul>
+        </div>
+        <div>
+          <h2 class="footer-label">Connect</h2>
+          <ul><li><a href="hero.html#app">The Rock App</a></li><li><a href="#" data-placeholder>Contact</a></li></ul>
+        </div>
+        <div>
+          <h2 class="footer-label">Policy</h2>
+          <ul><li><a href="#" data-placeholder>Privacy</a></li><li><a href="#" data-placeholder>Terms</a></li></ul>
+        </div>
+      </nav>
+    </div>
+    <a class="footer-mark" href="hero.html" aria-label="The Rock Network, home"><span class="logo" aria-hidden="true"></span></a>
+    <div class="footer-bottom"><span>© 2026 The Rock Network</span></div>
+  </div>
+</footer>
+
+<script>
+  /* The orbits: one ring-dot per person, the network's leaders on the inner circle and its other group leaders on
+     the outer one, read from the lists above (so names and photos are kept in one place). Each links to the
+     person's place in the list. */
+  (() => {
+    const orbit = document.getElementById('orbit');
+    const inner = [...document.querySelectorAll('.people-network .person')];
+    const outer = [...document.querySelectorAll('.people-group .person[id]')];   // network leaders are on the inner circle
+    let i = 0;
+    const place = (people, r, cls, turn) => people.forEach((li, k) => {
+      const a = (k / people.length + turn) * 2 * Math.PI - Math.PI / 2;
+      const x = 50 + r * Math.cos(a), y = 50 + r * Math.sin(a);
+      const name = li.querySelector('.person-name').textContent;
+      const node = document.createElement('a');
+      node.className = 'node ' + cls;
+      node.href = '#' + li.id;
+      node.setAttribute('aria-label', name);
+      node.style.cssText = `--x:${x}%;--y:${y}%;--i:${i++};--fx:${(50 - x).toFixed(2)}cqi;--fy:${(50 - y).toFixed(2)}cqi`;
+      node.innerHTML = `<img src="${li.querySelector('img').getAttribute('src')}" alt=""><span class="node-name" aria-hidden="true"></span>`;
+      node.querySelector('.node-name').textContent = name;
+      orbit.appendChild(node);
+    });
+    place(inner, 27, 'is-network', 0);
+    place(outer, 45, 'is-group', 1 / 30);
+    // grow once, when the orbit is first on screen
+    new IntersectionObserver(([e], io) => { if (e.isIntersecting) { orbit.classList.add('is-growing'); io.disconnect(); } }, { threshold: 0.2 }).observe(orbit);
+  })();
+</script>
+</body>
+</html>

@@ -252,10 +252,11 @@
     margin: calc(var(--g) * .56);
   }
   .site-nav { display: flex; gap: 28px; font-size: 15px; }
-  .site-nav a { text-decoration: none; color: var(--text); }
+  .site-nav a { text-decoration: none; color: var(--text); white-space: nowrap; }
   .site-nav a:hover { color: var(--heading); }
   @media (max-width: 760px) { .site-nav { display: none; } }
   @media (max-width: 1000px) { .site-nav { gap: 18px; } }   /* room for every link beside the logo */
+  @media (max-width: 900px) { .site-nav { gap: 14px; font-size: 14px; } .site-header .logo { --logo-h: 38px; } }   /* six links still fit on one line */
   .header-end { display: flex; align-items: center; gap: 28px; }
   /* Opens comment mode (review/comment-mode.js), where overseers mark up the page */
   .comment-toggle {
@@ -885,6 +886,7 @@
         <a href="#hubs">Find a hub</a>
         <a href="#story">Our story</a>
         <a href="groups.html">Groups</a>
+        <a href="leadership.html">Leadership</a>
       </nav>
       <button class="comment-toggle" id="comment-toggle" type="button" data-review-toggle>Comment</button>
     </div>
@@ -1226,7 +1228,7 @@
       <nav class="footer-cols" aria-label="Footer">
         <div>
           <h2 class="footer-label">Explore</h2>
-          <ul><li><a href="#top" aria-current="page">Home</a></li><li><a href="groups.html">Groups</a></li></ul>
+          <ul><li><a href="#top" aria-current="page">Home</a></li><li><a href="groups.html">Groups</a></li><li><a href="leadership.html">Leadership</a></li></ul>
         </div>
         <div>
           <h2 class="footer-label">Connect</h2>

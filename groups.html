@@ -97,10 +97,11 @@ const cfg = { ...CONFIG };
   }
   @media (max-width: 1000px) { .site-header .logo { --logo-h: 44px; } }
   .site-nav { display: flex; gap: 28px; font-size: 15px; }
-  .site-nav a { text-decoration: none; color: var(--text); }
+  .site-nav a { text-decoration: none; color: var(--text); white-space: nowrap; }
   .site-nav a:hover, .site-nav a[aria-current="page"] { color: var(--heading); }
   .site-nav a[aria-current="page"] { font-weight: 500; }
   @media (max-width: 1000px) { .site-nav { gap: 18px; } }
+  @media (max-width: 900px) { .site-nav { gap: 14px; font-size: 14px; } .site-header .logo { --logo-h: 38px; } }   /* six links still fit on one line */
   @media (max-width: 760px) { .site-nav { display: none; } }
 
   .glyph {
@@ -288,14 +289,18 @@ const cfg = { ...CONFIG };
   .photo-quote footer { margin-top: 28px; display: inline-flex; align-items: center; gap: 12px; font-size: 16px; color: rgba(255,255,255,.88); }
   .photo-quote footer .glyph { --ring: #2b2b30; }
 
-  /* ---------- 5. Meet the team ---------- */
+  /* ---------- 5. Leadership ---------- */
   .team-head .lead { margin-top: 14px; }
-  .team { list-style: none; margin: 56px 0 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
-  .member .frame { aspect-ratio: 4 / 5; display: grid; place-items: center; }
-  .member .frame .glyph { --g: 18px; --gc: #C9C9CF; --ring: #E9E9EC; }
-  .member h3 { margin: 18px 0 2px; font-size: 19px; font-weight: 500; color: var(--heading); letter-spacing: -0.01em; }
-  .member p { margin: 0; font-size: 15px; }
-  @media (max-width: 960px) { .team { grid-template-columns: repeat(2, 1fr); gap: 16px; } }
+  /* Four of the network's leaders as ring-dots (green rings, as on leadership.html), and a link to all of them */
+  .team { list-style: none; margin: 56px 0 0; padding: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 40px 24px; }
+  .member { display: grid; justify-items: center; gap: 18px; text-align: center; }
+  .member img {
+    width: min(100%, 180px); height: auto; aspect-ratio: 1; border-radius: 50%; object-fit: cover; background: #E9E9EC;
+    box-shadow: 0 0 0 4px var(--surface), 0 0 0 6.5px var(--c-disciples);
+  }
+  .member h3 { margin: 0; font-size: 18px; font-weight: 500; line-height: 1.3; color: var(--heading); letter-spacing: -0.01em; text-wrap: balance; }
+  .team-more { margin-top: 56px; display: flex; justify-content: center; }
+  @media (max-width: 960px) { .team { grid-template-columns: repeat(2, 1fr); gap: 32px 16px; } }
 
   /* ---------- Footer ---------- */
 
@@ -376,6 +381,7 @@ const cfg = { ...CONFIG };
       <a href="hero.html#app">App</a>
       <a href="hero.html#story">Our story</a>
       <a href="groups.html" aria-current="page">Groups</a>
+      <a href="leadership.html">Leadership</a>
     </nav>
   </div>
 </header>
@@ -385,7 +391,7 @@ const cfg = { ...CONFIG };
   <section class="groups-hero" id="top">
     <div class="wrap">
       <div class="frame hero-card" data-enter style="--i: 1">
-        <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=2000&h=1200&fit=crop&q=75&auto=format" alt="">
+        <img src="assets/group-gathered.jpg" alt="">
         <div class="hero-globe" id="hero-globe"></div>
         <div>
           <h1 data-enter style="--i: 2">Church Groups</h1>
@@ -456,7 +462,7 @@ const cfg = { ...CONFIG };
   <section class="section" id="story">
     <div class="wrap">
       <figure class="frame photo-quote reveal" style="margin: 0">
-        <img src="assets/group-gathered.jpg" alt="A church group gathered together in a living room" loading="lazy">
+        <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1600&h=1100&fit=crop&q=75&auto=format" alt="Three friends laughing around a table" loading="lazy">
         <blockquote>
           <p>“Doing church in a group changed everything for me. It’s the closest thing to family I’ve found.”</p>
           <footer><span class="glyph" aria-hidden="true"></span><span>Church group member</span></footer>
@@ -465,20 +471,21 @@ const cfg = { ...CONFIG };
     </div>
   </section>
 
-  <!-- 5. Meet the team -->
+  <!-- 5. Leadership -->
   <section class="section section-tint" id="team">
     <div class="wrap">
       <div class="team-head reveal">
         <p class="eyebrow">Connect with the Network</p>
-        <h2 class="section-title">Meet the team</h2>
+        <h2 class="section-title">Leadership</h2>
         <p class="lead">Working together to serve your region.</p>
       </div>
       <ul class="team">
-        <li class="member reveal"><div class="frame"><span class="glyph" aria-hidden="true"></span></div><h3>Name Surname</h3><p>Role</p></li>
-        <li class="member reveal"><div class="frame"><span class="glyph" aria-hidden="true"></span></div><h3>Name Surname</h3><p>Role</p></li>
-        <li class="member reveal"><div class="frame"><span class="glyph" aria-hidden="true"></span></div><h3>Name Surname</h3><p>Role</p></li>
-        <li class="member reveal"><div class="frame"><span class="glyph" aria-hidden="true"></span></div><h3>Name Surname</h3><p>Role</p></li>
+        <li class="member reveal" style="--i: 0"><img src="assets/leaders/jerry-dirmann.jpg" alt="" width="480" height="480" loading="lazy"><h3>Jerry Dirmann</h3></li>
+        <li class="member reveal" style="--i: 1"><img src="assets/leaders/kimberly-dirmann.jpg" alt="" width="480" height="480" loading="lazy"><h3>Kimberly Dirmann</h3></li>
+        <li class="member reveal" style="--i: 2"><img src="assets/leaders/jose-isabel-oneill.jpg" alt="" width="480" height="480" loading="lazy"><h3>Jose &amp; Isabel O'Neill</h3></li>
+        <li class="member reveal" style="--i: 3"><img src="assets/leaders/manny-andrea-orozco.jpg" alt="" width="480" height="480" loading="lazy"><h3>Manny &amp; Andrea Orozco</h3></li>
       </ul>
+      <p class="team-more reveal"><a class="button button-secondary" href="leadership.html">See all our leaders</a></p>
     </div>
   </section>
 </main>
@@ -507,7 +514,7 @@ const cfg = { ...CONFIG };
       <nav class="footer-cols" aria-label="Footer">
         <div>
           <h2 class="footer-label">Explore</h2>
-          <ul><li><a href="hero.html">Home</a></li><li><a href="groups.html" aria-current="page">Groups</a></li></ul>
+          <ul><li><a href="hero.html">Home</a></li><li><a href="groups.html" aria-current="page">Groups</a></li><li><a href="leadership.html">Leadership</a></li></ul>
         </div>
         <div>
           <h2 class="footer-label">Connect</h2>
