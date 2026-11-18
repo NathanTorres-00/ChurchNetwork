@@ -447,9 +447,9 @@ land in the live review.
 
 # Comment mode
 
-The hero page has a **Comment** button in its header, beside the nav. It turns the page into a review workspace
-where overseers mark up the live page, and everyone in comment mode sees each other's marks appear as they're
-posted. Outside comment mode none of it shows, and nothing for it loads until the button is clicked.
+Home, Groups, and Leadership each have a **Comment** button in the header and their own review thread. It turns
+the page into a workspace where overseers mark it up and see each other's marks as they're posted. The workspace
+loads only when opened, and marks stay with the page they were posted on.
 
 - **Four kinds of marks**, from the tools on the left:
   - **Comment**: click the page to pin a typed comment.
@@ -472,7 +472,7 @@ posted. Outside comment mode none of it shows, and nothing for it loads until th
   Clicking a card scrolls to its mark. Marks are tied to the element they were made on, so they stay on target at
   any window width; if that part of the page is removed, the card says **Moved**.
 - Reviewers type their name once per device. They can delete their own marks.
-- **Share review** copies a link that opens straight into comment mode (`/?comment`).
+- **Share review** copies a link that opens the current page straight into comment mode (for example, `/groups?comment`).
 - **Copy for agent**, at the foot of the thread, copies every open mark as one Markdown task list to paste into a
   chat with a coding agent (`review/agent-brief.js`). Each item has the reviewer's words, the text near the mark
   and the CSS path of its element, the words a highlight covers, and the window width it was made at. Voice memos

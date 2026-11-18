@@ -31,6 +31,17 @@ describe('marks', () => {
     expect(marks[0]).toMatchObject({ kind: 'comment', resolved: false, author: 'Ana', text: 'Make the cursor easier to see' });
   });
 
+  test('keeps Home, Groups and Leadership marks in separate threads', async () => {
+    const t = convexTest(schema, modules);
+    const pages = ['home', 'groups', 'leadership'];
+    for (const page of pages) await t.mutation(api.marks.create, comment({ page, text: `Feedback for ${page}` }));
+    for (const page of pages) {
+      const marks = await t.query(api.marks.list, { page });
+      expect(marks.map(mark => mark.text)).toEqual([`Feedback for ${page}`]);
+    }
+    expect(await code(t.mutation(api.marks.create, comment({ page: 'unknown' })))).toBe('INVALID');
+  });
+
   test('rejects a comment with empty text', async () => {
     const t = convexTest(schema, modules);
     expect(await code(t.mutation(api.marks.create, comment({ text: '   ' })))).toBe('INVALID');

@@ -1,0 +1,7 @@
+.header-end { display: flex; align-items: center; gap: 28px; }
+.comment-toggle {
+  font: 500 15px/1 var(--font); color: var(--heading); cursor: pointer;
+  padding: 9px 16px; border-radius: 999px; border: 1px solid #D4D4D8; background: rgba(255,255,255,.8);
+  transition: border-color .25s ease;
+}
+.comment-toggle:hover { border-color: #A1A1AA; }

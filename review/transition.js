@@ -23,7 +23,7 @@ const nextFrame = () => new Promise(r => requestAnimationFrame(() => requestAnim
 
 function scrollToY(y) {
   if (window.__lenis) window.__lenis.scrollTo(y, { immediate: true, force: true });
-  else window.scrollTo(0, y);
+  else window.scrollTo({ top: y, behavior: 'instant' });
 }
 
 // Keeping what the reader was looking at in the same place on screen across the layout change. notePlace() runs

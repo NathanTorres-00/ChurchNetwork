@@ -18,6 +18,7 @@ html.review-open { background: #F1F3F5; }
 /* body becomes the page's positioning box, so the page's absolutely placed header moves down with it */
 html.review-open body { position: relative; margin-top: var(--rv-top); }
 @media (min-width: 1280px) {
+  html.review-open { overflow-y: auto; }
   html.review-open body {
     margin: var(--rv-top) calc(var(--rv-side) + var(--rv-gap) * 2) 0 calc(var(--rv-rail) + var(--rv-gap) * 2);
     border-radius: 20px 20px 0 0; overflow: clip; box-shadow: 0 0 0 1px rgba(0, 0, 0, .04);
@@ -29,6 +30,13 @@ html.review-open .hero-title { font-size: max(24px, min(var(--h1-size), calc((10
 html.review-open .solo { font-size: max(26px, min(var(--solo-size), calc((100cqw - 64px) / 10.6))); }
 html.review-open .adjust, html.review-open .panel, html.review-open .hub-cursor { display: none !important; }
 html.review-open.has-hub-cursor .hub-row, html.review-open.has-hub-cursor .hub-row * { cursor: auto; }
+html.review-open .groups-hero .hero-card > div:not(.hero-globe) { pointer-events: auto; }
+html.rv-placing .groups-hero .hero-globe { pointer-events: none; }
+@media (min-width: 1280px) {
+  html.review-open:not([data-review-page="home"]) .site-header .logo { --logo-h: 38px; }
+  html.review-open:not([data-review-page="home"]) .site-nav { flex-wrap: wrap; justify-content: flex-end; gap: 4px 12px; font-size: 14px; }
+  html.review-open:not([data-review-page="home"]) .header-end { gap: 16px; }
+}
 
 /* ---------- Shared ---------- */
 .rv-root { font-family: var(--font, 'Geist', system-ui, sans-serif); color: var(--heading, #1F1F23); -webkit-font-smoothing: antialiased; }

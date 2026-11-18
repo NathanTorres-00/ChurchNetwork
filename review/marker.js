@@ -89,7 +89,7 @@ export function createMarker({ getTool, getInk, getSize, onStroke, onErase, onEr
     between = next;
     if (!dy) return;
     if (window.__lenis) window.__lenis.scrollTo(window.scrollY - dy, { immediate: true });
-    else window.scrollBy(0, -dy);
+    else window.scrollBy({ top: -dy, behavior: 'instant' });
   }
   function lift(e) {
     if (fingers.delete(e.pointerId)) between = fingers.size > 1 ? midpoint() : null;

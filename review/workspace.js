@@ -81,7 +81,7 @@ export function ago(ts, now = Date.now()) {
 }
 
 export function createWorkspace({
-  onExit, onShare, beforeToolChange, onToolChange, onSelectCard, onResolve, onDelete, onShowResolved, onSizeChange, onCopyForAgent,
+  title, onExit, onShare, beforeToolChange, onToolChange, onSelectCard, onResolve, onDelete, onShowResolved, onSizeChange, onCopyForAgent,
 } = {}) {
   let tool = 'comment';
   let statusTimer = 0;
@@ -103,7 +103,7 @@ export function createWorkspace({
         h('span', { text: 'Comment mode' }),
         h('span', { class: 'rv-mode-x', html: ICONS.close }),
       ]),
-      h('p', { class: 'rv-reviewing', text: 'Reviewing Church Network — Home' }),
+      h('p', { class: 'rv-reviewing', text: `Reviewing ${title}` }),
     ]),
     h('div', { class: 'rv-toolbar-end' }, [
       status,

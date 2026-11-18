@@ -21,7 +21,7 @@ export const MIN_WIDTH = 0.25;         // thinnest and thickest a stroke or arro
 export const MAX_WIDTH = 5;            // tool's usual width
 
 export const KINDS = ['comment', 'voice', 'arrow', 'highlight', 'drawing'];
-export const PAGES = ['home'];
+export const PAGES = ['home', 'groups', 'leadership'];
 
 const MAX_PATH = 500;
 const MAX_DEVICE = 100;

@@ -1,5 +1,5 @@
 // Comment mode: turns the page into a review workspace where anyone can leave comments, voice memos, arrows
-// and drawings. hero.html loads this module only when someone clicks Comment or opens a ?comment link.
+// and drawings. The site loads this module only when someone clicks Comment or opens a ?comment link.
 import { MAX_POINTS, MAX_STROKES } from '../convex/limits.js';
 import { agentBrief } from './agent-brief.js';
 import { rubOut } from './eraser.js';
@@ -27,6 +27,11 @@ const MESSAGES = {
 };
 const message = e => MESSAGES[e?.code] ?? MESSAGES.NETWORK;
 const newId = () => globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2) + Date.now().toString(36);
+const PAGE_DETAILS = {
+  home: { title: 'Church Network — Home', file: 'hero.html' },
+  groups: { title: 'Church Network — Groups', file: 'groups.html' },
+  leadership: { title: 'Church Network — Leadership', file: 'leadership.html' },
+};
 
 async function makeStore() {
   if (window.__reviewStoreFactory === 'fake') {
@@ -55,7 +60,7 @@ let wanted = false;
 const inTurn = fn => (queue = queue.then(fn, fn));
 export const enter = opts => { wanted = true; return inTurn(() => open(opts)); };
 export const exit = () => { wanted = false; return inTurn(async () => { const left = await close(); if (!left) wanted = true; return left; }); };
-export const toggle = () => (wanted ? exit() : enter());
+export const toggle = opts => (wanted ? exit() : enter(opts));
 
 async function open({ page = 'home' } = {}) {
   if (state) return;
@@ -99,6 +104,7 @@ async function open({ page = 'home' } = {}) {
   };
 
   s.workspace = createWorkspace({
+    title: PAGE_DETAILS[page].title,
     onExit: () => exit(),
     onShare: share,
     beforeToolChange: async () => closeDraft(s),
@@ -366,13 +372,10 @@ async function close() {
   return true;
 }
 
-// The source file each comment mode page is built from, so the agent knows where to look
-const SOURCE = { home: 'hero.html' };
-
 async function copyForAgent(s) {
   const open = s.marks.filter(m => !m.resolved);
   if (!open.length) return;
-  const brief = agentBrief(open, { title: 'Church Network — Home', url: location.origin + location.pathname, file: SOURCE[s.page] ?? s.page });
+  const brief = agentBrief(open, { ...PAGE_DETAILS[s.page], url: location.origin + location.pathname });
   try {
     await navigator.clipboard.writeText(brief);
     s.workspace.setStatus(`Copied ${open.length} ${open.length === 1 ? 'item' : 'items'} for an agent`, 2400);
