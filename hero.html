@@ -974,7 +974,7 @@
   <section class="section" id="what-we-do">
     <div class="wrap split">
       <div class="frame">
-        <img src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=1200&h=1020&fit=crop&q=75&auto=format" alt="" loading="lazy">
+        <img src="assets/network-photos/house-church-gathering.webp" width="1440" height="810" alt="A house church gathered in a living room" loading="lazy">
       </div>
       <div>
         <h2 class="section-title">What we do</h2>
@@ -1401,6 +1401,7 @@
   });
 })();
 </script>
+<script src="assets/network-globe-photos.js"></script>
 <script>
 /* =========================================================================
    CONFIG: every parameter the panel controls. Paste "Copy settings" output here.
@@ -1595,17 +1596,6 @@ const CONFIG = {
   galleryColorSettle: 2.5,          // seconds a finished line takes to ease back to the line colour
   galleryPhoneOpenings: 'around',   // phones: 'around' (above and below the text) or 'off'
 };
-
-// Placeholder photos (Unsplash). Each dot gets one, chosen by its network and position.
-const PHOTOS = [
-  '1529156069898-49953e39b3ac', '1511632765486-a01980e01a18', '1517486808906-6ca8b3f04846',
-  '1522202176988-66273c2fd55f', '1491438590914-bc09fcaaf77a', '1543269865-cbf427effbad',
-  '1531206715517-5c0ba140b2b8', '1506869640319-fe1a24fd76dc', '1488521787991-ed7bbaae773c',
-  '1469571486292-0ba58a3f068b', '1500648767791-00dcc994a43e', '1494790108377-be9c29b29330',
-  '1507003211169-0a1dd7228f2d', '1517841905240-472988babdf9',
-  '1438761681033-6461ffad8d80', '1472099645785-5658abf4ff4e', '1539571696357-5a69c17a67c6',
-];
-const photoUrl = id => `https://images.unsplash.com/photo-${id}?w=640&h=484&fit=crop&q=70&auto=format`;
 
 // Set to false for embeds to hide the Adjust panel (or add ?controls=0 to the address)
 const SHOW_CONTROLS = true;
@@ -2400,7 +2390,7 @@ function heroGalleryGroups(GALLERY_CONTROLS) {
   canvas.addEventListener('pointerleave', e => { if (e.pointerType !== 'touch') pointer.inside = false; });
 
   const photoFor = (site, node) =>
-    Math.abs((site.seed ^ Math.imul(site.nodes.indexOf(node) + 1, 2654435761)) | 0) % PHOTOS.length;
+    Math.abs((site.seed ^ Math.imul(site.nodes.indexOf(node) + 1, 2654435761)) | 0) % NETWORK_GLOBE_PHOTOS.length;
 
   function makePin() {
     const el = pinTemplate.content.firstElementChild.cloneNode(true);
@@ -2416,7 +2406,7 @@ function heroGalleryGroups(GALLERY_CONTROLS) {
     if (p.photo === idx) return;
     p.photo = idx;
     p.photoEl.classList.remove('is-loaded');
-    const url = photoUrl(PHOTOS[idx]);
+    const url = NETWORK_GLOBE_PHOTOS[idx];
     const img = new Image();
     img.onload = () => {
       if (p.photo !== idx) return;
@@ -2434,7 +2424,7 @@ function heroGalleryGroups(GALLERY_CONTROLS) {
       Object.assign(p, { node: hit.node, shown: 0, x: hit.x, y: hit.y, gap: hit.r });
       // Skip photos already showing on another pin
       let idx = photoFor(hit.site, hit.node);
-      for (let k = 0; k < PHOTOS.length && pins.some(q => q.photo === idx); k++) idx = (idx + 1) % PHOTOS.length;
+      for (let k = 0; k < NETWORK_GLOBE_PHOTOS.length && pins.some(q => q.photo === idx); k++) idx = (idx + 1) % NETWORK_GLOBE_PHOTOS.length;
       setPhoto(p, idx);
       pins.push(p);
     }
@@ -2704,7 +2694,7 @@ function heroGalleryGroups(GALLERY_CONTROLS) {
   }
 
   // Warm the cache so pins open with their photo already in place
-  setTimeout(() => PHOTOS.forEach(id => { new Image().src = photoUrl(id); }), 1500);
+  setTimeout(() => NETWORK_GLOBE_PHOTOS.forEach(url => { new Image().src = url; }), 1500);
 
   /* ---------- Loop ---------- */
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -2969,7 +2959,7 @@ function heroGalleryGroups(GALLERY_CONTROLS) {
         canvas: galleryCanvas,
         stage: galleryStage,
         cfg: m.prefixedConfig(cfg, 'gallery'),
-        photos: m.PHOTO_IDS.map(m.photoUrl),
+        photos: NETWORK_GLOBE_PHOTOS,
         insets: panelInsets,
         quiet: quietEllipse,
         viewTop: () => {                               // below the header's logo and links

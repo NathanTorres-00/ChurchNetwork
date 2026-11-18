@@ -23,6 +23,28 @@ test('the pins globe is the default art', async ({ page }) => {
   await expect(page.locator('#gallery-canvas')).toBeHidden();
 });
 
+for (const path of ['/hero.html', '/hero.html?heroArt=gallery', '/network-globe-pins.html', '/network-gallery.html']) {
+  test(`${path} loads the local network photo set`, async ({ page }) => {
+    const photos = new Set();
+    page.on('response', response => {
+      const photoPath = new URL(response.url()).pathname;
+      if (response.ok() && response.frame() === page.mainFrame() && photoPath.startsWith('/assets/network-photos/globe/')) {
+        photos.add(photoPath);
+      }
+    });
+    await page.goto(path, { waitUntil: 'domcontentloaded' });
+    await expect.poll(() => photos.size).toBe(9);
+  });
+}
+
+test('What we do loads the local house church photo', async ({ page }) => {
+  await openPage(page);
+  const photo = page.locator('#what-we-do img');
+  await expect(photo).toHaveAttribute('src', 'assets/network-photos/house-church-gathering.webp');
+  await photo.scrollIntoViewIfNeeded();
+  await expect.poll(() => photo.evaluate(img => img.naturalWidth)).toBeGreaterThan(0);
+});
+
 test('the pins globe never loads the gallery engine', async ({ page }) => {
   const engine = [];
   page.on('request', r => { if (r.url().endsWith('/assets/network-gallery.js')) engine.push(r.url()); });
@@ -122,7 +144,7 @@ test('Copy settings includes the gallery keys', async ({ page, context }) => {
 
 /* ---------- The Gallery behind the copy ---------- */
 
-const NO_PHOTOS = page => page.route('**/images.unsplash.com/**', r => r.abort());   // keeps the canvas readable
+const NO_PHOTOS = page => page.route('**/assets/network-photos/globe/**', r => r.abort());   // keeps the canvas readable
 
 async function openHeroGallery(page, extra = '') {
   await page.addInitScript(() => {

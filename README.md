@@ -160,8 +160,9 @@ on their own across the view, at a rate you choose. The pin rides along with
 its dot, the dot deepens in color, and the flight eases to a stop while the pin is open, then picks back up when
 you move away. On touch screens, tap a dot to open its pin and tap empty ground to close it.
 
-Photos are Unsplash placeholders listed in `PHOTOS` near the top of the script; each dot is assigned one by its
-network and position. Swap the IDs (or change `photoUrl`) to use real photos.
+The pins use photos of house groups, youth groups, and larger church gatherings. The Pins and Gallery pages
+share the list in `assets/network-globe-photos.js` and the WebP crops in `assets/network-photos/globe/`.
+Each dot is assigned a photo by its network and position.
 
 | Parameter | What it does |
 |-----------|--------------|
@@ -217,8 +218,7 @@ turning into view, which is what carries the sense of how big the network is.
 - **Hover.** A hovered dot opens larger (`hoverSize`) and stays open as long as the cursor is on it. New automatic
   openings pause meanwhile (`pauseAutoOnHover`), and the globe eases to a stop so the dot stays under the cursor
   (`slowOnHover`). On touch screens a tap opens a dot for a few seconds.
-- **Photos.** Placeholder Unsplash landscapes for now (`PHOTO_IDS` in `assets/network-gallery.js`). Swap in photos of the
-  network's house churches and campuses when they're ready; any image works, cropped to a circle.
+- **Photos.** The Gallery uses the same network photos as the Pins globe and frames them in circles.
 - **Built with** Canvas 2D and d3's satellite projection (`d3.geoSatellite`), so the grid bends with real
   perspective. The **Adjust** panel works like the other pages: Camera (spin, zoom, camera distance, tilt), Globe
   position (move sideways or up and down, latitude, roll, starting longitude), Grid, Dots and Openings. **Copy
