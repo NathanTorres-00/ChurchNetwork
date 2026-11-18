@@ -86,6 +86,8 @@ const homePage = defineCollection({
       app: z.object({
         logo: z.object({ src: image(), alt: z.string() }),
         heading: z.string(),
+        /** Bold line under the heading ("Are you a Pastor?"). */
+        subtitle: z.string().optional(),
         lead: z.string(),
         university: z.object({
           heading: z.string(),

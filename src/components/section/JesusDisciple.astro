@@ -12,13 +12,15 @@ interface Props extends HTMLAttributes<"section"> {
   logo: { src: ImageMetadata; alt: string };
   /** What the app is, under the wordmark. */
   heading: string;
+  /** Bold line under the heading. */
+  subtitle?: string;
   /** Paragraph under the heading. */
   lead?: string;
   /** The Jesus Disciple University banner under the video rows. */
   university?: { heading: string; body: string; photo: ImageMetadata; button?: Link };
 }
 
-const { render = true, logo, heading, lead, university, class: className, ...rest } = Astro.props;
+const { render = true, logo, heading, subtitle, lead, university, class: className, ...rest } = Astro.props;
 
 // The three rows of video cards stay in code for now (their links are placeholders until the videos have addresses)
 type Card = { label: string; image: string; position?: string };
@@ -65,6 +67,7 @@ const reels: { id: string; title: string; cards: Card[] }[] = [
           <Image class="jd-logo" src={logo.src} alt={logo.alt} widths={[420, 840, logo.src.width]} sizes="(max-width: 1235px) 34vw, 420px" />
           <span>{heading}</span>
         </h2>
+        {subtitle && <h3 class="jesus-disciple_subtitle">{subtitle}</h3>}
         {lead && <p class="jesus-disciple_lead text-style-large">{lead}</p>}
       </div>
       {/* public/scripts/home-jd-carousels.js reads .reel-group, .reel, .reel-btn and the cards */}
@@ -145,6 +148,13 @@ const reels: { id: string; title: string; cards: Card[] }[] = [
       width: clamp(15rem, 34vw, 26.25rem);
       height: auto;
     }
+    .jesus-disciple_subtitle {
+      margin: 0.875rem 0 0;
+      font-size: clamp(1.25rem, 2vw, 1.625rem);
+      line-height: 1.25;
+      font-weight: 700;
+      letter-spacing: -0.015em;
+    }
     .jesus-disciple_lead {
       margin: 1.125rem 0 0;
       max-width: 58ch;
@@ -160,7 +170,7 @@ const reels: { id: string; title: string; cards: Card[] }[] = [
     .jdu-photo { position: absolute; inset: 0; z-index: -1; width: 100%; height: 100%; object-fit: cover; object-position: 70% 40%; }
     .jdu::after { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: linear-gradient(90deg, rgba(4,16,28,.72) 0%, rgba(4,16,28,.35) 38%, rgba(4,16,28,0) 60%); }
     .jdu-body { max-width: 36rem; }
-    .jdu-title { margin: 0; font-size: clamp(2.5rem, 5.6vw, 4.75rem); line-height: 1; font-weight: 500; letter-spacing: -0.035em; color: #fff; text-wrap: balance; }
+    .jdu-title { margin: 0; font-size: clamp(2.5rem, 5.6vw, 4.75rem); line-height: 1; font-weight: 700; letter-spacing: -0.035em; color: #fff; text-wrap: balance; }
     .jdu-text { margin: 1.375rem 0 0; max-width: 36ch; font-size: clamp(1.125rem, 1.6vw, 1.375rem); line-height: 1.45; color: rgba(255,255,255,.78); }
     .jdu .jdu-button { display: inline-flex; align-items: center; justify-content: center; gap: 0.625rem; font: var(--primary-medium) 0.9375rem/1 var(--primary-family); text-decoration: none; cursor: pointer; padding: 0.9375rem 1.5rem; border-radius: var(--radius-round); border: var(--border-width) solid transparent; transition: background .25s ease, border-color .25s ease; margin-top: clamp(1.5rem, 3vw, 2rem); background: #fff; color: #1F1F23; }
     .jdu .jdu-button:hover { background: #E4E4E7; }
@@ -174,7 +184,7 @@ const reels: { id: string; title: string; cards: Card[] }[] = [
       .jdu::after { display: none; }
     }
     .reel-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 1.5rem; }
-    .reel-title { margin: 0; font-size: clamp(1.5rem, 2.6vw, 2.125rem); line-height: 1.15; font-weight: 500; color: var(--heading); letter-spacing: -0.02em; }
+    .reel-title { margin: 0; font-size: clamp(1.5rem, 2.6vw, 2.125rem); line-height: 1.15; font-weight: 700; color: var(--heading); letter-spacing: -0.02em; }
     .reel-nav { display: flex; gap: 0.625rem; }
     .reel-group.is-static .reel-nav { visibility: hidden; }
     /* every card fits: nothing to scroll */

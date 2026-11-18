@@ -104,3 +104,6 @@ decision Nathan should know about. Each item is marked **fixed**, **accepted** o
   the network's own photos on hover; the footer's globe loads once in idle time after the page loads and replays
   its growth each time the footer comes back into view (instead of reloading), at 1x pixel density; the globe
   reuses its network layout on replay.
+- **Homepage copy, group photo and footer** (ported from main 722c2bf): Jesus Disciple gains "Are you a Pastor?"
+  and bold row titles, the University banner and the How we got started steps have new copy, What we do shows the
+  smiling Iglesia Mi Ciudad group, and the footer's social links are hidden.

@@ -33,8 +33,8 @@
     "subtitle": "We are a four-stage ministry",
     "lead": "We multiply disciples, leaders, churches, and movements.",
     "photo": {
-      "src": "../../assets/images/house-church-gathering.webp",
-      "alt": "A house church gathered in a living room"
+      "src": "../../assets/images/iglesia-mi-ciudad-group.webp",
+      "alt": "A smiling group at Iglesia Mi Ciudad"
     },
     "stats": [
       {
@@ -107,10 +107,11 @@
       "alt": "Jesus Disciple"
     },
     "heading": "A Four-Stage Ministry tool",
+    "subtitle": "Are you a Pastor?",
     "lead": "Use the Jesus Disciple App to Launch your own New Testament Network",
     "university": {
       "heading": "Jesus Disciple University",
-      "body": "JDU is an online educational training institution that prepares individuals, ministry leaders, and churches to live out, teach, and multiply disciple-making in their own communities.",
+      "body": "JDU provides online training for disciple-makers, leaders, pastors, and missionaries from churches and ministries globally.",
       "photo": "../../assets/images/jdu-banner.jpg",
       "button": {
         "label": "Learn more",
@@ -127,24 +128,24 @@
     "heading": "How we got started",
     "items": [
       {
-        "when": "Where it began",
+        "when": "Multiplied disciples",
         "heading": "One local church",
-        "body": "A discipleship system for one local church designed to build solid lives."
+        "body": "began making disciples who make disciples"
       },
       {
-        "when": "Growing",
+        "when": "Multiplied leaders",
         "heading": "Disciples became leaders",
-        "body": "As people were discipled, they started leading groups of their own, and those groups began to multiply."
+        "body": "that started new groups"
       },
       {
-        "when": "Multiplying",
+        "when": "Multiplied churches",
         "heading": "Groups became churches",
-        "body": "Groups grew into new churches and local hubs, each one raising up leaders to send out."
+        "body": "forming a network"
       },
       {
-        "when": "Today",
-        "heading": "A global movement",
-        "body": "Today the network connects disciple makers across continents multiplying movements far beyond where it began."
+        "when": "Multiplied movements",
+        "heading": "Network sent missionaries",
+        "body": "to repeat the process"
       }
     ]
   }

@@ -42,7 +42,7 @@ for (const [path, links] of Object.entries(NAV)) {
 test('a placeholder link goes nowhere', async ({ page }) => {
   await page.goto('/groups');
   const before = page.url();
-  await page.locator('.site-footer a[data-placeholder]').first().click();
+  await page.locator('.site-footer a[data-placeholder]').filter({ visible: true }).first().click();
   await page.waitForTimeout(300);
   expect(page.url()).toBe(before);
 });
@@ -59,4 +59,9 @@ test('Groups links back to Home from the header, and Home links to Groups', asyn
   await expect(page.locator('.site-header .brand')).toHaveAttribute('href', '/');
   await page.goto('/');
   await expect(page.locator('.site-header .site-nav a', { hasText: 'Groups' })).toHaveAttribute('href', '/groups');
+});
+
+test('the footer\'s social links are hidden for now (main 722c2bf)', async ({ page }) => {
+  await page.goto('/groups');
+  await expect(page.locator('.footer-social')).toBeHidden();
 });

@@ -39,10 +39,10 @@ for (const path of ['/', '/?heroArt=gallery', '/embed/globe?embed=globe&controls
   });
 }
 
-test('What we do loads the local house church photo', async ({ page }) => {
+test('What we do loads the smiling Iglesia Mi Ciudad group photo', async ({ page }) => {
   await openPage(page);
   const photo = page.locator('#what-we-do img');
-  await expect(photo).toHaveAttribute('alt', 'A house church gathered in a living room');
+  await expect(photo).toHaveAttribute('alt', 'A smiling group at Iglesia Mi Ciudad');
   await photo.scrollIntoViewIfNeeded();
   await expect.poll(() => photo.evaluate(img => img.naturalWidth)).toBeGreaterThan(0);
 });
