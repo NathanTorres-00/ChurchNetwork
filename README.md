@@ -105,6 +105,10 @@ backend to Convex and then copies the pages, `assets/`, `review/`, `versions/` a
 [Comment mode](#comment-mode)). It also writes `dist/versions.json`, the list of builds for the
 [Versions panel](#versions-panel).
 
+Production builds currently omit `leadership.html` and the Leadership blocks marked in Home and Groups.
+Local and preview builds keep them. To restore Leadership on the live site, remove the `hideLeadership`
+option from the build command entry point in `scripts/build-static.js` and redeploy.
+
 Vercel Authentication is off for the project, so every build's own address (e.g.
 `churchnetwork-a79hy0ryt-nathan-torres-projects.vercel.app`) opens for anyone with the link, branch previews included.
 That's what lets the Versions panel show old builds.

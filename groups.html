@@ -383,7 +383,7 @@ const cfg = { ...CONFIG };
         <a href="hero.html#app">App</a>
         <a href="hero.html#story">Our story</a>
         <a href="groups.html" aria-current="page">Groups</a>
-        <a href="leadership.html">Leadership</a>
+        <!-- leadership:start --><a href="leadership.html">Leadership</a><!-- leadership:end -->
       </nav>
       <button class="comment-toggle" id="comment-toggle" type="button" data-review-toggle>Comment</button>
     </div>
@@ -476,7 +476,7 @@ const cfg = { ...CONFIG };
     </div>
   </section>
 
-  <!-- 5. Leadership -->
+  <!-- leadership:start -->
   <section class="section section-tint" id="team">
     <div class="wrap">
       <div class="team-head reveal">
@@ -493,6 +493,7 @@ const cfg = { ...CONFIG };
       <p class="team-more reveal"><a class="button button-secondary" href="leadership.html">See all our leaders</a></p>
     </div>
   </section>
+  <!-- leadership:end -->
 </main>
 
 <footer class="site-footer">
@@ -519,7 +520,7 @@ const cfg = { ...CONFIG };
       <nav class="footer-cols" aria-label="Footer">
         <div>
           <h2 class="footer-label">Explore</h2>
-          <ul><li><a href="hero.html">Home</a></li><li><a href="groups.html" aria-current="page">Groups</a></li><li><a href="leadership.html">Leadership</a></li></ul>
+          <ul><li><a href="hero.html">Home</a></li><li><a href="groups.html" aria-current="page">Groups</a></li><!-- leadership:start --><li><a href="leadership.html">Leadership</a></li><!-- leadership:end --></ul>
         </div>
         <div>
           <h2 class="footer-label">Connect</h2>

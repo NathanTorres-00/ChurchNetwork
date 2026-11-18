@@ -44,6 +44,28 @@ describe('buildStatic', () => {
     expect(() => buildStatic({ root, out, convexUrl: '' })).toThrow();
   });
 
+  test('keeps Leadership locally but omits its page and markup when hidden', () => {
+    const { root, out } = fixture();
+    const leadershipLink = '<a href="leadership.html">Leadership</a>';
+    const leadershipSection = '<section id="team">\nLeadership content\n</section>';
+    const home = `<nav><!-- leadership:start -->${leadershipLink}<!-- leadership:end --></nav>`;
+    const groups = `<main>Groups<!-- leadership:start -->\n${leadershipSection}\n<!-- leadership:end --></main>`;
+    writeFileSync(join(root, 'hero.html'), home);
+    writeFileSync(join(root, 'groups.html'), groups);
+    writeFileSync(join(root, 'leadership.html'), '<main>Leadership</main>');
+    const options = { root, out, convexUrl: 'https://x.convex.cloud' };
+
+    buildStatic(options);
+    expect(existsSync(join(out, 'leadership.html'))).toBe(true);
+    expect(readFileSync(join(out, 'hero.html'), 'utf8')).toBe(home);
+    expect(readFileSync(join(out, 'groups.html'), 'utf8')).toBe(groups);
+
+    buildStatic({ ...options, hideLeadership: true });
+    expect(existsSync(join(out, 'leadership.html'))).toBe(false);
+    expect(readFileSync(join(out, 'hero.html'), 'utf8')).toBe('<nav></nav>');
+    expect(readFileSync(join(out, 'groups.html'), 'utf8')).toBe('<main>Groups</main>');
+  });
+
   test('build copies versions/ and writes the list', () => {
     const { root, out } = fixture();
     const entry = { sha: 'a', href: 'https://x/', createdAt: 1, summary: 'S', current: true };
