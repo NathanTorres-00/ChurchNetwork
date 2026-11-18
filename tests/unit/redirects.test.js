@@ -19,3 +19,9 @@ describe('vercel.json', () => {
     expect(vercel.rewrites ?? []).toEqual([]);
   });
 });
+
+describe('vercel.json build', () => {
+  test('names the framework, so Vercel builds with Astro and serves dist/ whatever the project preset says', () => {
+    expect(vercel.framework).toBe('astro');
+  });
+});

@@ -117,3 +117,24 @@ decision Nathan should know about. Each item is marked **fixed**, **accepted** o
   Sub-Networks, The Rock Leaders, a short "Start a group" row), and the live folder holds more uncommitted edits
   to it. The Astro page still has the earlier layout (orbit, Network leaders, Group leaders, Lead a group). Once
   the page settles on `main`, it can be ported in one go.
+  main 77af76e (a simpler orbit) and 01d9ead (breathing dots in the Leadership hero) belong with it and are
+  also not ported yet.
+- **Home's welcome-video eyebrow** reads "What is it?" (ported from main 77af76e).
+
+## Found in the final review
+
+- **Fixed:** a leader without a photo blanked the whole Leadership orbit (the orbit script expected a photo);
+  such a leader now gets a plain dot.
+- **Fixed:** `vercel.json` names the framework (`astro`), so Vercel builds with Astro and serves `dist/`
+  whatever the project's Framework Preset says (it was set up as a plain static site).
+- **Deferred (minor), for Nathan to decide:**
+  - Saved settings that are valid JSON but the wrong type (say `{"scale":"x"}` in `rn:footer`) still break the
+    footer's panel controls and newsletter handler, as they did on the old site. Real browsers won't hold these.
+  - Canonical URLs and the sitemap end in `/` (`/groups/`) while the site's links don't (`/groups`). Setting
+    `trailingSlash: "never"` in `astro.config.mjs` would make them agree; worth doing before launch.
+  - A style object (not a string) passed to Lumos `Heading` or `Paragraph` is dropped; every use today passes a
+    string.
+  - A Leadership list with nobody in it still shows its heading.
+  - Clearing this week's `youtubeId` fails the build rather than leaving the video section out.
+  - The demos' "Hero" link goes to `hero.html`, which reaches Home on Vercel but not under `npm run preview`
+    (the demos stay byte-identical to `main`).

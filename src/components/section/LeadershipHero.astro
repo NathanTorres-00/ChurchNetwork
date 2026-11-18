@@ -124,7 +124,8 @@ const { render = true, heading, lead, key, class: className, ...rest } = Astro.p
       text-decoration: none;
       color: var(--heading);
       z-index: 1;
-      & img {
+      & :is(img, .node-empty) {
+        display: block;
         width: 100%;
         height: 100%;
         border-radius: 50%;

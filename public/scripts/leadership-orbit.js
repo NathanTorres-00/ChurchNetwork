@@ -15,7 +15,10 @@
       node.href = '#' + li.id;
       node.setAttribute('aria-label', name);
       node.style.cssText = `--x:${x}%;--y:${y}%;--i:${i++};--fx:${(50 - x).toFixed(2)}cqi;--fy:${(50 - y).toFixed(2)}cqi`;
-      node.innerHTML = `<img src="${li.querySelector('img').getAttribute('src')}" alt=""><span class="node-name" aria-hidden="true"></span>`;
+      // a leader without a photo gets a plain dot (the content allows it; main's page always had photos)
+      const photo = li.querySelector('img');
+      node.innerHTML = (photo ? `<img src="${photo.getAttribute('src')}" alt="">` : '<span class="node-empty"></span>') +
+        '<span class="node-name" aria-hidden="true"></span>';
       node.querySelector('.node-name').textContent = name;
       orbit.appendChild(node);
     });
