@@ -18,8 +18,8 @@ shape.
   24px corners, pill buttons). Sections: a photo hero (Church Groups), What are Rock Network Groups? with the
   Church Groups and Discipleship Groups cards and "Already a part of a group?", the weekly Network Video
   (a YouTube video: its thumbnail until play, then YouTube's player; change `data-youtube` each week), a group member's quote over the photo of three friends at a table (the hero is now the
-  group's own photo, `assets/group-gathered.jpg`), and Leadership: four of the network's leaders and **See all our
-  leaders** (to `leadership.html`). Links not built yet are marked `data-placeholder`.
+  group's own photo, `assets/group-gathered.jpg`), and the **Rock Groups Leadership Team** with portraits, roles,
+  and **See all our leaders** (to `leadership.html`). Links not built yet are marked `data-placeholder`.
   - **Adjust panel** (bottom right; `?controls=0` hides it), with its own CONFIG at the top of `groups.html`:
     - **Hero › Art:** **Photo** (default) or **Pins globe**, the home page's own globe and photo pins behind the
       title. It's `hero.html?embed=globe` in a frame, loaded only when chosen; its pins keep clear of the Groups
@@ -30,14 +30,12 @@ shape.
     - **Page transition:** Rise, Slide, Fade or None, and its speed, between Home and Groups. It uses the
       browser's cross-document View Transitions (`assets/page-transition.css` and `.js`, loaded on both pages), so
       it plays in Chrome, Edge and Safari 18.2+; the choice is kept in this browser (`localStorage`) for both pages.
-- **`leadership.html`**: the whole leadership of The Rock Network. Every person is a ring-dot: green rings for the
-  **network leaders** (9), gold for the **group leaders** (18, including the three network leaders who also lead
-  groups). The hero places them on two orbits around The Rock Network wordmark, network leaders inside; on load
-  the orbits draw and the people grow out from the center once (not with reduced motion). Hover or Tab to a
-  ring-dot for the name; click it to jump to that person in the lists below. Then the two lists, and the team
-  outside The Rock with **Start a group**. The orbits are built from the lists, so to add or change someone, edit
-  their `<li class="person">` (photo in `assets/leaders/`, a 480px square crop centred on the face; the
-  originals are in `Leadership/`). Home and Groups link to Leadership in their headers and footers.
+- **`leadership.html`**: the directory starts with the **Rock Groups Leadership Team**, followed by **Regional
+  Overseers** (by region and by ministry or online), **Sub-Networks**, and **The Rock Leaders**. The hero orbit
+  links to each leader once, even when they appear under multiple assignments. Keep one anchored
+  `<li class="person">` per leader for the orbit; repeat assignments do not need an ID. Web portraits are
+  480px square crops in `assets/leaders/`; the roster reference and source photos are in `Leadership/`.
+  Home and Groups link to Leadership in their headers and footers.
 - **Site footer** (Home and Groups; `assets/site-footer.css` and `.js`): tagline, social links, a newsletter form
   (not connected to a mailing list yet; it says so on submit), Explore / Connect / Policy links, and the big
   wordmark (`assets/the-rock-network-large.png`, 1944px wide so it stays sharp). Links not built yet are
@@ -105,9 +103,7 @@ backend to Convex and then copies the pages, `assets/`, `review/`, `versions/` a
 [Comment mode](#comment-mode)). It also writes `dist/versions.json`, the list of builds for the
 [Versions panel](#versions-panel).
 
-Production builds currently omit `leadership.html` and the Leadership blocks marked in Home and Groups.
-Local and preview builds keep them. To restore Leadership on the live site, remove the `hideLeadership`
-option from the build command entry point in `scripts/build-static.js` and redeploy.
+Production and preview builds include `leadership.html` and the Leadership links on Home and Groups.
 
 Vercel Authentication is off for the project, so every build's own address (e.g.
 `churchnetwork-a79hy0ryt-nathan-torres-projects.vercel.app`) opens for anyone with the link, branch previews included.

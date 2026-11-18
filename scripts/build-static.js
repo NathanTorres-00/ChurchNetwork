@@ -52,6 +52,6 @@ async function loadVersions(root, env) {
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
   const versions = await loadVersions(root, process.env);
-  buildStatic({ root, out: join(root, 'dist'), convexUrl: process.env.CONVEX_URL, hideLeadership: process.env.VERCEL_ENV === 'production', ...versions });
+  buildStatic({ root, out: join(root, 'dist'), convexUrl: process.env.CONVEX_URL, ...versions });
   console.log('Built dist/ for', process.env.CONVEX_URL);
 }
