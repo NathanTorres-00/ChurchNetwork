@@ -484,30 +484,80 @@
     border-left: 22px solid var(--heading); border-top: 14px solid transparent; border-bottom: 14px solid transparent;
   }
 
-  /* How we got started */
-  .timeline {
-    list-style: none; margin: 64px 0 0; padding: 0; position: relative;
-    display: grid; grid-template-columns: repeat(4, 1fr); gap: 40px;
+  /* How we got started, the Story stage (from the interaction lab): a wide panel tells the story one stage at a time. Each stage has its own scene (the network,
+     divided one more generation, the newest generation in the stage's colour) and they crossfade through a soft
+     blur. Under it, the four stages: the current one lifts, a ring fills as it plays, and it moves on by itself.
+     Hovering the stages pauses it (the ring shows a pause sign); choosing one stops the autoplay. */
+  .nx-story { --nx-ease: cubic-bezier(.23, 1, .32, 1); container-type: inline-size; }
+  /* sized to the column, not the window, so both lines stay whole when the column narrows (comment mode) */
+  .nx-story_title.section-title { margin: 0 auto; width: max-content; max-width: 100%; font-size: clamp(28px, 4cqi, 44px); line-height: 1.1; text-wrap: initial; }
+  .nx-story_title span { display: block; }
+  .nx-story_title span + span { margin-left: clamp(0px, 8cqi, 140px); color: #A1A1AA; }
+
+  /* The dashed rule, and the mark that slides to the stage that's playing, in its colour */
+  .nx-story_rule { position: relative; height: 1px; margin-top: 56px; background: repeating-linear-gradient(90deg, #D4D4D8 0 3px, transparent 3px 7px); }
+  .nx-story_mark { position: absolute; left: 0; top: -1px; width: 80px; height: 2px; border-radius: 1px; background: var(--nx-mark, var(--heading, #1F1F23)); transform-origin: 0 50%; transform: translateX(var(--nx-x, 0)) scaleX(var(--nx-w, 0)); transition: transform .5s cubic-bezier(.77, 0, .175, 1), background .4s ease; }
+
+  .nx-story_panel { position: relative; margin-top: 12px; height: clamp(300px, 36vw, 460px); overflow: hidden; border-radius: var(--radius, 24px); background: var(--nx-story-panel); }
+  .nx-story_scene { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; filter: blur(2px); transition: opacity 0s .3s, filter 0s .3s;
+    -webkit-mask-image: radial-gradient(60% 62% at 50% 50%, #000 55%, transparent 100%); mask-image: radial-gradient(60% 62% at 50% 50%, #000 55%, transparent 100%); }
+  .nx-story_scene.is-on { z-index: 1; opacity: 1; filter: none; transition: opacity .3s var(--nx-ease), filter .3s var(--nx-ease); }
+  .nx-story_scene .t { fill: none; stroke: #D4D4D8; stroke-width: 1; }
+  .nx-story_scene .t.new { stroke: var(--nx-c); stroke-opacity: .55; stroke-dasharray: 1; stroke-dashoffset: 1; }
+  .nx-story_scene .n.new { transform-box: fill-box; transform-origin: center; opacity: 0; transform: translate(var(--tx), var(--ty)) scale(.3); }
+  .nx-story_scene.is-growing .t.new { animation: nx-story-draw .7s cubic-bezier(.65, 0, .35, 1) var(--d) forwards; }
+  .nx-story_scene.is-growing .n.new { animation: nx-story-pop .7s cubic-bezier(.65, 0, .35, 1) var(--d) forwards; }
+  @keyframes nx-story-draw { to { stroke-dashoffset: 0; } }
+  @keyframes nx-story-pop { to { opacity: 1; transform: none; } }
+
+  /* Caption: the stage's name, decoding in from block glyphs */
+  .nx-story_caption { position: absolute; left: 28px; bottom: 22px; z-index: 2; margin: 0; display: grid; gap: 2px; }
+  .nx-story_caption small { font-size: 13px; color: #8A8A93; }
+  .nx-story_caption span { font-size: 17px; font-weight: 500; color: var(--heading, #1F1F23); white-space: nowrap; }
+  .nx-story_caption .g { font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 14px; color: #A1A1AA; }
+
+  /* The four stages */
+  .nx-story_steps { list-style: none; margin: 40px 0 0; padding: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 48px; }
+  .nx-story_step { position: relative; padding-right: 24px; font-size: 16px; line-height: 1.6; opacity: .5; transition: opacity .2s ease, transform .3s var(--nx-ease); }
+  .nx-story_step > :not(.nx-story_ring) { opacity: 0; filter: blur(4px); transform: translateY(6px); }
+  .nx-story.is-in .nx-story_step > :not(.nx-story_ring) { opacity: 1; filter: none; transform: none; transition: opacity .5s var(--nx-ease), filter .5s var(--nx-ease), transform .5s var(--nx-ease); transition-delay: calc(180ms + var(--i) * 70ms); }
+  .nx-story_step.is-on { opacity: 1; transform: translateY(-8px); }
+  @media (hover: hover) and (pointer: fine) { .nx-story_step:not(.is-on):hover { opacity: .8; } }
+  .nx-story_glyph { display: block; width: var(--nx-g); height: var(--nx-g); margin: calc((28px - var(--nx-g)) / 2) calc(var(--nx-g) * .56); border-radius: 50%; background: var(--nx-c); box-shadow: 0 0 0 calc(var(--nx-g) * .3) #fff, 0 0 0 calc(var(--nx-g) * .56) var(--nx-c); }
+  .nx-story_step p, .nx-story_step h3 { margin: 4px 0 0; }
+  .nx-story_step h3 { font: inherit; }
+  .nx-story_step .nx-story_when { margin-top: 14px; font-size: 14px; font-weight: 500; color: var(--nx-c); }
+  .nx-story_name { all: unset; font-weight: 500; cursor: pointer; font-weight: 500; color: var(--heading, #1F1F23); }
+  .nx-story_step:not(.is-on) { cursor: pointer; }
+  .nx-story_step.is-on .nx-story_name { cursor: default; }
+  .nx-story_step:has(.nx-story_name:focus-visible) { outline: 2px solid var(--heading, #1F1F23); outline-offset: 6px; border-radius: 4px; }
+
+  .nx-story_ring { position: absolute; right: 0; top: 2px; width: 16px; height: 16px; opacity: 0; transition: opacity .2s var(--nx-ease); pointer-events: none; }
+  .nx-story_ring circle { fill: none; stroke: #E4E4E7; stroke-width: 1.5; }
+  .nx-story_ring .nx-story_ring-fill { stroke: var(--nx-c); stroke-dasharray: 1; stroke-dashoffset: 1; }
+  .nx-story_step.is-on .nx-story_ring { opacity: 1; }
+  .nx-story_step.is-on .nx-story_ring-fill { animation: nx-story-ring var(--nx-story-time) linear forwards; }
+  .nx-story.is-holding .nx-story_step.is-on .nx-story_ring-fill, .nx-story.is-away .nx-story_step.is-on .nx-story_ring-fill, .nx-story.is-reviewing .nx-story_step.is-on .nx-story_ring-fill { animation-play-state: paused; }
+  .nx-story.is-manual .nx-story_ring { opacity: 0 !important; }
+  /* comment mode: the stages hold still (no fade-in or lift in motion) so marks land on the words */
+  .nx-story.is-reviewing .nx-story_step, .nx-story.is-reviewing .nx-story_step > * { transition: none !important; }
+  @keyframes nx-story-ring { to { stroke-dashoffset: 0; } }
+  .nx-story_pause { fill: none; stroke: var(--heading, #1F1F23); stroke-width: 1.1; stroke-linecap: round; opacity: 0; transform: scale(.7); transform-box: fill-box; transform-origin: center; transition: opacity .2s var(--nx-ease), transform .26s var(--nx-ease); }
+  .nx-story.is-holding .nx-story_step.is-on .nx-story_pause { opacity: 1; transform: none; }
+
+  @media (max-width: 900px) { .nx-story_steps { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 36px; } }
+  @media (max-width: 560px) {
+    .nx-story_title { width: auto; text-align: center; }
+    .nx-story_title span + span { margin-left: 0; }
+    .nx-story_steps { grid-template-columns: minmax(0, 1fr); }
+    .nx-story_step.is-on { transform: none; }
   }
-  .timeline::before {                         /* the thread joining the milestones */
-    content: ''; position: absolute; top: 22px; left: 22px; right: 0; height: 1px; background: #D4D4D8;
-  }
-  .step { position: relative; }
-  .step .node { height: 44px; display: flex; align-items: center; }
-  .step .node .glyph { --g: var(--size); --gc: var(--color); box-shadow: 0 0 0 calc(var(--g) * .3) var(--surface), 0 0 0 calc(var(--g) * .56) var(--gc); }
-  .step:nth-child(1) { --size: 9px;  --color: var(--c-disciples); }
-  .step:nth-child(2) { --size: 12px; --color: var(--c-leaders); }
-  .step:nth-child(3) { --size: 15px; --color: var(--c-churches); }
-  .step:nth-child(4) { --size: 19px; --color: var(--c-movements); }
-  .step .when { margin: 22px 0 6px; font-size: 14px; font-weight: 500; color: var(--color); }
-  .step h3 { margin: 0; font-size: 21px; line-height: 1.25; font-weight: 500; color: var(--heading); letter-spacing: -0.01em; }
-  .step p:last-child { margin: 10px 0 0; }
-  @media (max-width: 860px) {
-    .timeline { grid-template-columns: 1fr; gap: 36px; }
-    .timeline::before { top: 22px; bottom: 22px; left: 21px; right: auto; width: 1px; height: auto; }
-    .step { padding-left: 64px; }
-    .step .node { position: absolute; left: 0; top: 0; width: 44px; justify-content: center; }
-    .step .when { margin-top: 10px; }
+  @media (prefers-reduced-motion: reduce) {
+    .nx-story_scene, .nx-story_scene.is-on { filter: none; transition: opacity .2s ease; }
+    .nx-story_scene .t.new, .nx-story_scene .n.new { animation: none !important; opacity: 1; transform: none; stroke-dashoffset: 0; }
+    .nx-story_step, .nx-story_step > :not(.nx-story_ring) { filter: none !important; transform: none !important; }
+    .nx-story_mark { transition: none; }
+    .nx-story_ring { display: none; }
   }
 
   /* What we do */
@@ -1141,33 +1191,42 @@
     </div>
   </section>
 
-  <!-- 8. How we got started: the last section before the footer -->
+  <!-- 8. How we got started: the last section before the footer. The Story stage: a panel shows the network
+       dividing one more generation per stage, and the four stages below play through by themselves. -->
   <section class="section" id="story">
-    <div class="wrap">
-      <h2 class="section-title">How we got started</h2>
-      <ol class="timeline">
-        <li class="step">
-          <div class="node"><span class="glyph" aria-hidden="true"></span></div>
-          <p class="when">Multiplied disciples</p>
-          <h3>One local church</h3>
+    <div class="wrap nx-story" data-time="6" data-play="auto" data-decode="on" style="--nx-story-panel: var(--surface)">
+      <h2 class="section-title nx-story_title"><span>How we got started:</span><span>from one local church to a global movement.</span></h2>
+      <div class="nx-story_rule" aria-hidden="true"><i class="nx-story_mark"></i></div>
+      <div class="nx-story_panel" aria-hidden="true">
+        <p class="nx-story_caption"><small></small><span></span></p>
+      </div>
+      <ol class="nx-story_steps">
+        <li class="nx-story_step step" style="--i: 0; --nx-c: var(--c-disciples, #2F7D6D); --nx-g: 7px" data-label="Multiplied disciples">
+          <svg class="nx-story_ring" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><circle class="nx-story_ring-fill" cx="8" cy="8" r="6.5" pathLength="1" transform="rotate(-90 8 8)"/><path class="nx-story_pause" d="M6.4 6.35V9.65M9.6 6.35V9.65"/></svg>
+          <span class="nx-story_glyph" aria-hidden="true"></span>
+          <p class="nx-story_when">Multiplied disciples</p>
+          <h3><button type="button" class="nx-story_name">One local church</button></h3>
           <p>began making disciples who make disciples</p>
         </li>
-        <li class="step">
-          <div class="node"><span class="glyph" aria-hidden="true"></span></div>
-          <p class="when">Multiplied leaders</p>
-          <h3>Disciples became leaders</h3>
+        <li class="nx-story_step step" style="--i: 1; --nx-c: var(--c-leaders, #C2861A); --nx-g: 8.5px" data-label="Multiplied leaders">
+          <svg class="nx-story_ring" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><circle class="nx-story_ring-fill" cx="8" cy="8" r="6.5" pathLength="1" transform="rotate(-90 8 8)"/><path class="nx-story_pause" d="M6.4 6.35V9.65M9.6 6.35V9.65"/></svg>
+          <span class="nx-story_glyph" aria-hidden="true"></span>
+          <p class="nx-story_when">Multiplied leaders</p>
+          <h3><button type="button" class="nx-story_name">Disciples became leaders</button></h3>
           <p>that started new groups</p>
         </li>
-        <li class="step">
-          <div class="node"><span class="glyph" aria-hidden="true"></span></div>
-          <p class="when">Multiplied churches</p>
-          <h3>Groups became churches</h3>
+        <li class="nx-story_step step" style="--i: 2; --nx-c: var(--c-churches, #3F55A8); --nx-g: 10px" data-label="Multiplied churches">
+          <svg class="nx-story_ring" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><circle class="nx-story_ring-fill" cx="8" cy="8" r="6.5" pathLength="1" transform="rotate(-90 8 8)"/><path class="nx-story_pause" d="M6.4 6.35V9.65M9.6 6.35V9.65"/></svg>
+          <span class="nx-story_glyph" aria-hidden="true"></span>
+          <p class="nx-story_when">Multiplied churches</p>
+          <h3><button type="button" class="nx-story_name">Groups became churches</button></h3>
           <p>forming a network</p>
         </li>
-        <li class="step">
-          <div class="node"><span class="glyph" aria-hidden="true"></span></div>
-          <p class="when">Multiplied movements</p>
-          <h3>Network sent missionaries</h3>
+        <li class="nx-story_step step" style="--i: 3; --nx-c: var(--c-movements, #B23A5B); --nx-g: 12px" data-label="Multiplied movements">
+          <svg class="nx-story_ring" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.5"/><circle class="nx-story_ring-fill" cx="8" cy="8" r="6.5" pathLength="1" transform="rotate(-90 8 8)"/><path class="nx-story_pause" d="M6.4 6.35V9.65M9.6 6.35V9.65"/></svg>
+          <span class="nx-story_glyph" aria-hidden="true"></span>
+          <p class="nx-story_when">Multiplied movements</p>
+          <h3><button type="button" class="nx-story_name">Network sent missionaries</button></h3>
           <p>to repeat the process</p>
         </li>
       </ol>
@@ -3516,6 +3575,145 @@ function heroGalleryGroups(GALLERY_CONTROLS) {
   // hide the Adjust panel (SHOW_CONTROLS = false, or ?controls=0) hide this too.
   import { initVersions } from './versions/versions-panel.js';
   if (SHOW_CONTROLS && new URLSearchParams(location.search).get('controls') !== '0') initVersions();
+</script>
+<script>
+/* How we got started: the Story stage */
+(() => {
+  const NS = 'http://www.w3.org/2000/svg';
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const el = (tag, a) => { const e = document.createElementNS(NS, tag); for (const k in a) e.setAttribute(k, a[k]); return e; };
+
+  // One network, grown five generations from a single dot. Stage k shows it up to generation k + 2.
+  function grow(seed) {
+    const rand = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    const nodes = [{ gen: 0, x: 0, y: 0, a: -Math.PI / 2, w: Math.PI * 2, r: 0 }];
+    for (let g = 1, front = [0]; g <= 5; g++) {
+      const next = [], len = 52 * Math.pow(0.9, g - 1);
+      for (const pi of front) {
+        const p = nodes[pi];
+        [-1, 1].forEach(side => {
+          const a = p.a + side * (p.w / 4) * (g === 1 ? 1 : 0.84) + (rand() - 0.5) * (p.w / 4) * 0.35;
+          const r = p.r + len * (0.9 + rand() * 0.2);
+          next.push(nodes.length);
+          nodes.push({ gen: g, parent: pi, side, a, w: p.w / 2, r, x: Math.cos(a) * r * 1.9, y: Math.sin(a) * r });
+        });
+      }
+      front = next;
+    }
+    return nodes;
+  }
+
+  for (const root of document.querySelectorAll('.nx-story')) {
+    const panel = root.querySelector('.nx-story_panel'), steps = [...root.querySelectorAll('.nx-story_step')];
+    const mark = root.querySelector('.nx-story_mark'), rule = root.querySelector('.nx-story_rule');
+    const cap = root.querySelector('.nx-story_caption'), capSmall = cap.querySelector('small'), capText = cap.querySelector('span');
+    const time = +root.dataset.time || 6, auto = root.dataset.play === 'auto' && !reduce, decode = root.dataset.decode === 'on' && !reduce;
+    root.style.setProperty('--nx-story-time', time + 's');
+    const nodes = grow(11);
+
+    // A scene per stage
+    const scenes = steps.map((step, k) => {
+      const top = k + 2, color = getComputedStyle(step).getPropertyValue('--nx-c');
+      const svg = el('svg', { class: 'nx-story_scene', viewBox: '-600 -300 1200 600', preserveAspectRatio: 'xMidYMid slice', style: `--nx-c:${color}` });
+      const threads = [], dots = [];
+      for (const n of nodes) {
+        if (n.gen > top) continue;
+        const isNew = n.gen === top, d = isNew ? (nodes.indexOf(n) % 8) * 0.04 + 0.15 : 0;
+        if (n.gen) {
+          const p = nodes[n.parent], dx = n.x - p.x, dy = n.y - p.y, b = 0.16 * n.side;
+          threads.push(el('path', { class: 't' + (isNew ? ' new' : ''), pathLength: 1, style: `--d:${d}s`, d: `M${p.x} ${p.y}Q${(p.x + n.x) / 2 - dy * b} ${(p.y + n.y) / 2 + dx * b} ${n.x} ${n.y}` }));
+        }
+        const p = n.gen ? nodes[n.parent] : n, rr = 7 * Math.pow(0.84, n.gen);
+        const fill = n.gen === 0 ? 'var(--c-disciples, #2F7D6D)' : isNew ? color : '#C9C9CD';
+        const g = el('g', { class: 'n' + (isNew ? ' new' : ''), style: `--d:${d + 0.12}s;--tx:${p.x - n.x}px;--ty:${p.y - n.y}px` });
+        g.append(el('circle', { cx: n.x, cy: n.y, r: rr * 1.56, fill: 'none', stroke: fill, 'stroke-width': rr * 0.42 }), el('circle', { cx: n.x, cy: n.y, r: rr, fill }));
+        dots.push(g);
+      }
+      svg.append(...threads, ...dots.reverse());
+      panel.prepend(svg);
+      return svg;
+    });
+
+    // Caption: block glyphs resolve into the stage's name, left to right
+    let capTimer = 0;
+    const caption = (small, text) => {
+      capSmall.textContent = small; clearInterval(capTimer);
+      if (!decode) { capText.textContent = text; return; }
+      const glyphs = '░▒▓', start = performance.now(), dur = 520;
+      capTimer = setInterval(() => {
+        const done = Math.min(1, (performance.now() - start) / dur), upto = Math.floor(done * text.length);
+        capText.innerHTML = [...text].map((c, i) => i < upto || c === ' ' ? c : `<span class="g">${glyphs[(Math.random() * 3) | 0]}</span>`).join('');
+        if (done >= 1) clearInterval(capTimer);
+      }, 40);
+    };
+
+    let cur = -1, timer = 0, left = time * 1000, since = 0;
+    const placeMark = () => {
+      const r = rule.getBoundingClientRect(), s = steps[cur].getBoundingClientRect();
+      root.style.setProperty('--nx-x', (s.left - r.left) + 'px');
+      mark.style.setProperty('--nx-w', (s.width / 80).toFixed(3));
+      mark.style.setProperty('--nx-mark', getComputedStyle(steps[cur]).getPropertyValue('--nx-c'));
+    };
+    const show = k => {
+      cur = k;
+      steps.forEach((s, i) => { s.classList.toggle('is-on', i === k); s.querySelector('.nx-story_name').setAttribute('aria-current', i === k ? 'step' : 'false'); });
+      scenes.forEach((sc, i) => {
+        const on = i === k;
+        sc.classList.toggle('is-on', on);
+        if (on) { sc.classList.remove('is-growing'); void sc.getBBox(); sc.classList.add('is-growing'); }
+      });
+      // restart the ring
+      const ring = steps[k].querySelector('.nx-story_ring-fill');
+      ring.style.animation = 'none'; void ring.getBoundingClientRect(); ring.style.animation = '';
+      placeMark();
+      caption(steps[k].dataset.label, steps[k].querySelector('.nx-story_name').textContent);
+      left = time * 1000; schedule();
+    };
+    // the timer follows the ring: it stops while held or off screen, and picks up where it left off
+    const running = () => auto && !['is-manual', 'is-holding', 'is-away', 'is-reviewing'].some(c => root.classList.contains(c));
+    function schedule() {
+      clearTimeout(timer);
+      if (!running()) return;
+      since = performance.now();
+      timer = setTimeout(() => show((cur + 1) % steps.length), left);
+    }
+    const hold = on => {
+      if (running()) left -= performance.now() - since;
+      clearTimeout(timer);
+      root.classList.toggle('is-holding', on);
+      schedule();
+    };
+
+    const list = root.querySelector('.nx-story_steps');
+    list.addEventListener('pointerenter', () => hold(true));
+    list.addEventListener('pointerleave', () => hold(false));
+    // the whole stage picks it (the title is the button, for the keyboard); text can still be selected
+    steps.forEach((s, i) => s.addEventListener('click', () => { if (getSelection().toString()) return; root.classList.add('is-manual'); if (i !== cur) show(i); }));
+    if (!auto) root.classList.add('is-manual');
+
+    root.classList.add('is-away');
+    new IntersectionObserver(([e]) => {
+      if (e.isIntersecting && !root.classList.contains('is-in')) { root.classList.add('is-in'); root.classList.remove('is-away'); show(0); return; }
+      if (running()) left -= performance.now() - since;
+      root.classList.toggle('is-away', !e.isIntersecting);
+      schedule();
+    }, { threshold: 0.35 }).observe(root);
+    new ResizeObserver(() => cur >= 0 && placeMark()).observe(root);
+    // it holds still while comment mode is open (already shown, and not playing), so marks stay on the words they
+    // were drawn on
+    const html = document.documentElement;
+    const review = () => {
+      const on = html.classList.contains('review-open');
+      if (on === root.classList.contains('is-reviewing')) return;
+      if (running()) left -= performance.now() - since;
+      root.classList.toggle('is-reviewing', on);
+      if (on && !root.classList.contains('is-in')) { root.classList.add('is-in'); show(0); return; }   // settled before it's reached
+      schedule();
+    };
+    new MutationObserver(review).observe(html, { attributes: true, attributeFilter: ['class'] });
+    review();
+  }
+})();
 </script>
 </body>
 </html>

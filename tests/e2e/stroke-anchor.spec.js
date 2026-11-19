@@ -113,9 +113,8 @@ test('the loop follows its word to another width and scales with it', async ({ p
     const ratio = (now.width / drawn.width) / (now.font / drawn.font);
     expect(ratio).toBeGreaterThan(0.9);
     expect(ratio).toBeLessThan(1.1);
+    if (width === 390) expect(now.font).toBeLessThan(drawn.font);
   }
-  // the font really did change size, so the scaling was exercised
-  expect(drawn.font).toBeGreaterThan(40);
 });
 
 test('an underline anchors to the text above it', async ({ page }) => {
@@ -238,7 +237,7 @@ test('a loop whose character is lost falls back to its element, where the charac
     const stroke = anchorStroke(__sa.loop(__sa.wordRange(h2, 'started').getBoundingClientRect()), 'pen');
     const drawn = resolveStroke(stroke);
     const lost = resolveStroke({ ...stroke, char: { ...stroke.char, i: 99 } });
-    return { atOnH2: document.querySelector(stroke.at.path) === h2, drawn, lost };
+    return { atOnH2: h2.contains(document.querySelector(stroke.at.path)), drawn, lost };
   });
   expect(result.atOnH2).toBe(true);
   expect(result.lost.scale).toBe(1);
@@ -305,10 +304,10 @@ test('a loop around a word isn\'t badged as shifted when its text rewraps', asyn
 test('a highlighter across two side-by-side columns keeps no text', async ({ page }) => {
   const result = await page.evaluate(async () => {
     const { anchorStroke } = await __sa.mod();
-    const [a, b] = document.querySelectorAll('#story .step h3');
+    const [, a, b] = document.querySelectorAll('#story .step h3');
     __sa.show(a);
-    const ra = __sa.wordRange(a, 'church').getBoundingClientRect();
-    const rb = __sa.wordRange(b, 'Disciples').getBoundingClientRect();
+    const ra = __sa.wordRange(a, 'Disciples').getBoundingClientRect();
+    const rb = __sa.wordRange(b, 'Groups').getBoundingClientRect();
     const y = (ra.top + ra.bottom) / 2;
     return {
       sideBySide: Math.abs(rb.top - ra.top) < 4 && rb.left > ra.right,

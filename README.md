@@ -325,8 +325,13 @@ turning into view, which is what carries the sense of how big the network is.
 
    Photos are placeholders, set per row with `data-photo`. Tabbing to a row fills it and raises its pin over the
    hub's dot. Touch screens keep the plain rows.
-8. **How we got started** (the last section before the footer): a four-step timeline from one local church to a global movement. The milestone dots
-   grow and step through the four headline colors.
+8. **How we got started** (the last section before the footer): the Story stage. A wide panel shows one network dividing one more generation per
+   stage, the newest generation in that stage's color, crossfading through a soft blur, with the stage's name
+   decoding in at its corner. Under it the four stages (Multiplied disciples, leaders, churches, movements): the
+   current one lifts, a mark on the dashed rule slides to it, and a ring fills over 6 seconds before it moves on.
+   Hovering the stages pauses it; clicking one stops the autoplay. It waits until it's on screen, and holds still
+   (already shown, not playing) while comment mode is open so marks stay on their words. Reduced motion: no
+   autoplay or blur.
 
 All copy, names, stats and photos are placeholders to replace. Links marked `data-placeholder` (Start a group, store
 buttons, directions) go nowhere until you add real URLs.

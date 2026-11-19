@@ -69,7 +69,7 @@ test('circle, underline, switch ink, add a note, post: one card', async ({ page 
   await expect(composer(page).getByRole('heading', { name: 'Add a drawing' })).toBeVisible();
   await underline(page, await wordRect(page, '#story h2', 'started'));
   await ink(page, 'Highlighter').click();
-  await underline(page, await wordRect(page, '#story .step:nth-child(1) > p:last-child', 'A discipleship system'));
+  await underline(page, await wordRect(page, '#story .step:nth-child(1) > p:last-child', 'began making'));
   await expect(draftStrokes(page)).toHaveCount(3);
 
   await composer(page).getByLabel('Your name').fill('Ana');
@@ -366,7 +366,7 @@ test('resizing mid-draft keeps strokes on their words', async ({ page }) => {
   await page.evaluate(() => new Promise(r => setTimeout(() => requestAnimationFrame(() => requestAnimationFrame(r)), 300)));
   const { word, stroke } = await page.evaluate(() => {
     const h2 = document.querySelector('#story h2');
-    const n = h2.firstChild;
+    const n = document.createTreeWalker(h2, NodeFilter.SHOW_TEXT).nextNode();
     const range = document.createRange();
     range.setStart(n, n.data.indexOf('How'));
     range.setEnd(n, n.data.indexOf('How') + 3);
@@ -495,7 +495,7 @@ test('Esc mid-sweep puts back what the sweep rubbed out', async ({ page }) => {
 test('the eraser cuts a highlight that follows the text, leaving the words on either side', async ({ page }) => {
   await tool(page, 'Marker').click();
   await ink(page, 'Highlighter').click();
-  const r = await clearOfInks(page, await wordRect(page, '#story .step:nth-child(1) > p:last-child', 'A discipleship system'));
+  const r = await clearOfInks(page, await wordRect(page, '#story .step:nth-child(1) > p:last-child', 'began making'));
   const y = r.y + r.height / 2;
   await sweep(page, [r.x - 2, y], [r.x + r.width + 2, y + 1]);
   await expect(draftStrokes(page)).toHaveCount(1);

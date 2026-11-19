@@ -6,9 +6,9 @@ const cards = page => page.locator('.rv-card');
 
 async function startVoiceMemo(page, name = 'Ana') {
   await tool(page, 'Voice memo').click();
-  const timeline = page.locator('#story .timeline');
-  await timeline.scrollIntoViewIfNeeded();
-  const b = await timeline.boundingBox();
+  const stages = page.locator('#story .nx-story_steps');
+  await stages.scrollIntoViewIfNeeded();
+  const b = await stages.boundingBox();
   await page.mouse.click(b.x + b.width / 2, b.y + 20);
   await expect(page.locator('.rv-composer-voice')).toBeVisible();
   if (name) await composer(page).getByLabel('Your name').fill(name);
