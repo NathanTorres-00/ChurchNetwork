@@ -1,0 +1,103 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import type { ImageMetadata } from "astro";
+import type { ComponentProps } from "astro/types";
+import { Image } from "astro:assets";
+import PeopleList from "@/components/content/PeopleList.astro";
+
+interface Props extends HTMLAttributes<"div"> {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+  /** Heading beside the photo. */
+  heading: string;
+  /** Paragraphs under the heading. */
+  body?: string[];
+  /** The team, as ring-dots with their roles. */
+  people: ComponentProps<typeof PeopleList>["people"];
+  /** Tall photo on the right. */
+  photo: ImageMetadata;
+  /** Describes the photo for screen readers. */
+  photoAlt?: string;
+  /** Line under the photo. */
+  caption?: string;
+}
+
+const {
+  render = true,
+  heading,
+  body = [],
+  people,
+  photo,
+  photoAlt = "",
+  caption,
+  class: className,
+  ...rest
+} = Astro.props;
+---
+
+{
+  render && heading && (
+    <div class:list={["team-intro_wrap", className]} {...rest}>
+      <div>
+        <h2 class="team-intro_title text-style-h2" id="groups-leadership-title">
+          {heading}
+        </h2>
+        {body.map((paragraph) => (
+          <p class="team-intro_text text-style-large">{paragraph}</p>
+        ))}
+        <PeopleList variant="team" people={people} />
+      </div>
+      <figure class="team-intro_figure">
+        <Image
+          class="team-intro_photo"
+          src={photo}
+          alt={photoAlt}
+          widths={[700, 1400]}
+          sizes="(max-width: 860px) 100vw, 640px"
+          loading="lazy"
+        />
+        {caption && <figcaption class="team-intro_caption">{caption}</figcaption>}
+      </figure>
+    </div>
+  )
+}
+
+<style is:global>
+  @layer components {
+    /* The leadership team: heading, two lines and the four of them, beside their photo */
+    .team-intro_wrap {
+      width: 100%;
+      display: grid;
+      grid-template-columns: minmax(0, 4fr) minmax(0, 6fr);
+      gap: clamp(2rem, 6vw, 5rem);
+      align-items: center;
+      @media (max-width: 53.75em) {
+        grid-template-columns: 1fr;
+      }
+    }
+    .team-intro_title {
+      margin: 0;
+    }
+    .team-intro_text {
+      max-width: 52ch;
+      margin: 1.125rem 0 0;
+    }
+    .team-intro_figure {
+      margin: 0;
+    }
+    .team-intro_photo {
+      width: 100%;
+      height: auto;
+      aspect-ratio: 4 / 5;
+      object-fit: cover;
+      border-radius: var(--radius-main);
+      @media (max-width: 53.75em) {
+        aspect-ratio: 4 / 3;
+      }
+    }
+    .team-intro_caption {
+      margin-top: 0.75rem;
+      font-size: 0.8125rem;
+    }
+  }
+</style>

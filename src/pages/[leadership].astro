@@ -1,57 +1,81 @@
 ---
-import { getEntries, getEntry } from "astro:content";
+import { getEntries, getEntry, type ReferenceDataEntry } from "astro:content";
 import Layout from "@/layouts/BaseLayout.astro";
 import LeadershipHero from "@/components/section/LeadershipHero.astro";
 import Section from "@/components/wrapper/Section.astro";
 import ContentWrapper from "@/components/wrapper/ContentWrapper.astro";
 import Heading from "@/components/typography/Heading.astro";
 import PeopleList from "@/components/content/PeopleList.astro";
-import CtaPhoto from "@/components/content/CtaPhoto.astro";
+import TeamIntro from "@/components/content/TeamIntro.astro";
+import LeaderDirectory from "@/components/content/LeaderDirectory.astro";
+import CtaSplit from "@/components/content/CtaSplit.astro";
 import { showLeadership } from "@/utils/leadership.ts";
 
-// /leadership is built only while Leadership is shown (see src/utils/leadership.ts): production leaves it out
+// /leadership is built only while Leadership is shown (see src/utils/leadership.ts)
 export function getStaticPaths() {
   return showLeadership() ? [{ params: { leadership: "leadership" } }] : [];
 }
 
 const page = (await getEntry("leadershipPage", "leadership"))!.data;
-const network = await getEntries(page.network.people);
-const group = await getEntries(page.group.people);
-const onNetwork = new Set(network.map((p) => p.id));
-// each person is anchored once: network leaders in their list; the group list anchors only the others
-const people = (entries: typeof network, anchorAll: boolean) =>
-  entries.map((p) => ({ id: p.id, name: p.data.name, photo: p.data.photo, anchor: anchorAll || !onNetwork.has(p.id) }));
+
+// Each person is anchored once, where they first appear: the orbit links to that place
+const anchored = new Set<string>();
+const toPeople = async (refs: ReferenceDataEntry<"leaders">[], roles: (string | undefined)[] = []) =>
+  (await getEntries(refs)).map((p, i) => {
+    const anchor = !anchored.has(p.id);
+    anchored.add(p.id);
+    return { id: p.id, name: p.data.name, role: roles[i], photo: p.data.photo, anchor };
+  });
+
+const network = page.network.show ? await toPeople(page.network.people) : [];
+const team = await toPeople(
+  page.team.people.map((p) => p.leader),
+  page.team.people.map((p) => p.role),
+);
+const groups = [];
+for (const group of page.overseers.groups) {
+  const assignments = [];
+  for (const assignment of group.assignments)
+    assignments.push({ heading: assignment.heading, people: await toPeople(assignment.people) });
+  groups.push({ id: group.id, heading: group.heading, assignments });
+}
 ---
 
 <Layout title={page.top.heading} page="leadership">
-  <!-- The network and its leaders, on two orbits -->
-  <LeadershipHero heading={page.top.heading} lead={page.top.lead} key={page.top.key} />
+  <!-- The Groups leaders around The Rock Network -->
+  <LeadershipHero heading={page.top.heading} lead={page.top.lead} directory={page.top.directory} key={page.top.key} />
 
-  <!-- Network leaders -->
-  <Section id="network-leaders" class="background-2">
+  <!-- Rock Groups Leadership Team -->
+  <Section id="groups-leadership" class="background-2" aria-labelledby="groups-leadership-title">
+    <TeamIntro
+      heading={page.team.heading}
+      body={page.team.body}
+      people={team}
+      photo={page.team.photo}
+      photoAlt={page.team.photoAlt}
+      caption={page.team.caption}
+    />
+  </Section>
+
+  <!-- Regional Overseers -->
+  <Section id="group-leaders">
+    <ContentWrapper>
+      <Heading>{page.overseers.heading}</Heading>
+    </ContentWrapper>
+    <LeaderDirectory groups={groups} />
+  </Section>
+
+  <!-- The Rock Leaders, hidden for now -->
+  <Section id="network-leaders" class="background-2" render={page.network.show}>
     <ContentWrapper>
       <Heading>{page.network.heading}</Heading>
     </ContentWrapper>
-    <PeopleList variant="network" people={people(network, true)} />
-  </Section>
-
-  <!-- Group leaders -->
-  <Section id="group-leaders">
-    <ContentWrapper>
-      <Heading>{page.group.heading}</Heading>
-    </ContentWrapper>
-    <PeopleList variant="group" people={people(group, false)} />
+    <PeopleList variant="network" people={network} />
   </Section>
 
   <!-- Lead a group -->
-  <Section class="background-2">
-    <CtaPhoto
-      heading={page.join.heading}
-      lead={page.join.lead}
-      photo={page.join.photo}
-      photoAlt={page.join.photoAlt}
-      button={page.join.button}
-    />
+  <Section>
+    <CtaSplit heading={page.join.heading} lead={page.join.lead} button={page.join.button} />
   </Section>
 
   <Fragment slot="after">

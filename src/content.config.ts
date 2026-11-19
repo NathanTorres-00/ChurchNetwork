@@ -154,16 +154,34 @@ const leadershipPage = defineCollection({
       top: z.object({
         heading: z.string(),
         lead: z.string(),
-        /** Labels of the two rings under the orbit. */
-        key: z.object({ network: z.string(), group: z.string() }),
+        /** Links to the page's own sections, under the lead. */
+        directory: z.array(z.object({ label: z.string(), href: z.string() })),
+        /** Label under the orbit. */
+        key: z.string(),
       }),
-      network: z.object({ heading: z.string(), people: z.array(reference("leaders")) }),
-      group: z.object({ heading: z.string(), people: z.array(reference("leaders")) }),
+      team: z.object({
+        heading: z.string(),
+        body: z.array(z.string()),
+        people: z.array(z.object({ leader: reference("leaders"), role: z.string().optional() })),
+        photo: image(),
+        photoAlt: z.string(),
+        caption: z.string().optional(),
+      }),
+      overseers: z.object({
+        heading: z.string(),
+        groups: z.array(
+          z.object({
+            id: z.string().optional(),
+            heading: z.string(),
+            assignments: z.array(z.object({ heading: z.string(), people: z.array(reference("leaders")) })),
+          }),
+        ),
+      }),
+      /** The Rock Leaders roster; hidden while `show` is false (main 77af76e). */
+      network: z.object({ show: z.boolean(), heading: z.string(), people: z.array(reference("leaders")) }),
       join: z.object({
         heading: z.string(),
         lead: z.string(),
-        photo: image(),
-        photoAlt: z.string(),
         button,
       }),
     }),

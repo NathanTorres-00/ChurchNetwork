@@ -1,14 +1,67 @@
 {
   "top": {
     "heading": "Leadership",
-    "lead": "The people leading The Rock Network, and the leaders of its church groups.",
-    "key": {
-      "network": "Network leaders",
-      "group": "Group leaders"
-    }
+    "lead": "Meet the people leading and supporting church groups across The Rock Network.",
+    "directory": [
+      { "label": "Groups Leadership Team", "href": "#groups-leadership" },
+      { "label": "Regional Overseers", "href": "#group-leaders" },
+      { "label": "Sub-Networks", "href": "#sub-networks" }
+    ],
+    "key": "Groups Leadership & Overseers"
+  },
+  "team": {
+    "heading": "Rock Groups Leadership Team",
+    "body": [
+      "From homes to parks, schools to workplaces, our discipleship and church groups are engaging with Jesus Disciple and training disciples to become disciple-makers.",
+      "We have a group of faithful people who have committed themselves to the vision and to providing practical and prayer support to our groups."
+    ],
+    "people": [
+      { "leader": "jerry-dirmann", "role": "Director" },
+      { "leader": "tina-shubin", "role": "Asst. Director" },
+      { "leader": "eryne-nevarez", "role": "Operations" },
+      { "leader": "crissy-shubin", "role": "Admin Asst." }
+    ],
+    "photo": "../../assets/images/leaders/team-at-the-rock.jpg",
+    "photoAlt": "The Rock Groups Leadership Team standing outside The Rock",
+    "caption": "From left: Tina Shubin, Eryne Nevarez, Jerry Dirmann, and Crissy Shubin."
+  },
+  "overseers": {
+    "heading": "Regional Overseers",
+    "groups": [
+      {
+        "heading": "By Region",
+        "assignments": [
+          { "heading": "Los Angeles & Orange County", "people": ["jerry-dirmann", "david-roxy", "david-paulina-cadena"] },
+          { "heading": "The Rock West", "people": ["manny-andrea-orozco"] },
+          { "heading": "Western U.S.", "people": ["helen"] },
+          { "heading": "Eastern U.S.", "people": ["misti", "marylee"] },
+          { "heading": "San Bernardino/Riverside Counties", "people": ["christy"] }
+        ]
+      },
+      {
+        "heading": "By Ministry & Online",
+        "assignments": [
+          { "heading": "Online", "people": ["ben-flores"] },
+          { "heading": "Abide Youth", "people": ["alex", "michael-gomez"] },
+          { "heading": "Beyond Young Adults", "people": ["jared"] },
+          { "heading": "Jesus Clubs", "people": ["nicole"] },
+          { "heading": "The Rock Anaheim Men’s Ministry", "people": ["brian-palacios", "michael-jaimes"] }
+        ]
+      },
+      {
+        "id": "sub-networks",
+        "heading": "Sub-Networks",
+        "assignments": [
+          { "heading": "Iglesia Mi Ciudad", "people": ["jose-isabel-oneill"] },
+          { "heading": "To Serve Mankind", "people": ["jeff-jennifer-little"] },
+          { "heading": "Backyard Revival", "people": ["nicole"] }
+        ]
+      }
+    ]
   },
   "network": {
-    "heading": "Network leaders",
+    "show": false,
+    "heading": "The Rock Leaders",
     "people": [
       "jerry-dirmann",
       "kimberly-dirmann",
@@ -21,34 +74,9 @@
       "tristan-fenholt"
     ]
   },
-  "group": {
-    "heading": "Group leaders",
-    "people": [
-      "alex",
-      "ben-flores",
-      "brian-palacios",
-      "christine-chen",
-      "christy",
-      "david-paulina-cadena",
-      "david-roxy",
-      "helen",
-      "jared",
-      "jeff-jennifer-little",
-      "jerry-dirmann",
-      "jose-isabel-oneill",
-      "manny-andrea-orozco",
-      "marylee",
-      "michael-gomez",
-      "michael-jaimes",
-      "misti",
-      "nicole"
-    ]
-  },
   "join": {
     "heading": "Lead a group with us",
     "lead": "A church group gathers, grows, gives and goes together, using the Jesus Disciple App.",
-    "photo": "../../assets/images/leaders/team-at-the-rock.jpg",
-    "photoAlt": "Members of The Rock Network team standing outside The Rock",
     "button": {
       "label": "Start a group",
       "href": "/groups#start"

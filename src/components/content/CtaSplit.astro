@@ -1,0 +1,56 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import Button from "@/components/Button.astro";
+
+type Link = { label: string; href: string; placeholder?: boolean };
+
+interface Props extends HTMLAttributes<"div"> {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+  /** Heading on the left. */
+  heading: string;
+  /** Paragraph under the heading. */
+  lead?: string;
+  /** Link on the right. */
+  button?: Link;
+}
+
+const { render = true, heading, lead, button, class: className, ...rest } = Astro.props;
+---
+
+{
+  render && heading && (
+    <div class:list={["cta-split_wrap", className]} {...rest}>
+      <div>
+        <h2 class="cta-split_title text-style-h2">{heading}</h2>
+        {lead && <p class="cta-split_lead text-style-large">{lead}</p>}
+      </div>
+      {button && (
+        <Button element="link" href={button.href} data-placeholder={button.placeholder ? "" : undefined}>
+          {button.label}
+        </Button>
+      )}
+    </div>
+  )
+}
+
+<style is:global>
+  @layer components {
+    /* A heading and a line on the left, one button on the right */
+    .cta-split_wrap {
+      width: 100%;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1.5rem;
+    }
+    .cta-split_title {
+      margin: 0;
+    }
+    .cta-split_lead {
+      max-width: 52ch;
+      margin: 1.125rem 0 0;
+    }
+  }
+</style>

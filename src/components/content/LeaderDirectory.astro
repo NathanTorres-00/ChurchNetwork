@@ -1,0 +1,85 @@
+---
+import type { HTMLAttributes, ComponentProps } from "astro/types";
+import PeopleList from "@/components/content/PeopleList.astro";
+
+type Assignment = { heading: string; people: ComponentProps<typeof PeopleList>["people"] };
+type Group = { id?: string; heading: string; assignments: Assignment[] };
+
+interface Props extends HTMLAttributes<"div"> {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+  /** Groups of assignments, each under its own heading. */
+  groups: Group[];
+}
+
+const { render = true, groups, class: className, ...rest } = Astro.props;
+const slug = (text: string) =>
+  text
+    .toLowerCase()
+    .replace(/&/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+---
+
+{
+  render && groups.length > 0 && (
+    <div class:list={["leader-directory_wrap", className]} {...rest}>
+      {groups.map((group) => (
+        <div class="leader-directory_group" id={group.id}>
+          <h3 class="leader-directory_heading">{group.heading}</h3>
+          <div class="leader-directory_list">
+            {group.assignments.map((assignment) => (
+              <section class="leader-directory_card" aria-labelledby={slug(assignment.heading)}>
+                <h4 class="leader-directory_title" id={slug(assignment.heading)}>
+                  {assignment.heading}
+                </h4>
+                <PeopleList variant="assignment" people={assignment.people} />
+              </section>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+<style is:global>
+  @layer components {
+    /* Overseers by region, by ministry and by sub-network: a card per assignment, its people as small ring-dots */
+    .leader-directory_wrap {
+      width: 100%;
+    }
+    .leader-directory_group {
+      margin-top: clamp(2.5rem, 5.5vw, 4.5rem);
+      scroll-margin-top: 7.5rem;
+      &:first-child {
+        margin-top: 0;
+      }
+    }
+    .leader-directory_heading {
+      margin: 0 0 1.25rem;
+      color: var(--heading);
+      font-size: clamp(1.375rem, 3vw, 1.8125rem);
+      font-weight: var(--primary-medium);
+      letter-spacing: -0.02em;
+    }
+    .leader-directory_list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 19.375rem), 1fr));
+      gap: 1rem;
+    }
+    .leader-directory_card {
+      padding: clamp(1.125rem, 2vw, 1.625rem);
+      border: 0.0625rem solid var(--border);
+      border-radius: var(--radius-main);
+    }
+    .leader-directory_title {
+      margin: 0;
+      color: var(--heading);
+      font-size: 1.1875rem;
+      font-weight: var(--primary-bold);
+      line-height: 1.3;
+      text-wrap: balance;
+    }
+  }
+</style>
