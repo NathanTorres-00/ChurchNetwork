@@ -117,7 +117,11 @@ const reels: { id: string; title: string; cards: Card[] }[] = [
       ))}
       <dialog class="jesus-disciple_player" aria-label="Jesus Disciple video" closedby="any" data-lenis-prevent>
         <form method="dialog">
-          <button class="jesus-disciple_player-close" type="submit" autofocus>Close video</button>
+          <button class="jesus-disciple_player-close" type="submit" aria-label="Close video" autofocus>
+            <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+              <path d="M3.5 3.5l9 9M12.5 3.5l-9 9" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
+            </svg>
+          </button>
         </form>
         <div class="jesus-disciple_player-screen">
           <template>
@@ -290,34 +294,57 @@ const reels: { id: string; title: string; cards: Card[] }[] = [
     html:has(.jesus-disciple_player[open]) {
       overflow: hidden;
     }
+    /* The player is just the video: a 16:9 box it fills edge to edge, with a small round close button outside its
+       top-right corner (Vimeo keeps its own buttons in the video's top-right corner) */
     .jesus-disciple_player {
-      width: min(60rem, calc(100% - 2 * var(--site-margin)), max(15rem, calc((100dvh - 6rem) * 16 / 9)));
+      --player-close: 2.5rem;
+      width: min(
+        60rem,
+        calc(100% - 2 * var(--site-margin)),
+        max(15rem, calc((100dvh - 2 * var(--player-close) - 3rem) * 16 / 9))
+      );
       max-width: none;
+      max-height: none;
       margin: auto;
       padding: 0;
+      overflow: visible;
       border: 0;
-      border-radius: var(--radius-main);
-      background: #04101c;
+      background: transparent;
       color: #fff;
     }
     .jesus-disciple_player::backdrop {
       background: rgb(0 0 0 / 80%);
     }
     .jesus-disciple_player form {
-      display: flex;
-      justify-content: flex-end;
-      padding: 0.5rem;
+      position: absolute;
+      right: 0;
+      bottom: 100%;
+      padding-bottom: 0.625rem;
     }
     .jesus-disciple_player-close {
-      padding: 0.625rem 0.875rem;
+      display: grid;
+      place-items: center;
+      width: var(--player-close);
+      height: var(--player-close);
+      padding: 0;
       border: 0;
-      border-radius: var(--radius-round);
-      background: #fff;
+      border-radius: 50%;
+      background: rgb(255 255 255 / 92%);
       color: #1f1f23;
       cursor: pointer;
+      transition: background 0.2s ease;
+      &:hover {
+        background: #fff;
+      }
+      &:focus-visible {
+        outline: 0.125rem solid #fff;
+        outline-offset: 0.1875rem;
+      }
     }
     .jesus-disciple_player-screen {
       aspect-ratio: 16 / 9;
+      overflow: hidden;
+      border-radius: var(--radius-main);
       background: #000;
     }
     .jesus-disciple_player-screen iframe {

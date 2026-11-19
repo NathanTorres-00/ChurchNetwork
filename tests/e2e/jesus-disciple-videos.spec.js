@@ -27,7 +27,19 @@ test('every Vision and How-to card opens its Vimeo video, and closing stops it',
   const player = page.locator('.jesus-disciple_player');
   await expect(player).toHaveAttribute('open', '');
   await expect(player.locator('iframe')).toHaveAttribute('src', /video\/1248457129\?.*autoplay=1/);
+  // the video fills the box, and a small close button sits outside its top-right corner
+  const screen = await player.locator('.jesus-disciple_player-screen').boundingBox();
+  const frame = await player.locator('iframe').boundingBox();
+  expect(frame).toEqual(screen);
+  const close = player.getByRole('button', { name: 'Close video' });
+  const button = await close.boundingBox();
+  expect(button.y + button.height).toBeLessThanOrEqual(screen.y);
+  expect(button.x + button.width).toBeCloseTo(screen.x + screen.width, 0);
   await page.keyboard.press('Escape');
+  await expect(player).not.toHaveAttribute('open', '');
+  await card.click();
+  await expect(player).toHaveAttribute('open', '');
+  await close.click();
   await expect(player).not.toHaveAttribute('open', '');
   await expect(player.locator('iframe')).toHaveCount(0);
   await expect(card).toBeFocused();
