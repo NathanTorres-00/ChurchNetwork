@@ -1,0 +1,591 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+type Step = { when: string; heading: string; body: string };
+
+interface Props extends HTMLAttributes<"div"> {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+  /** Title, first line. */
+  heading: string;
+  /** Title, second line, in grey. */
+  subheading?: string;
+  /** The stages in order; each takes the next headline color and a bigger dot. */
+  items: Step[];
+  /** Seconds each stage plays before the next. */
+  time?: number;
+  /** Play through the stages by itself. */
+  autoplay?: boolean;
+}
+
+const { render = true, heading, subheading, items, time = 6, autoplay = true, class: className, ...rest } = Astro.props;
+
+const colors = ["disciples", "leaders", "churches", "movements"];
+const glyphs = ["0.4375rem", "0.53125rem", "0.625rem", "0.75rem"];
+---
+
+{
+  render && heading && items.length > 0 && (
+    <div
+      class:list={["story-stage_wrap", className]}
+      data-time={time}
+      data-play={autoplay ? "auto" : "click"}
+      {...rest}
+    >
+      <h2 class="story-stage_title">
+        <span>{heading}</span>
+        {subheading && <span>{subheading}</span>}
+      </h2>
+      <div class="story-stage_rule" aria-hidden="true">
+        <i class="story-stage_mark" />
+      </div>
+      <div class="story-stage_panel" aria-hidden="true">
+        <p class="story-stage_caption">
+          <small />
+          <span />
+        </p>
+      </div>
+      <ol class="story-stage_steps">
+        {items.map((item, i) => (
+          <li
+            class="story-stage_step"
+            style={`--i: ${i}; --story-c: var(--c-${colors[i % 4]}); --story-g: ${glyphs[i % 4]}`}
+            data-label={item.when}
+          >
+            <svg class="story-stage_ring" viewBox="0 0 16 16" aria-hidden="true">
+              <circle cx="8" cy="8" r="6.5" />
+              <circle class="story-stage_ring-fill" cx="8" cy="8" r="6.5" pathLength="1" transform="rotate(-90 8 8)" />
+              <path class="story-stage_pause" d="M6.4 6.35V9.65M9.6 6.35V9.65" />
+            </svg>
+            <span class="story-stage_glyph" aria-hidden="true" />
+            <p class="story-stage_when">{item.when}</p>
+            <h3 class="story-stage_name">
+              <button type="button">{item.heading}</button>
+            </h3>
+            <p class="story-stage_text">{item.body}</p>
+          </li>
+        ))}
+      </ol>
+    </div>
+  )
+}
+
+<script>
+  const NS = "http://www.w3.org/2000/svg";
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const el = (tag: string, attrs: Record<string, string | number>) => {
+    const node = document.createElementNS(NS, tag);
+    for (const key in attrs) node.setAttribute(key, String(attrs[key]));
+    return node;
+  };
+
+  type Node = { gen: number; parent?: number; side?: number; a: number; w: number; r: number; x: number; y: number };
+
+  // One network, grown five generations from a single dot. Stage k shows it up to generation k + 2.
+  function grow(seed: number) {
+    const rand = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    const nodes: Node[] = [{ gen: 0, x: 0, y: 0, a: -Math.PI / 2, w: Math.PI * 2, r: 0 }];
+    for (let g = 1, front = [0]; g <= 5; g++) {
+      const next: number[] = [];
+      const len = 52 * Math.pow(0.9, g - 1);
+      for (const pi of front) {
+        const p = nodes[pi];
+        [-1, 1].forEach((side) => {
+          const a = p.a + side * (p.w / 4) * (g === 1 ? 1 : 0.84) + (rand() - 0.5) * (p.w / 4) * 0.35;
+          const r = p.r + len * (0.9 + rand() * 0.2);
+          next.push(nodes.length);
+          nodes.push({ gen: g, parent: pi, side, a, w: p.w / 2, r, x: Math.cos(a) * r * 1.9, y: Math.sin(a) * r });
+        });
+      }
+      front = next;
+    }
+    return nodes;
+  }
+
+  for (const root of document.querySelectorAll<HTMLElement>(".story-stage_wrap")) {
+    const panel = root.querySelector<HTMLElement>(".story-stage_panel")!;
+    const steps = [...root.querySelectorAll<HTMLElement>(".story-stage_step")];
+    const mark = root.querySelector<HTMLElement>(".story-stage_mark")!;
+    const rule = root.querySelector<HTMLElement>(".story-stage_rule")!;
+    const cap = root.querySelector<HTMLElement>(".story-stage_caption")!;
+    const capSmall = cap.querySelector("small")!;
+    const capText = cap.querySelector("span")!;
+    const time = Number(root.dataset.time) || 6;
+    const auto = root.dataset.play === "auto" && !reduce;
+    root.style.setProperty("--story-time", `${time}s`);
+    const nodes = grow(11);
+
+    const scenes = steps.map((step, k) => {
+      const top = k + 2;
+      const color = getComputedStyle(step).getPropertyValue("--story-c");
+      const svg = el("svg", {
+        class: "story-stage_scene",
+        viewBox: "-600 -300 1200 600",
+        preserveAspectRatio: "xMidYMid slice",
+        style: `--story-c:${color}`,
+      }) as SVGSVGElement;
+      const threads: Element[] = [];
+      const dots: Element[] = [];
+      nodes.forEach((n, index) => {
+        if (n.gen > top) return;
+        const isNew = n.gen === top;
+        const d = isNew ? (index % 8) * 0.04 + 0.15 : 0;
+        const p = n.gen ? nodes[n.parent!] : n;
+        if (n.gen) {
+          const dx = n.x - p.x;
+          const dy = n.y - p.y;
+          const b = 0.16 * n.side!;
+          threads.push(
+            el("path", {
+              class: `t${isNew ? " new" : ""}`,
+              pathLength: 1,
+              style: `--d:${d}s`,
+              d: `M${p.x} ${p.y}Q${(p.x + n.x) / 2 - dy * b} ${(p.y + n.y) / 2 + dx * b} ${n.x} ${n.y}`,
+            }),
+          );
+        }
+        const rr = 7 * Math.pow(0.84, n.gen);
+        const fill = n.gen === 0 ? "var(--c-disciples)" : isNew ? color : "#C9C9CD";
+        const g = el("g", { class: `n${isNew ? " new" : ""}`, style: `--d:${d + 0.12}s;--tx:${p.x - n.x}px;--ty:${p.y - n.y}px` });
+        g.append(
+          el("circle", { cx: n.x, cy: n.y, r: rr * 1.56, fill: "none", stroke: fill, "stroke-width": rr * 0.42 }),
+          el("circle", { cx: n.x, cy: n.y, r: rr, fill }),
+        );
+        dots.push(g);
+      });
+      svg.append(...threads, ...dots.reverse());
+      panel.prepend(svg);
+      return svg;
+    });
+
+    // Caption: block glyphs resolve into the stage's name, left to right
+    let capTimer = 0;
+    const caption = (small: string, text: string) => {
+      capSmall.textContent = small;
+      clearInterval(capTimer);
+      if (reduce) {
+        capText.textContent = text;
+        return;
+      }
+      const glyphs = "░▒▓";
+      const start = performance.now();
+      capTimer = window.setInterval(() => {
+        const done = Math.min(1, (performance.now() - start) / 520);
+        const upto = Math.floor(done * text.length);
+        capText.innerHTML = [...text]
+          .map((c, i) => (i < upto || c === " " ? c : `<span class="g">${glyphs[(Math.random() * 3) | 0]}</span>`))
+          .join("");
+        if (done >= 1) clearInterval(capTimer);
+      }, 40);
+    };
+
+    let cur = -1;
+    let timer = 0;
+    let left = time * 1000;
+    let since = 0;
+    const placeMark = () => {
+      const r = rule.getBoundingClientRect();
+      const s = steps[cur].getBoundingClientRect();
+      root.style.setProperty("--story-x", `${s.left - r.left}px`);
+      mark.style.setProperty("--story-w", (s.width / mark.offsetWidth).toFixed(3));
+      mark.style.setProperty("--story-mark", getComputedStyle(steps[cur]).getPropertyValue("--story-c"));
+    };
+    const running = () => auto && !["is-manual", "is-holding", "is-away"].some((c) => root.classList.contains(c));
+    const schedule = () => {
+      clearTimeout(timer);
+      if (!running()) return;
+      since = performance.now();
+      timer = window.setTimeout(() => show((cur + 1) % steps.length), left);
+    };
+    const show = (k: number) => {
+      cur = k;
+      steps.forEach((s, i) => {
+        s.classList.toggle("is-on", i === k);
+        s.querySelector("button")!.setAttribute("aria-current", i === k ? "step" : "false");
+      });
+      scenes.forEach((sc, i) => {
+        const on = i === k;
+        sc.classList.toggle("is-on", on);
+        if (on) {
+          sc.classList.remove("is-growing");
+          sc.getBBox();
+          sc.classList.add("is-growing");
+        }
+      });
+      const ring = steps[k].querySelector<SVGElement>(".story-stage_ring-fill")!;
+      ring.style.animation = "none";
+      ring.getBoundingClientRect();
+      ring.style.animation = "";
+      placeMark();
+      caption(steps[k].dataset.label ?? "", steps[k].querySelector("button")!.textContent ?? "");
+      left = time * 1000;
+      schedule();
+    };
+    const hold = (on: boolean) => {
+      if (running()) left -= performance.now() - since;
+      clearTimeout(timer);
+      root.classList.toggle("is-holding", on);
+      schedule();
+    };
+
+    const list = root.querySelector<HTMLElement>(".story-stage_steps")!;
+    list.addEventListener("pointerenter", () => hold(true));
+    list.addEventListener("pointerleave", () => hold(false));
+    steps.forEach((s, i) =>
+      s.addEventListener("click", () => {
+        if (getSelection()?.toString()) return;
+        root.classList.add("is-manual");
+        if (i !== cur) show(i);
+      }),
+    );
+    if (!auto) root.classList.add("is-manual");
+
+    root.classList.add("is-away");
+    new IntersectionObserver(
+      ([e]) => {
+        if (e.isIntersecting && !root.classList.contains("is-in")) {
+          root.classList.add("is-in");
+          root.classList.remove("is-away");
+          show(0);
+          return;
+        }
+        if (running()) left -= performance.now() - since;
+        root.classList.toggle("is-away", !e.isIntersecting);
+        schedule();
+      },
+      { threshold: 0.35 },
+    ).observe(root);
+    new ResizeObserver(() => cur >= 0 && placeMark()).observe(root);
+  }
+</script>
+
+<style is:global>
+  @layer components {
+    /* How we got started: a panel where one network divides a generation per stage, the four stages under it.
+       The stage playing lifts and fills its ring; hovering the stages pauses it, choosing one stops the autoplay. */
+    .story-stage_wrap {
+      --story-ease: cubic-bezier(0.23, 1, 0.32, 1);
+      width: 100%;
+      container-type: inline-size;
+    }
+    .story-stage_title {
+      width: max-content;
+      max-width: 100%;
+      margin: 0 auto;
+      color: var(--heading);
+      font-size: clamp(1.75rem, 4cqi, 2.75rem);
+      font-weight: var(--primary-bold);
+      letter-spacing: var(--letter-spacing-tight);
+      line-height: 1.1;
+      & span {
+        display: block;
+      }
+      & span + span {
+        margin-left: clamp(0rem, 8cqi, 8.75rem);
+        color: #a1a1aa;
+      }
+      @media (max-width: 35em) {
+        width: auto;
+        text-align: center;
+        & span + span {
+          margin-left: 0;
+        }
+      }
+    }
+
+    /* ---------- The dashed rule, and the mark that slides to the stage playing ---------- */
+    .story-stage_rule {
+      position: relative;
+      height: 0.0625rem;
+      margin-top: 3.5rem;
+      background: repeating-linear-gradient(90deg, #d4d4d8 0 0.1875rem, transparent 0.1875rem 0.4375rem);
+    }
+    .story-stage_mark {
+      position: absolute;
+      left: 0;
+      top: -0.0625rem;
+      width: 5rem;
+      height: 0.125rem;
+      border-radius: 0.0625rem;
+      background: var(--story-mark, var(--heading));
+      transform-origin: 0 50%;
+      transform: translateX(var(--story-x, 0)) scaleX(var(--story-w, 0));
+      transition:
+        transform 0.5s cubic-bezier(0.77, 0, 0.175, 1),
+        background 0.4s ease;
+      @media (prefers-reduced-motion: reduce) {
+        transition: none;
+      }
+    }
+
+    /* ---------- The panel and its scenes ---------- */
+    .story-stage_panel {
+      position: relative;
+      height: clamp(18.75rem, 36vw, 28.75rem);
+      margin-top: 0.75rem;
+      overflow: hidden;
+      border-radius: var(--radius-main);
+      background: var(--background-2);
+    }
+    .story-stage_scene {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      filter: blur(0.125rem);
+      transition:
+        opacity 0s 0.3s,
+        filter 0s 0.3s;
+      -webkit-mask-image: radial-gradient(60% 62% at 50% 50%, #000 55%, transparent 100%);
+      mask-image: radial-gradient(60% 62% at 50% 50%, #000 55%, transparent 100%);
+      &.is-on {
+        z-index: 1;
+        opacity: 1;
+        filter: none;
+        transition:
+          opacity 0.3s var(--story-ease),
+          filter 0.3s var(--story-ease);
+      }
+      & .t {
+        fill: none;
+        stroke: #d4d4d8;
+        stroke-width: 1;
+      }
+      & .t.new {
+        stroke: var(--story-c);
+        stroke-opacity: 0.55;
+        stroke-dasharray: 1;
+        stroke-dashoffset: 1;
+      }
+      & .n.new {
+        transform-box: fill-box;
+        transform-origin: center;
+        opacity: 0;
+        transform: translate(var(--tx), var(--ty)) scale(0.3);
+      }
+      &.is-growing .t.new {
+        animation: story-stage-draw 0.7s cubic-bezier(0.65, 0, 0.35, 1) var(--d) forwards;
+      }
+      &.is-growing .n.new {
+        animation: story-stage-pop 0.7s cubic-bezier(0.65, 0, 0.35, 1) var(--d) forwards;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        &,
+        &.is-on {
+          filter: none;
+          transition: opacity 0.2s ease;
+        }
+        & .t.new,
+        & .n.new {
+          animation: none !important;
+          opacity: 1;
+          transform: none;
+          stroke-dashoffset: 0;
+        }
+      }
+    }
+    @keyframes story-stage-draw {
+      to {
+        stroke-dashoffset: 0;
+      }
+    }
+    @keyframes story-stage-pop {
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+    .story-stage_caption {
+      position: absolute;
+      left: 1.75rem;
+      bottom: 1.375rem;
+      z-index: 2;
+      display: grid;
+      gap: 0.125rem;
+      margin: 0;
+      & small {
+        font-size: 0.8125rem;
+        color: #8a8a93;
+      }
+      & span {
+        font-size: 1.0625rem;
+        font-weight: var(--primary-medium);
+        color: var(--heading);
+        white-space: nowrap;
+      }
+      & .g {
+        font-family: ui-monospace, "SF Mono", Menlo, monospace;
+        font-size: 0.875rem;
+        color: #a1a1aa;
+      }
+    }
+
+    /* ---------- The four stages ---------- */
+    .story-stage_steps {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 3rem;
+      margin: 2.5rem 0 0;
+      padding: 0;
+      list-style: none;
+      @media (max-width: 56.25em) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        row-gap: 2.25rem;
+      }
+      @media (max-width: 35em) {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+    .story-stage_step {
+      position: relative;
+      padding-right: 1.5rem;
+      font-size: calc(var(--text-main) - 0.0625rem);
+      line-height: 1.6;
+      opacity: 0.5;
+      transition:
+        opacity 0.2s ease,
+        transform 0.3s var(--story-ease);
+      & > :not(.story-stage_ring) {
+        opacity: 0;
+        filter: blur(0.25rem);
+        transform: translateY(0.375rem);
+      }
+      .story-stage_wrap.is-in & > :not(.story-stage_ring) {
+        opacity: 1;
+        filter: none;
+        transform: none;
+        transition:
+          opacity 0.5s var(--story-ease),
+          filter 0.5s var(--story-ease),
+          transform 0.5s var(--story-ease);
+        transition-delay: calc(180ms + var(--i) * 70ms);
+      }
+      &:not(.is-on) {
+        cursor: pointer;
+      }
+      &.is-on {
+        opacity: 1;
+        transform: translateY(-0.5rem);
+      }
+      &:has(button:focus-visible) {
+        outline: 0.125rem solid var(--heading);
+        outline-offset: 0.375rem;
+        border-radius: 0.25rem;
+      }
+      @media (hover: hover) and (pointer: fine) {
+        &:not(.is-on):hover {
+          opacity: 0.8;
+        }
+      }
+      @media (max-width: 35em) {
+        &.is-on {
+          transform: none;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        &,
+        & > :not(.story-stage_ring) {
+          filter: none !important;
+          transform: none !important;
+        }
+      }
+    }
+    .story-stage_glyph {
+      display: block;
+      width: var(--story-g);
+      height: var(--story-g);
+      margin: calc((1.75rem - var(--story-g)) / 2) calc(var(--story-g) * 0.56);
+      border-radius: 50%;
+      background: var(--story-c);
+      box-shadow:
+        0 0 0 calc(var(--story-g) * 0.3) var(--background),
+        0 0 0 calc(var(--story-g) * 0.56) var(--story-c);
+    }
+    .story-stage_when,
+    .story-stage_name,
+    .story-stage_text {
+      margin: 0.25rem 0 0;
+    }
+    .story-stage_when {
+      margin-top: 0.875rem;
+      font-size: 0.875rem;
+      font-weight: var(--primary-medium);
+      color: var(--story-c);
+    }
+    .story-stage_name {
+      font: inherit;
+      & button {
+        all: unset;
+        font-weight: var(--primary-medium);
+        color: var(--heading);
+        cursor: pointer;
+        .is-on & {
+          cursor: default;
+        }
+      }
+    }
+
+    /* ---------- The ring that fills while a stage plays ---------- */
+    .story-stage_ring {
+      position: absolute;
+      top: 0.125rem;
+      right: 0;
+      width: 1rem;
+      height: 1rem;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s var(--story-ease);
+      .is-on > & {
+        opacity: 1;
+      }
+      .story-stage_wrap.is-manual & {
+        opacity: 0 !important;
+      }
+      & circle {
+        fill: none;
+        stroke: #e4e4e7;
+        stroke-width: 1.5;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        display: none;
+      }
+    }
+    .story-stage_ring-fill {
+      .story-stage_ring & {
+        stroke: var(--story-c);
+      }
+      stroke-dasharray: 1;
+      stroke-dashoffset: 1;
+      .is-on & {
+        animation: story-stage-ring var(--story-time) linear forwards;
+      }
+      .story-stage_wrap.is-holding .is-on &,
+      .story-stage_wrap.is-away .is-on & {
+        animation-play-state: paused;
+      }
+    }
+    @keyframes story-stage-ring {
+      to {
+        stroke-dashoffset: 0;
+      }
+    }
+    .story-stage_pause {
+      fill: none;
+      stroke: var(--heading);
+      stroke-width: 1.1;
+      stroke-linecap: round;
+      opacity: 0;
+      transform: scale(0.7);
+      transform-box: fill-box;
+      transform-origin: center;
+      transition:
+        opacity 0.2s var(--story-ease),
+        transform 0.26s var(--story-ease);
+      .story-stage_wrap.is-holding .is-on & {
+        opacity: 1;
+        transform: none;
+      }
+    }
+  }
+</style>

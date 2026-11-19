@@ -102,6 +102,7 @@ const homePage = defineCollection({
       }),
       story: z.object({
         heading: z.string(),
+        subheading: z.string().optional(),
         items: z.array(z.object({ when: z.string(), heading: z.string(), body: z.string() })),
       }),
     }),

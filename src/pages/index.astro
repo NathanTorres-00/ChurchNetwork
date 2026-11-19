@@ -15,7 +15,7 @@ import StatsSplit from "@/components/content/StatsSplit.astro";
 import HubList from "@/components/content/HubList.astro";
 import GroupStory from "@/components/content/GroupStory.astro";
 import JesusDisciple from "@/components/section/JesusDisciple.astro";
-import Timeline from "@/components/content/Timeline.astro";
+import StoryStage from "@/components/content/StoryStage.astro";
 
 const home = (await getEntry("homePage", "home"))!.data;
 const { top, churchNetwork, whatWeDo, how, app, hubs, story } = home;
@@ -107,10 +107,7 @@ const hubRows = [
 
   <!-- How we got started: the last section before the footer -->
   <Section id="story">
-    <ContentWrapper>
-      <Heading>{story.heading}</Heading>
-    </ContentWrapper>
-    <Timeline items={story.items} />
+    <StoryStage heading={story.heading} subheading={story.subheading} items={story.items} />
   </Section>
 
   <Fragment slot="after">

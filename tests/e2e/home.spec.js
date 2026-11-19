@@ -106,7 +106,7 @@ test('the panel\'s Page settings still reach the sections', async ({ page }) => 
   expect(await how.evaluate(el => getComputedStyle(el).paddingTop)).toBe('200px');
   expect(await page.locator('#intro-video').evaluate(el => getComputedStyle(el).borderTopLeftRadius)).toBe('8px');
   expect(await page.locator('#how .container').evaluate(el => Math.round(el.getBoundingClientRect().width))).toBe(952);
-  expect(await page.locator('#story .timeline_text').first().evaluate(el => getComputedStyle(el).fontSize)).toBe('20px');
+  expect(await page.locator('#story .story-stage_text').first().evaluate(el => getComputedStyle(el).fontSize)).toBe('19px');   // the stages sit 1px under body text
 });
 
 test('Home keeps 128px between sections on a phone', async ({ page }) => {

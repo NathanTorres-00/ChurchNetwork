@@ -13,8 +13,8 @@ test('Jesus Disciple shows the pastor heading, bold subheadings and updated JDU 
 
 test('How we got started tells the four stages of multiplication', async ({ page }) => {
   await page.goto('/', { waitUntil: 'domcontentloaded' });
-  await expect(page.locator('#story h2')).toHaveText('How we got started');
-  await expect(page.locator('#story .timeline_step')).toHaveText([
+  await expect(page.locator('#story h2')).toHaveText('How we got started:from one local church to a global movement.');
+  await expect(page.locator('#story .story-stage_step')).toHaveText([
     'Multiplied disciples One local church began making disciples who make disciples',
     'Multiplied leaders Disciples became leaders that started new groups',
     'Multiplied churches Groups became churches forming a network',
@@ -26,7 +26,7 @@ test('the updated sections fit on a narrow screen', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 720 });
   await page.goto('/', { waitUntil: 'domcontentloaded' });
   await page.evaluate(() => document.fonts.ready.then(() => true));
-  for (const selector of ['.jd-heading', '#app .jesus-disciple_subtitle', '.reel-head', '.jdu-body', '.timeline_list']) {
+  for (const selector of ['.jd-heading', '#app .jesus-disciple_subtitle', '.reel-head', '.jdu-body', '.story-stage_steps', '.story-stage_title']) {
     for (const element of await page.locator(selector).all()) {
       expect(await element.evaluate(item => item.scrollWidth)).toBeLessThanOrEqual(await element.evaluate(item => item.clientWidth));
     }
