@@ -38,6 +38,9 @@ const {
       style={`--gc: var(--c-${color})`}
       {...rest}
     >
+      <svg class="group-card_trace" aria-hidden="true" focusable="false">
+        <path />
+      </svg>
       <p class="group-card_tag" aria-hidden="true">
         <span class="glyph" />
       </p>
@@ -59,15 +62,120 @@ const {
   )
 }
 
+<script>
+  for (const svg of document.querySelectorAll<SVGSVGElement>(".group-card_trace")) {
+    const card = svg.parentElement;
+    const path = svg.querySelector("path");
+    if (!card || !path) continue;
+    let length = 0;
+    let entry = 0;
+    let hovering = false;
+    let traced = false;
+
+    const draw = (halfLength: number, animate: boolean) => {
+      path.style.transition = animate ? "" : "none";
+      path.style.strokeDasharray = `${2 * halfLength} ${length - 2 * halfLength}`;
+      path.style.strokeDashoffset = `${halfLength - entry * length}`;
+    };
+
+    const resize = () => {
+      const { width, height } = card.getBoundingClientRect();
+      if (!width || !height) return;
+      const inset = parseFloat(getComputedStyle(path).strokeWidth) / 2;
+      const radius = Math.min(parseFloat(getComputedStyle(card).borderTopLeftRadius), width / 2, height / 2);
+      const corner = Math.max(0, radius - inset);
+      svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+      path.setAttribute(
+        "d",
+        [
+          `M${radius} ${inset} H${width - radius}`,
+          `A${corner} ${corner} 0 0 1 ${width - inset} ${radius} V${height - radius}`,
+          `A${corner} ${corner} 0 0 1 ${width - radius} ${height - inset} H${radius}`,
+          `A${corner} ${corner} 0 0 1 ${inset} ${height - radius} V${radius}`,
+          `A${corner} ${corner} 0 0 1 ${radius} ${inset} Z`,
+        ].join(" "),
+      );
+      length = path.getTotalLength();
+      draw(traced ? length / 2 : 0, false);
+    };
+
+    const start = (position: number) => {
+      entry = position;
+      draw(0, false);
+      path.getBoundingClientRect();
+      traced = true;
+      draw(length / 2, true);
+    };
+
+    const stop = () => {
+      traced = false;
+      draw(0, true);
+    };
+
+    card.addEventListener("pointerenter", (event) => {
+      hovering = true;
+      const { left, top } = card.getBoundingClientRect();
+      const x = event.clientX - left;
+      const y = event.clientY - top;
+      let nearest = 0;
+      let nearestDistance = Infinity;
+      for (let step = 0; step < 180; step++) {
+        const position = step / 180;
+        const point = path.getPointAtLength(length * position);
+        const distance = (point.x - x) ** 2 + (point.y - y) ** 2;
+        if (distance < nearestDistance) {
+          nearest = position;
+          nearestDistance = distance;
+        }
+      }
+      start(nearest);
+    });
+    card.addEventListener("pointerleave", () => {
+      hovering = false;
+      if (!card.contains(document.activeElement)) stop();
+    });
+    card.addEventListener("focusin", () => {
+      if (!traced) start(0);
+    });
+    card.addEventListener("focusout", (event) => {
+      if (!hovering && !card.contains(event.relatedTarget as Node | null)) stop();
+    });
+
+    resize();
+    new ResizeObserver(resize).observe(card);
+  }
+</script>
+
 <style is:global>
   @layer components {
     .group-card_wrap {
+      position: relative;
       display: flex;
       flex-direction: column;
       align-items: flex-start;
       padding: clamp(2rem, 4vw, 3rem);
       border-radius: var(--radius-main);
       background: var(--background-2);
+    }
+    /* ---------- Trace: a single dash grows both ways from where the pointer came in ---------- */
+    .group-card_trace {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      & path {
+        fill: none;
+        stroke: var(--gc);
+        stroke-width: 0.109375rem;
+        stroke-linecap: butt;
+        transition:
+          stroke-dasharray 0.9s cubic-bezier(0.65, 0, 0.35, 1),
+          stroke-dashoffset 0.9s cubic-bezier(0.65, 0, 0.35, 1);
+        @media (prefers-reduced-motion: reduce) {
+          transition: none;
+        }
+      }
     }
     .group-card_tag {
       display: flex;

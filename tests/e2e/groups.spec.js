@@ -252,3 +252,29 @@ test('the Rock Groups Leadership Team shows each person with their role (main 49
   await expect(team.locator('h3')).toHaveText(['Jerry Dirmann', 'Tina Shubin', 'Eryne Nevarez', 'Crissy Shubin']);
   await expect(team.locator('.team-member_role')).toHaveText(['Director', 'Asst. Director', 'Operations', 'Admin Asst.']);
 });
+
+// The group cards' outline trace (ported from the live folder's groups.html)
+test('a group card traces its outline from where the pointer comes in, and on keyboard focus', async ({ page }) => {
+  await page.goto('/groups');
+  const card = page.locator('.group-card_wrap').first();
+  const path = card.locator('.group-card_trace path');
+  await card.scrollIntoViewIfNeeded();
+  const dash = () => path.evaluate(el => {
+    const [on] = getComputedStyle(el).strokeDasharray.split(/[ ,]+/).map(parseFloat);
+    return { on: on || 0, length: el.getTotalLength() };
+  });
+  await expect.poll(async () => (await dash()).on).toBe(0);
+
+  const box = await card.boundingBox();
+  await page.mouse.move(box.x + box.width - 2, box.y + box.height / 2);
+  await expect.poll(async () => { const d = await dash(); return Math.round(d.on - d.length); }).toBe(0);
+  await page.mouse.move(box.x + box.width / 2, box.y - 200);
+  await expect.poll(async () => (await dash()).on).toBe(0);
+
+  await card.getByRole('link').focus();
+  await expect.poll(async () => { const d = await dash(); return Math.round(d.on - d.length); }).toBe(0);
+  await page.setViewportSize({ width: 800, height: 900 });
+  await expect.poll(async () => { const d = await dash(); return Math.round(d.on - d.length); }).toBe(0);
+  await page.locator('body').click({ position: { x: 5, y: 5 } });
+  await expect.poll(async () => (await dash()).on).toBe(0);
+});
