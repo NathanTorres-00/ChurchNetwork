@@ -18,9 +18,9 @@ function strings(value) {
   return [];
 }
 
-// The old pages as main holds them now (deleted from this branch; the port follows main, so new copy there shows
-// up here as a failure until it's carried over)
-const oldPage = (file) => new JSDOM(execFileSync('git', ['show', `main:${file}`], { encoding: 'utf8' })).window.document;
+// The old pages as the last legacy commit on main held them (dc5b9f5, before the Astro cutover)
+const LEGACY = 'dc5b9f5';
+const oldPage = (file) => new JSDOM(execFileSync('git', ['show', `${LEGACY}:${file}`], { encoding: 'utf8' })).window.document;
 const clean = (text) => text.replace(/\s+/g, ' ').trim();
 
 describe('content collections', () => {
@@ -33,9 +33,12 @@ describe('content collections', () => {
     const groups = readJson('pages/groups.json');
     const leadership = readJson('pages/leadership.json');
     expect(groups.team.people).toHaveLength(4);
-    for (const id of [...groups.team.people.map((p) => p.leader), ...leadership.network.people, ...leadership.group.people]) expect(leaders).toContain(id);
+    const overseers = leadership.overseers.groups.flatMap((g) => g.assignments.flatMap((a) => a.people));
+    const team = leadership.team.people.map((p) => p.leader);
+    for (const id of [...groups.team.people.map((p) => p.leader), ...leadership.network.people, ...team, ...overseers]) expect(leaders).toContain(id);
     expect(leadership.network.people).toHaveLength(9);
-    expect(leadership.group.people).toHaveLength(18);
+    expect(team).toHaveLength(4);
+    expect(overseers).toHaveLength(18);
   });
 
   test('group stories hold Anastasia (Home) and the church group member (Groups)', () => {
@@ -51,8 +54,11 @@ describe('content collections', () => {
 
   test('every Home section title is in the Home page copy', () => {
     const copy = strings(readJson('pages/home.json'));
-    const titles = [...oldPage('hero.html').querySelectorAll('h2.section-title')].map((h) => clean(h.textContent));
-    expect(titles).toHaveLength(5);
+    // a title set in two spans (How we got started) is two strings
+    const titles = [...oldPage('hero.html').querySelectorAll('h2.section-title')]
+      .flatMap((h) => (h.querySelector('span') ? [...h.querySelectorAll('span')] : [h]))
+      .map((h) => clean(h.textContent));
+    expect(titles).toHaveLength(6);
     for (const title of titles) expect(copy).toContain(title);
   });
 

@@ -11,12 +11,13 @@ const script = readFileSync(resolve(process.cwd(), 'public/scripts/leadership-or
 test('a leader without a photo gets a placeholder dot, and the orbit still grows', () => {
   document.body.innerHTML = `
     <div class="orbit" id="orbit"></div>
-    <ul class="people people-network">
-      <li class="person is-network" id="p-a"><img src="/a.jpg" alt=""><span class="person-name">A</span></li>
-      <li class="person is-network" id="p-b"><span class="person-empty"></span><span class="person-name">B</span></li>
+    <ul class="people people-group people-team">
+      <li class="person is-group" id="p-a"><img src="/a.jpg" alt=""><span class="person-name">A</span></li>
+      <li class="person is-group" id="p-b"><span class="person-empty"></span><span class="person-name">B</span></li>
     </ul>
-    <ul class="people people-group">
+    <ul class="people people-group people-assignment">
       <li class="person is-group" id="p-c"><span class="person-empty"></span><span class="person-name">C</span></li>
+      <li class="person is-group"><span class="person-empty"></span><span class="person-name">A</span></li>
     </ul>`;
   let observed = null;
   window.IntersectionObserver = class { constructor(cb) { this.cb = cb; } observe(el) { observed = el; this.cb([{ isIntersecting: true }], this); } disconnect() {} };
