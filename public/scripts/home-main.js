@@ -979,7 +979,7 @@ function heroGalleryGroups(GALLERY_CONTROLS) {
     }
     for (const el of heroCopy.querySelectorAll('.hero-actions .button, .word-dots')) rects.push(el.getBoundingClientRect());
     // The header's logo and links sit over the hero too
-    for (const el of document.querySelectorAll('.site-header .brand, .site-nav a')) rects.push(el.getBoundingClientRect());
+    for (const el of document.querySelectorAll('.site-nav')) rects.push(el.getBoundingClientRect());
     return rects.filter(b => b.width > 0 && b.height > 0);
   }
   const pointer = { x: 0, y: 0, inside: false, moves: 0 };

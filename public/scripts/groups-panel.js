@@ -27,7 +27,7 @@
       const walk = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
       for (let n = walk.nextNode(); n; n = walk.nextNode()) { range.selectNodeContents(n); boxes.push(...range.getClientRects()); }
     }
-    for (const el of document.querySelectorAll('.hero-card .actions .button, .site-header .brand, .site-nav a')) boxes.push(el.getBoundingClientRect());
+    for (const el of document.querySelectorAll('.hero-card .actions .button, .site-nav')) boxes.push(el.getBoundingClientRect());
     return boxes.map(r => ({ left: r.left - f.left, right: r.right - f.left, top: r.top - f.top, bottom: r.bottom - f.top, width: r.width, height: r.height }))
       .filter(b => b.width > 0 && b.height > 0);
   };

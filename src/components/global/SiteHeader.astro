@@ -13,117 +13,309 @@ const { render = true, page, class: className, ...rest } = Astro.props;
 
 const onHome = page === "home";
 const home = onHome ? "" : "/";
-const links = [
+const left = [
+  { label: "Home", href: onHome ? "#top" : "/", current: onHome },
   { label: "What we do", href: `${home}#what-we-do` },
   { label: "How we do it", href: `${home}#how` },
-  { label: "App", href: `${home}#app` },
-  { label: "Find a hub", href: "#hubs", render: onHome },
   { label: "Our story", href: `${home}#story` },
+];
+const right = [
   { label: "Groups", href: "/groups", current: page === "groups" },
   { label: "Leadership", href: "/leadership", current: page === "leadership", render: showLeadership() },
+  { label: "App", href: `${home}#app` },
 ].filter((link) => link.render !== false);
 ---
 
 {
   render && page !== "embed" && (
-    <header
-      class:list={["site-header", className]}
-      data-enter={page === "groups" ? "" : undefined}
-      style={page === "groups" ? "--i: 0" : undefined}
-      {...rest}
-    >
-      <div class="site-header_layout">
-        <a
-          class="brand"
-          href={onHome ? "#top" : "/"}
-          aria-label={onHome ? "The Rock Network" : "The Rock Network, home"}
-        >
-          <span class="logo" aria-hidden="true" />
-        </a>
-        <nav class="site-nav" aria-label={onHome ? "Sections" : "Site"}>
-          {links.map((link) => (
-            <a href={link.href} aria-current={link.current ? "page" : undefined}>
-              {link.label}
-            </a>
-          ))}
+    <header class:list={["site-header", className]} {...rest}>
+      <div class="site-header_position">
+        <nav class="site-nav" aria-label="Site navigation">
+          <button
+            class="site-nav_brand"
+            type="button"
+            aria-label="The Rock Network menu"
+            aria-expanded="false"
+            aria-controls="site-nav-links"
+          >
+            <img src="/assets/the-rock-network.png" alt="" width="960" height="202" />
+          </button>
+          <div class="site-nav_links" id="site-nav-links" aria-hidden="true" inert>
+            <div class="site-nav_side">
+              {left.map((link) => (
+                <a href={link.href} aria-current={link.current ? "page" : undefined}>
+                  {link.label}
+                </a>
+              ))}
+            </div>
+            <div class="site-nav_side">
+              {right.map((link) => (
+                <a href={link.href} aria-current={link.current ? "page" : undefined}>
+                  {link.label}
+                </a>
+              ))}
+              {onHome && (
+                <a class="site-nav_cta" href="#hubs" hidden>
+                  Find a hub
+                </a>
+              )}
+            </div>
+          </div>
         </nav>
       </div>
     </header>
   )
 }
 
+<script>
+  const nav = document.querySelector<HTMLElement>(".site-nav");
+  const brand = nav?.querySelector<HTMLButtonElement>(".site-nav_brand");
+  const links = nav?.querySelector<HTMLElement>(".site-nav_links");
+  if (nav && brand && links) {
+    const scrollThreshold = 18;
+    const readScroll = () => {
+      const limit = document.documentElement.scrollHeight - window.innerHeight;
+      return Math.max(0, Math.min(window.scrollY, limit));
+    };
+    let previousY = readScroll();
+    let distance = 0;
+    let stayOpen = false;
+    let hovered = false;
+
+    const render = () => {
+      const open = stayOpen || hovered || Boolean(links.querySelector(":focus-visible"));
+      if (!open && links.contains(document.activeElement)) brand.focus({ preventScroll: true });
+      nav.classList.toggle("is-open", open);
+      brand.setAttribute("aria-expanded", String(open));
+      links.inert = !open;
+      links.setAttribute("aria-hidden", String(!open));
+    };
+
+    const close = () => {
+      stayOpen = hovered = false;
+      if (links.contains(document.activeElement)) brand.focus({ preventScroll: true });
+      render();
+    };
+
+    nav.addEventListener("pointerenter", (event) => {
+      if (event.pointerType !== "mouse") return;
+      hovered = true;
+      render();
+    });
+    nav.addEventListener("pointerleave", () => {
+      hovered = false;
+      render();
+    });
+    nav.addEventListener("focusout", (event) => {
+      if (nav.contains(event.relatedTarget as Node | null)) return;
+      requestAnimationFrame(() => {
+        if (nav.contains(document.activeElement)) return;
+        stayOpen = false;
+        render();
+      });
+    });
+    brand.addEventListener("click", () => {
+      if (stayOpen) close();
+      else {
+        stayOpen = true;
+        render();
+      }
+    });
+    document.addEventListener("click", (event) => {
+      if (!nav.contains(event.target as Node)) close();
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && nav.classList.contains("is-open")) close();
+    });
+    window.addEventListener(
+      "scroll",
+      () => {
+        const y = readScroll();
+        const delta = y - previousY;
+        previousY = y;
+        if (!delta) return;
+        distance = Math.sign(delta) === Math.sign(distance) ? distance + delta : delta;
+        if (Math.abs(distance) < scrollThreshold && y !== 0) return;
+        stayOpen = distance < 0;
+        nav.classList.toggle("is-scroll-hidden", distance > 0);
+        hovered = false;
+        distance = 0;
+        render();
+      },
+      { passive: true },
+    );
+  }
+</script>
+
 <style is:global>
   @layer components {
-    /* .site-header, .brand, .logo and .site-nav keep their old names: the page scripts and the footer read them */
+    /* .site-header and .site-nav keep their old names: the page scripts read them */
     .site-header {
+      --site-nav-logo-width: calc(8.875rem * 1.19);
+      --site-nav-compact: calc(var(--site-nav-logo-width) + 2.625rem);
+      --site-nav-bar: calc(var(--site-nav-logo-width) * 202 / 960 + 2.125rem);
       position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
+      inset: 0 0 auto;
       z-index: 5;
-    }
-    .site-header_layout {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      width: var(--site-width);
-      max-width: var(--max-width-main);
       height: var(--nav-height);
-      margin-inline: auto;
+      pointer-events: none;
     }
-    .brand {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.75rem;
-      font-weight: var(--primary-bold);
-      color: var(--heading);
-      text-decoration: none;
-      letter-spacing: -0.01em;
-    }
-    /* The Rock Network logo, used as a mask so it takes the heading color */
-    .logo {
-      --logo-h: 3.25rem;
-      display: block;
-      height: var(--logo-h);
-      aspect-ratio: 960 / 202;
-      background: currentColor;
-      -webkit-mask: url("/assets/the-rock-network.png") center / contain no-repeat;
-      mask: url("/assets/the-rock-network.png") center / contain no-repeat;
-    }
-    .site-header .logo {
-      @media (max-width: 62.5em) {
-        --logo-h: 2.75rem;
-      }
-      @media (max-width: 56.25em) {
-        --logo-h: 2.375rem;
-      }
-    }
-    .site-nav {
+    .site-header_position {
+      position: fixed;
+      z-index: 20;
+      inset: max(0.875rem, env(safe-area-inset-top)) 0 auto;
       display: flex;
-      gap: 1.75rem;
-      font-size: 0.9375rem;
-      @media (max-width: 62.5em) {
-        gap: 1.125rem;
+      justify-content: center;
+      container-type: inline-size;
+    }
+
+    /* ---------- The pill ---------- */
+    .site-nav {
+      --site-nav-time: 0.44s;
+      --site-nav-reveal: 0.22;
+      --site-nav-transition: var(--site-nav-time) cubic-bezier(0.22, 1, 0.36, 1);
+      --site-nav-wide: min(56.25rem, calc(100cqw - 1.5rem));
+      position: relative;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      width: min(var(--site-nav-compact), calc(100% - 1.5rem));
+      height: var(--site-nav-bar);
+      overflow: clip;
+      border: 0.0625rem solid var(--border);
+      border-radius: calc(var(--site-nav-bar) / 2);
+      background: rgb(255 255 255 / 80%);
+      -webkit-backdrop-filter: blur(0.3125rem);
+      backdrop-filter: blur(0.3125rem);
+      box-shadow: 0 0.0625rem 0.25rem rgb(31 31 35 / 8%);
+      color: var(--heading);
+      pointer-events: auto;
+      transition:
+        width var(--site-nav-transition),
+        height var(--site-nav-transition),
+        translate var(--site-nav-transition),
+        opacity var(--site-nav-transition);
+      &.is-open {
+        width: var(--site-nav-wide);
       }
-      /* six links still fit on one line */
-      @media (max-width: 56.25em) {
-        gap: 0.875rem;
-        font-size: 0.875rem;
-      }
-      @media (max-width: 47.5em) {
-        display: none;
+      &.is-scroll-hidden:not(:has(:focus-visible)) {
+        translate: 0 calc(-100% - max(0.875rem, env(safe-area-inset-top)) - 0.25rem);
+        opacity: 0;
+        pointer-events: none;
       }
       & a {
+        display: grid;
+        place-items: center;
+        min-height: 2.75rem;
+        padding: 0 0.5625rem;
+        border-radius: 999px;
+        color: inherit;
+        font-size: 0.875rem;
+        font-weight: var(--primary-medium);
+        line-height: 1.2;
         text-decoration: none;
-        color: var(--text);
         white-space: nowrap;
+        &[hidden] {
+          display: none;
+        }
         &:hover,
         &[aria-current="page"] {
-          color: var(--heading);
+          background: var(--background-2);
         }
-        &[aria-current="page"] {
-          font-weight: var(--primary-medium);
+      }
+      & :focus-visible {
+        outline: 0.125rem solid currentColor;
+        outline-offset: -0.1875rem;
+      }
+      /* The pill's own width, not the screen's: the open menu stacks into two columns */
+      @container (max-width: 56.25rem) {
+        --site-nav-wide: min(26.25rem, calc(100cqw - 1.5rem));
+        max-height: calc(100dvh - max(0.875rem, env(safe-area-inset-top)) - 0.75rem);
+        &.is-open {
+          height: calc(var(--site-nav-bar) + 11.9375rem);
         }
+        & a {
+          white-space: normal;
+          text-align: center;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        transition: none;
+      }
+    }
+    .site-nav_brand {
+      position: relative;
+      z-index: 1;
+      flex: none;
+      display: grid;
+      place-items: center;
+      width: min(11rem, calc(100% - 0.5rem));
+      height: calc(var(--site-nav-bar) - 0.5rem);
+      margin-top: 0.1875rem;
+      padding: 0;
+      border: 0;
+      border-radius: 999px;
+      color: inherit;
+      background: transparent;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      &:active {
+        background: var(--background-2);
+      }
+      & img {
+        display: block;
+        width: var(--site-nav-logo-width);
+        height: auto;
+        filter: brightness(0) invert(12%);
+      }
+    }
+    .site-nav_links {
+      position: absolute;
+      inset: 0 auto 0 50%;
+      translate: -50% 0;
+      width: calc(var(--site-nav-wide) - 0.125rem);
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 11.5rem minmax(0, 1fr);
+      align-items: center;
+      opacity: 0;
+      transition: opacity calc(var(--site-nav-time) * 0.22) ease;
+      .site-nav.is-open & {
+        opacity: 1;
+        transition-delay: calc(var(--site-nav-time) * var(--site-nav-reveal));
+      }
+      @container (max-width: 56.25rem) {
+        inset: var(--site-nav-bar) 0.625rem 0.5rem;
+        translate: none;
+        width: auto;
+        min-height: 0;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-content: start;
+        gap: 0.25rem;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        transition: none;
+      }
+    }
+    .site-nav_side {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      &:last-child {
+        grid-column: -2;
+      }
+      @container (max-width: 56.25rem) {
+        flex-direction: column;
+        align-items: stretch;
+      }
+    }
+    .site-nav .site-nav_cta {
+      padding-inline: 0.875rem;
+      color: #fff;
+      background: var(--c-disciples);
+      &:hover {
+        background: color-mix(in srgb, var(--c-disciples), black 21%);
       }
     }
   }

@@ -16,15 +16,15 @@ for (const demo of ['network-multiply', 'network-globe', 'network-globe-pins', '
   });
 }
 
-// The header's links, as the old pages had them (Home also lists Find a hub; Leadership from main 5f3b046)
+// The floating nav's links, as the live folder's floating nav has them (Home also has a hidden Find a hub)
 const NAV = {
-  '/': ['What we do', 'How we do it', 'App', 'Find a hub', 'Our story', 'Groups', 'Leadership'],
-  '/groups': ['What we do', 'How we do it', 'App', 'Our story', 'Groups', 'Leadership'],
-  '/leadership': ['What we do', 'How we do it', 'App', 'Our story', 'Groups', 'Leadership'],
+  '/': ['Home', 'What we do', 'How we do it', 'Our story', 'Groups', 'Leadership', 'App', 'Find a hub'],
+  '/groups': ['Home', 'What we do', 'How we do it', 'Our story', 'Groups', 'Leadership', 'App'],
+  '/leadership': ['Home', 'What we do', 'How we do it', 'Our story', 'Groups', 'Leadership', 'App'],
 };
 
 for (const [path, links] of Object.entries(NAV)) {
-  test(`${path} has the site header with its links in order`, async ({ page }) => {
+  test(`${path} has the site nav with its links in order`, async ({ page }) => {
     await page.goto(path);
     await expect(page.locator('.site-header .site-nav a')).toHaveText(links);
   });
@@ -56,7 +56,7 @@ test('the site is set in Geist', async ({ page }) => {
 test('Groups links back to Home from the header, and Home links to Groups', async ({ page }) => {
   await page.goto('/groups');
   await expect(page.locator('.site-header .site-nav a', { hasText: 'Groups' })).toHaveAttribute('aria-current', 'page');
-  await expect(page.locator('.site-header .brand')).toHaveAttribute('href', '/');
+  await expect(page.locator('.site-nav a', { hasText: 'Home' })).toHaveAttribute('href', '/');
   await page.goto('/');
   await expect(page.locator('.site-header .site-nav a', { hasText: 'Groups' })).toHaveAttribute('href', '/groups');
 });

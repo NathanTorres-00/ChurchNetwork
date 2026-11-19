@@ -262,20 +262,7 @@ const looks = ["button-light", "button-ghost"];
           radial-gradient(ellipse 75% var(--arc) at 50% calc(100% - var(--arc)), #000 99.6%, transparent);
       }
     }
-    /* Over the full-width photo the header turns white */
-    html[data-shape="full"][data-art="photo"] .site-header {
-      color: #fff;
-      & .brand,
-      & .site-nav a {
-        color: rgb(255 255 255 / 0.88);
-      }
-      & .site-nav a:hover,
-      & .site-nav a[aria-current="page"] {
-        color: #fff;
-      }
-    }
-
-    /* ---------- Page load: the header, the hero, then its title, line and buttons, one after another ---------- */
+    /* ---------- Page load: the hero, then its title, line and buttons, one after another ---------- */
     [data-enter] {
       animation-duration: var(--load-speed, 0.9s);
       animation-delay: calc(var(--i, 0) * var(--load-stagger, 0.09s));
@@ -304,9 +291,6 @@ const looks = ["button-light", "button-ghost"];
         animation-name: g-open;
         animation-duration: calc(var(--load-speed, 0.9s) * 1.4);
         animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1);
-      }
-      & .site-header[data-enter] {
-        animation-name: g-fade;
       }
     }
     html[data-load="none"] [data-enter] {

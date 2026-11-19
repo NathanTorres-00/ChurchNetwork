@@ -224,6 +224,7 @@ test('the Adjust panel switches the hero to the Pins globe and back', async ({ p
 
 test('arriving at Home from Groups skips the loading screen', async ({ page }) => {
   await page.goto('/groups');
+  await page.locator('.site-nav_brand').click();
   await page.locator('.site-nav a', { hasText: 'Our story' }).click();
   await expect(page).toHaveURL(/\/#story$/);
   await expect(page.locator('html')).not.toHaveClass(/is-loading/, { timeout: 2000 });

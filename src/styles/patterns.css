@@ -258,3 +258,14 @@ h6,
     opacity: 0.5;
   }
 }
+
+/* The Rock Network logo, used as a mask so it takes the text color (footer, Leadership hero) */
+.logo {
+  --logo-h: 3.25rem;
+  display: block;
+  height: var(--logo-h);
+  aspect-ratio: 960 / 202;
+  background: currentColor;
+  -webkit-mask: url("/assets/the-rock-network.png") center / contain no-repeat;
+  mask: url("/assets/the-rock-network.png") center / contain no-repeat;
+}
