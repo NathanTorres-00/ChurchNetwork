@@ -9,13 +9,13 @@ This folder is the live site: Astro + Lumos on branch `main`. It replaced the ol
   (`worker/index.js`). Config is in `wrangler.jsonc`.
 - **Old addresses:** `public/_redirects` keeps old links working (`/hero.html`, `/groups.html`,
   `/leadership.html`, `/hero`), and URLs drop the trailing slash.
-- **Deploy:** run `npm run deploy` (build, then `wrangler deploy`). Once the GitHub repo is connected in
-  the Cloudflare dashboard (Workers Builds), every push to `main` deploys.
+- **Deploy:** Workers Builds is connected to `the-rock-network`, so every push to `main` builds and deploys
+  it. `npm run deploy` does the same by hand. Run it only from a clean checkout of `main`, because it builds
+  whatever is in the folder, including uncommitted edits.
 - **Preview:** run `npm run deploy:preview`, which deploys to `rock-network-preview.tr-playground.workers.dev`.
 - **Vercel is retired.** GitHub was disconnected on 2026-11-19, so pushes no longer build there. The last
   Vercel deploy stays up as a fallback. `vercel.json` is unused.
-- **Before you push:** pushing `main` publishes the site once Workers Builds is connected. Ask Nathan
-  first.
+- **Before you push:** pushing `main` publishes the site. Ask Nathan first.
 
 ## Working here
 
