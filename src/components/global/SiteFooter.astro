@@ -1,0 +1,440 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { getEntry } from "astro:content";
+import { showLeadership } from "@/utils/leadership.ts";
+
+interface Props extends HTMLAttributes<"footer"> {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+  /** The page the footer sits on. Home's links point at its own sections. */
+  page: "home" | "groups" | "leadership" | "embed" | "other";
+}
+
+const { render = true, page, class: className, ...rest } = Astro.props;
+
+const footer = (await getEntry("footer", "footer"))?.data;
+const onHome = page === "home";
+const pagePath = onHome ? "/" : `/${page}`;
+
+// On Home, links to Home's sections stay on the page, as they did in hero.html
+const href = (to: string) => {
+  if (!onHome) return to;
+  if (to === "/") return "#top";
+  if (to.startsWith("/#")) return to.slice(1);
+  return to;
+};
+---
+
+{
+  render && footer && page !== "embed" && (
+    <footer class:list={["site-footer", className]} {...rest}>
+      <div class="site-footer_layout">
+        <div class="footer-top">
+          <div>
+            <p class="footer-tagline">{footer.tagline}</p>
+            <ul class="footer-social" aria-label="Social">
+              {footer.social.map((link) => (
+                <li>
+                  <a href={link.href} data-placeholder={link.placeholder ? "" : undefined}>
+                    {link.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+            <div class="footer-signup">
+              <h2 class="footer-label" id="signup-label">
+                {footer.newsletter.label}
+              </h2>
+              <form novalidate aria-labelledby="signup-label">
+                <div class="signup-row">
+                  <input
+                    type="email"
+                    name="email"
+                    required
+                    placeholder={footer.newsletter.placeholder}
+                    aria-label="Email address"
+                    autocomplete="email"
+                  />
+                  <button class="footer-button" type="submit">
+                    {footer.newsletter.button}
+                  </button>
+                </div>
+                <p class="signup-note" role="status" data-notice={footer.newsletter.notice} />
+              </form>
+            </div>
+          </div>
+          <nav class="footer-cols" aria-label="Footer">
+            {footer.columns.map((column) => (
+              <div>
+                <h2 class="footer-label">{column.label}</h2>
+                <ul>
+                  {column.links.filter((link) => showLeadership() || link.href !== "/leadership").map((link) => (
+                    <li>
+                      <a
+                        href={href(link.href)}
+                        data-placeholder={link.placeholder ? "" : undefined}
+                        aria-current={link.href === pagePath ? "page" : undefined}
+                      >
+                        {link.label}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </nav>
+        </div>
+        <a class="footer-mark" href={onHome ? "#top" : "/"} aria-label="The Rock Network, home">
+          <span class="logo" aria-hidden="true" />
+        </a>
+        <div class="footer-bottom">
+          <span>{footer.copyright}</span>
+        </div>
+      </div>
+    </footer>
+  )
+}
+
+<style is:global>
+  @layer components {
+    /* Every class here keeps its name from assets/site-footer.css: public/scripts/site-footer.js reads them.
+       Settings from the Adjust panels arrive as html[data-footer-*] attributes and --footer-* / --mark-* /
+       --reveal-* properties, set by that script. */
+    .site-footer {
+      position: relative;
+      background: var(--footer-bg, #f7f7f8);
+      border-top: var(--border-width) solid var(--border);
+      padding: clamp(3.5rem, 7vw, 5.5rem) 0 1.75rem;
+      color: var(--text);
+      font-size: 0.9375rem;
+      line-height: 1.6;
+      overflow: hidden;
+    }
+    .site-footer_layout {
+      width: var(--site-width);
+      max-width: var(--max-width-main);
+      margin-inline: auto;
+    }
+    .footer-top {
+      display: grid;
+      grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+      gap: 3rem 4rem;
+      @media (max-width: 53.75em) {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .footer-tagline {
+      margin: 0;
+      max-width: 22ch;
+      font-size: clamp(1.25rem, 2vw, 1.5rem);
+      line-height: 1.3;
+      font-weight: var(--primary-medium);
+      color: var(--heading);
+      letter-spacing: -0.015em;
+    }
+    /* hidden for now (main 722c2bf): the links have nowhere to go yet */
+    .footer-social {
+      display: none;
+      margin: 1.5rem 0 0;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      & a {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.5625rem 1rem;
+        border: var(--border-width) solid #d4d4d8;
+        border-radius: var(--radius-round);
+        font-size: 0.875rem;
+        line-height: 1;
+        color: var(--heading);
+        text-decoration: none;
+        background: #fff;
+        transition:
+          border-color 0.2s ease,
+          background 0.2s ease;
+        &:hover {
+          border-color: #a1a1aa;
+        }
+      }
+    }
+
+    .footer-label {
+      margin: 0 0 0.875rem;
+      font-size: 0.875rem;
+      font-weight: var(--primary-medium);
+      line-height: 1.6;
+      letter-spacing: normal;
+      color: var(--c-disciples);
+    }
+
+    .footer-signup {
+      margin-top: 2.5rem;
+      max-width: 26.25rem;
+    }
+    .signup-row {
+      display: flex;
+      gap: 0.5rem;
+      @media (max-width: 26.25em) {
+        flex-direction: column;
+      }
+      & input {
+        flex: 1;
+        min-width: 0;
+        font: 400 0.9375rem/1 var(--primary-family);
+        color: var(--heading);
+        padding: 0.875rem 1.25rem;
+        border-radius: var(--radius-round);
+        border: var(--border-width) solid #d4d4d8;
+        background: #fff;
+        &::placeholder {
+          color: #a1a1aa;
+        }
+        &:focus-visible {
+          outline: 0.125rem solid var(--heading);
+          outline-offset: 0.125rem;
+        }
+      }
+    }
+    /* The old site's primary pill button, at the footer's size */
+    .footer-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex: none;
+      padding: 0.875rem 1.375rem;
+      border-radius: var(--radius-round);
+      border: var(--border-width) solid transparent;
+      font: 500 0.9375rem/1 var(--primary-family);
+      background: var(--button-background);
+      color: var(--button-text);
+      transition:
+        background 0.25s ease,
+        border-color 0.25s ease,
+        color 0.25s ease;
+      &:hover {
+        background: var(--button-background-hover);
+      }
+    }
+    .signup-note {
+      margin: 0.625rem 0 0;
+      min-height: 1.4em;
+      font-size: 0.8125rem;
+    }
+
+    .footer-cols {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 2rem;
+      @media (max-width: 26.25em) {
+        gap: 1.25rem;
+      }
+      & ul {
+        margin: 0;
+        display: grid;
+        gap: 0.625rem;
+      }
+      & a {
+        color: var(--text);
+        text-decoration: none;
+        transition: color 0.2s ease;
+        &:hover {
+          color: var(--heading);
+        }
+      }
+    }
+
+    /* The big wordmark across the bottom, from a 1944px-wide copy of the logo (the header's blurs this big).
+       --mark-scale sizes it against the content width (above 1 it runs toward the window edges), centred. */
+    .footer-mark {
+      display: block;
+      margin-top: clamp(2.5rem, 6vw, 5rem);
+      color: var(--heading);
+      & .logo {
+        position: relative;
+        left: 50%;
+        translate: -50% 0;
+        width: calc(100% * var(--mark-scale, 1));
+        height: auto;
+        aspect-ratio: 1944 / 408;
+        -webkit-mask-image: url("/assets/the-rock-network-large.png");
+        mask-image: url("/assets/the-rock-network-large.png");
+      }
+    }
+
+    .footer-bottom {
+      margin-top: clamp(1.25rem, 3vw, 2rem);
+      padding-top: 1.25rem;
+      border-top: var(--border-width) solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      gap: 0.5rem 1rem;
+      flex-wrap: wrap;
+      font-size: 0.8125rem;
+      color: #71717a;
+    }
+
+    /* Clipped: copyright first, then the wordmark runs off the footer's bottom edge with --mark-clip of its height
+       cut off, moved down (+) or up (−) by --mark-shift of its height */
+    html[data-footer-mark="clip"] {
+      & .site-footer {
+        padding-bottom: 0;
+      }
+      & .site-footer_layout {
+        display: flex;
+        flex-direction: column;
+      }
+      & .footer-bottom {
+        order: 1;
+      }
+      & .footer-mark {
+        order: 2;
+        position: relative;
+        height: 0;
+        padding-bottom: calc(408 / 1944 * 100% * var(--mark-scale, 1) * (1 - var(--mark-clip, 0.4)));
+        & .logo {
+          position: absolute;
+          top: 0;
+          transform: translateY(calc(var(--mark-shift, 0) * 100%));
+        }
+      }
+    }
+
+    /* Colours: --footer-bg is set by site-footer.js (Light #F7F7F8, Grey at the chosen shade, Inverted #1F1F23).
+       On a dark background (Inverted, or a dark Grey) the text flips to light: data-footer-ink="light". */
+    html[data-footer-theme="grey"] .site-footer {
+      border-top-color: transparent;
+    }
+    html[data-footer-ink="light"] {
+      & .site-footer {
+        border-top-color: transparent;
+        color: #c4c4ca;
+      }
+      & .footer-tagline,
+      & .footer-mark {
+        color: #fff;
+      }
+      & .footer-label {
+        color: #7cc7b4;
+      }
+      & .footer-social a {
+        background: color-mix(in srgb, var(--footer-bg) 92%, #fff);
+        border-color: rgb(255 255 255 / 0.22);
+        color: #fff;
+        &:hover {
+          border-color: rgb(255 255 255 / 0.5);
+        }
+      }
+      & .signup-row input {
+        background: color-mix(in srgb, var(--footer-bg) 94%, #fff);
+        border-color: rgb(255 255 255 / 0.22);
+        color: #fff;
+        &::placeholder {
+          color: #8a8a93;
+        }
+        &:focus-visible {
+          outline-color: #fff;
+        }
+      }
+      & .footer-button {
+        background: #fff;
+        color: #1f1f23;
+        &:hover {
+          background: #e4e4e7;
+        }
+      }
+      & .footer-cols a {
+        color: #a1a1aa;
+        &:hover {
+          color: #fff;
+        }
+      }
+      & .footer-bottom {
+        border-top-color: rgb(255 255 255 / 0.12);
+        color: #8a8a93;
+      }
+    }
+
+    /* Slide-out reveal: the page sits above the footer, and the footer starts tucked up underneath the last section
+       (--reveal-y, set on scroll by site-footer.js), sliding down into place as it comes into view. --reveal-shade
+       darkens it while it's still tucked under. */
+    html[data-footer-reveal="on"] {
+      & main {
+        position: relative;
+        z-index: 1;
+        background: var(--bg, #fff);
+      }
+      & .site-footer {
+        z-index: 0;
+        transform: translateY(var(--reveal-y, 0));
+        @media (prefers-reduced-motion: reduce) {
+          transform: none;
+        }
+        &::after {
+          content: "";
+          position: absolute;
+          inset: 0;
+          z-index: 2;
+          pointer-events: none;
+          background: #000;
+          opacity: calc(var(--reveal-shade, 0) * (1 - var(--reveal-p, 1)));
+          @media (prefers-reduced-motion: reduce) {
+            display: none;
+          }
+        }
+      }
+    }
+
+    /* Curved: the last section above the footer ends in the Home hero's downward arc, and the footer shows past its
+       sides. site-footer.js marks the last visible section .footer-above and gives it a solid background;
+       --footer-curve is the arc's depth in vw (capped at 120px), like the hero's Bottom curve. */
+    html[data-footer-edge="curve"] {
+      --fcurve: min(calc(var(--footer-curve, 5) * 1vw), 7.5rem);
+      & main {
+        position: relative;
+        z-index: 1;
+        margin-bottom: calc(-1 * var(--fcurve));
+        /* the page's own background stops short of the arc, so the footer shows past it */
+        background: linear-gradient(var(--bg, #fff) 0 0) top / 100% calc(100% - var(--fcurve)) no-repeat;
+      }
+      & .footer-above {
+        --arc: calc(var(--fcurve) * 3.93);
+        border-bottom: var(--fcurve) solid transparent;
+        -webkit-mask:
+          linear-gradient(#000 0 0) top / 100% calc(100% - var(--fcurve)) no-repeat,
+          radial-gradient(ellipse 75% var(--arc) at 50% calc(100% - var(--arc)), #000 99.6%, transparent);
+        mask:
+          linear-gradient(#000 0 0) top / 100% calc(100% - var(--fcurve)) no-repeat,
+          radial-gradient(ellipse 75% var(--arc) at 50% calc(100% - var(--arc)), #000 99.6%, transparent);
+      }
+      & .site-footer {
+        border-top: 0;
+        padding-top: calc(clamp(3.5rem, 7vw, 5.5rem) + var(--fcurve));
+      }
+    }
+
+    /* Animation: the Home hero's Pins globe (/embed/globe, recoloured to the footer) behind the footer's content.
+       Loaded by site-footer.js only while the footer is near the screen. Its pins keep clear of the footer's text
+       (the frame asks window.rnHeroTextRects). */
+    .footer-anim {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      opacity: var(--footer-anim-strength, 0.8);
+      & iframe {
+        display: block;
+        width: 100%;
+        height: 100%;
+        border: 0;
+      }
+    }
+    .site-footer > .site-footer_layout {
+      position: relative;
+      z-index: 1;
+    }
+    html[data-footer-anim="off"] .footer-anim {
+      display: none;
+    }
+  }
+</style>

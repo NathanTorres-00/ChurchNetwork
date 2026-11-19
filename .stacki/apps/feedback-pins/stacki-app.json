@@ -1,0 +1,55 @@
+{
+  "manifestVersion": 1,
+  "id": "feedback-pins",
+  "name": "Feedback pins",
+  "version": "1.8.1",
+  "description": "Comment anywhere on a page or component: pins, threads, @mentions, reactions, unread markers and export, for people and their coding agents. Kept in the project, so feedback commits and pulls with the site.",
+  "author": { "github": "flowtricks" },
+  "icon": "icon.svg",
+  "entry": "index.html",
+  "window": {
+    "mode": "panel",
+    "width": 360,
+    "height": 640
+  },
+  "commands": [
+    {
+      "id": "toggle-pins",
+      "title": "Feedback: show or hide pins",
+      "shortcut": "Mod+Alt+Shift+2",
+      "panel": "list"
+    },
+    {
+      "id": "next-unresolved",
+      "title": "Feedback: next unresolved thread",
+      "shortcut": "Mod+Alt+Shift+3",
+      "panel": "list"
+    }
+  ],
+  "permissions": [
+    {
+      "id": "comment",
+      "label": "Leave and reply to comments",
+      "description": "Without it the role sees threads and pins, view only.",
+      "default": true
+    },
+    {
+      "id": "resolve-threads",
+      "label": "Resolve threads",
+      "description": "Mark a thread resolved, or reopen it.",
+      "default": true
+    },
+    {
+      "id": "delete-any-comment",
+      "label": "Delete anyone's comments",
+      "description": "Without it, people delete only their own comments and threads.",
+      "default": false
+    },
+    {
+      "id": "moderate",
+      "label": "Moderate feedback",
+      "description": "Edit and delete anyone's comments.",
+      "default": false
+    }
+  ]
+}

@@ -1,0 +1,118 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import Button from "@/components/Button.astro";
+
+type CardButton = { label: string; href: string; placeholder?: boolean };
+
+interface Props extends HTMLAttributes<"article"> {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+  /** Card title. */
+  heading: string;
+  /** Line above the list. */
+  intro?: string;
+  /** What marks this kind of group, one line each. */
+  traits?: string[];
+  /** Link at the foot of the card. */
+  button?: CardButton;
+  /** Which of the four headline colors marks the card. */
+  color?: "disciples" | "leaders" | "churches" | "movements";
+}
+
+const {
+  render = true,
+  heading,
+  intro,
+  traits = [],
+  button,
+  color = "disciples",
+  class: className,
+  ...rest
+} = Astro.props;
+---
+
+{
+  render && heading && (
+    <article
+      class:list={["group-card_wrap", className]}
+      style={`--gc: var(--c-${color})`}
+      {...rest}
+    >
+      <p class="group-card_tag" aria-hidden="true">
+        <span class="glyph" />
+      </p>
+      <h3 class="group-card_title">{heading}</h3>
+      {intro && <p class="group-card_intro">{intro}</p>}
+      {traits.length > 0 && (
+        <ul class="group-card_list">
+          {traits.map((trait) => (
+            <li class="group-card_item">{trait}</li>
+          ))}
+        </ul>
+      )}
+      {button && (
+        <Button element="link" href={button.href} data-placeholder={button.placeholder ? "" : undefined}>
+          {button.label}
+        </Button>
+      )}
+    </article>
+  )
+}
+
+<style is:global>
+  @layer components {
+    .group-card_wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      padding: clamp(2rem, 4vw, 3rem);
+      border-radius: var(--radius-main);
+      background: var(--background-2);
+    }
+    .group-card_tag {
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+      margin: 0 0 1.375rem;
+      font-size: 0.9375rem;
+      font-weight: var(--primary-medium);
+      color: var(--gc);
+      & .glyph {
+        --g: 0.75rem;
+        --ring: var(--background-2);
+        margin: 0 0.25rem 0 0.4375rem;
+      }
+    }
+    .group-card_intro {
+      margin: 1.75rem 0 0.625rem;
+      color: var(--heading);
+      font-weight: var(--primary-medium);
+    }
+    .group-card_list {
+      margin: 0 0 2.25rem;
+      display: grid;
+      flex: 1;
+      align-content: start;
+      width: 100%;
+    }
+    .group-card_item {
+      display: flex;
+      gap: 0.875rem;
+      align-items: baseline;
+      padding: 0.75rem 0;
+      border-top: var(--border-width) solid var(--border);
+      &:last-child {
+        border-bottom: var(--border-width) solid var(--border);
+      }
+      &::before {
+        content: "";
+        flex: none;
+        width: 0.4375rem;
+        height: 0.4375rem;
+        border-radius: 50%;
+        background: var(--gc);
+        translate: 0 -0.125rem;
+      }
+    }
+  }
+</style>

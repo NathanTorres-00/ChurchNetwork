@@ -1,0 +1,60 @@
+---
+interface Props {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+}
+
+const { render = true } = Astro.props;
+---
+
+{
+  render && (
+    <Fragment>
+      {/* Loading screen: a small network grows while the globe gets ready, then opens to reveal the page */}
+      <div class="loader" id="loader" role="status">
+        <span class="sr-only">Loading</span>
+          <svg class="loader-net" id="loader-net" viewBox="0 0 200 200" aria-hidden="true"><g class="breathe"></g></svg>
+      </div>
+      <script is:inline src="/scripts/home-boot.js"></script>
+    </Fragment>
+  )
+}
+
+<style is:global>
+  @layer components {
+    /* ---------- Loading screen ----------
+     One dot divides into a small network while the globe gets ready, then the white opens outward from it,
+     like a widening ring, to reveal the globe. */
+    /* the ring starts one feather-width below zero, so the screen is fully white until it opens */
+    @property --hole { syntax: '<length>'; inherits: false; initial-value: -140px;   /* px: a registered length's initial value can't be font-relative */ }
+    html.is-loading { overflow: hidden; }
+    .loader { position: fixed; inset: 0; z-index: 50; background: #fff; display: grid; place-items: center; -webkit-mask-image: radial-gradient(circle at 50% 50%, transparent var(--hole), #000 calc(var(--hole) + 8.75rem)); mask-image: radial-gradient(circle at 50% 50%, transparent var(--hole), #000 calc(var(--hole) + 8.75rem)); }
+    .loader.is-leaving { --hole: 150vmax; opacity: 0; pointer-events: none; transition: --hole 1.6s cubic-bezier(.65, 0, .35, 1), opacity .5s ease 1.2s; /* the fade is a fallback */ }
+    .loader-net { width: min(20rem, 74vw); overflow: visible; transition: transform 1.3s cubic-bezier(.65, 0, .35, 1), opacity .7s ease; }
+    .loader.is-leaving .loader-net { transform: scale(1.18); opacity: 0; }
+    /* Each generation draws its threads while its dots bud out of their parents (--d staggers them).
+     Folding back is the exact reverse, outermost generation first (--c): each dot rides its thread
+     back into its parent as the thread retracts, until only the first dot is left. */
+    .loader-net .thread { fill: none; stroke: #C9C9CD; stroke-width: 1; stroke-dasharray: 1; stroke-dashoffset: 1; animation: ld-draw .55s cubic-bezier(.65, 0, .35, 1) var(--d) forwards; }
+    .loader-net .node { transform-box: fill-box; transform-origin: center; transform: translate(var(--tx, 0rem), var(--ty, 0rem)) scale(0); /* starts inside its parent */ animation: ld-grow .55s cubic-bezier(.65, 0, .35, 1) var(--d) forwards; }
+    .loader-net .node .ring { fill: none; }
+    /* 'both': while a generation waits its turn to fold, it holds its full, visible state */
+    .loader.is-collapsing .loader-net .thread { animation: ld-undraw .45s cubic-bezier(.65, 0, .35, 1) var(--c) both; }
+    .loader.is-collapsing .loader-net .node:not(.root) { animation: ld-shrink .45s cubic-bezier(.65, 0, .35, 1) var(--c) both; }
+    .loader-net .breathe { transform-box: fill-box; transform-origin: center; animation: ld-breathe 2.6s ease-in-out 3.4s infinite; }
+    .loader.is-collapsing .loader-net .breathe { animation-play-state: paused; }
+    @keyframes ld-grow { to { transform: none; } }
+    @keyframes ld-shrink { from { transform: none; } to { transform: translate(var(--tx, 0rem), var(--ty, 0rem)) scale(0); } }
+    @keyframes ld-draw { to { stroke-dashoffset: 0; } }
+    @keyframes ld-undraw { from { stroke-dashoffset: 0; } to { stroke-dashoffset: 1; } }
+    @keyframes ld-breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.025); } }
+    .loader .sr-only { position: absolute; width: 0.0625rem; height: 0.0625rem; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+    @media (prefers-reduced-motion: reduce) {
+      .loader-net .node { transform: none; }
+      .loader-net .thread { stroke-dashoffset: 0; }
+      .loader-net *, .loader-net .breathe, .loader.is-collapsing .loader-net * { animation: none !important; }
+      .loader.is-leaving { transition: opacity .4s ease; }
+      .loader.is-leaving .loader-net { transform: none; }
+    }
+  }
+</style>

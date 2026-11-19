@@ -1,0 +1,100 @@
+---
+import { getEntries, getEntry } from "astro:content";
+import { showLeadership } from "@/utils/leadership.ts";
+import Layout from "@/layouts/BaseLayout.astro";
+import GroupsHero from "@/components/section/GroupsHero.astro";
+import NetworkVideo from "@/components/section/NetworkVideo.astro";
+import Section from "@/components/wrapper/Section.astro";
+import ContentWrapper from "@/components/wrapper/ContentWrapper.astro";
+import Eyebrow from "@/components/typography/Eyebrow.astro";
+import Heading from "@/components/typography/Heading.astro";
+import Paragraph from "@/components/typography/Paragraph.astro";
+import Grid from "@/components/wrapper/Grid.astro";
+import GroupCard from "@/components/content/GroupCard.astro";
+import CtaDivided from "@/components/content/CtaDivided.astro";
+import GroupStory from "@/components/content/GroupStory.astro";
+import TeamList from "@/components/content/TeamList.astro";
+import AdjustPanelGroups from "@/components/utility/AdjustPanelGroups.astro";
+
+const groups = (await getEntry("groupsPage", "groups"))!.data;
+const { top, what, video, team } = groups;
+const weeklyVideo = (await getEntry("weeklyVideo", "current"))?.data;
+const story = (await getEntry("groupStories", "church-group-member"))?.data;
+const leaders = await getEntries(team.people.map((person) => person.leader));
+const members = leaders.map((entry, i) => ({ ...entry.data, role: team.people[i].role }));
+const cardColors = ["churches", "disciples"] as const;
+---
+
+<Layout title="Groups" page="groups">
+  <script is:inline slot="head" src="/scripts/groups-config.js"></script>
+
+  <!-- Hero -->
+  <GroupsHero heading={top.heading} tagline={top.tagline} buttons={top.buttons} photo={top.photo} />
+
+  <!-- What are Rock Network Groups? -->
+  <Section id="what">
+    <ContentWrapper>
+      <Eyebrow class="reveal">{what.eyebrow}</Eyebrow>
+      <Heading class="reveal" style="--i: 1">{what.heading}</Heading>
+      <Paragraph variant="large" maxWidth={58} class="reveal" style="--i: 2">{what.lead}</Paragraph>
+    </ContentWrapper>
+    <Grid large={2} id="start">
+      {
+        what.items.map((item, i) => (
+          <GroupCard
+            class="reveal"
+            style={`--i: ${i}`}
+            heading={item.heading}
+            intro={item.intro}
+            traits={item.traits}
+            button={item.button}
+            color={cardColors[i] ?? "disciples"}
+          />
+        ))
+      }
+    </Grid>
+    <CtaDivided class="reveal" text={what.already.body} button={what.already.button} />
+  </Section>
+
+  <!-- Network Video: this week's video comes from src/content/weekly-video.json -->
+  <NetworkVideo
+    render={!!weeklyVideo}
+    eyebrow={video.eyebrow}
+    heading={video.heading}
+    playLabel={video.playLabel}
+    youtubeId={weeklyVideo?.youtubeId ?? ""}
+    title={weeklyVideo?.title}
+  />
+
+  <!-- A group member's words -->
+  <Section id="story" render={!!story}>
+    {
+      story && (
+        <GroupStory
+          class="reveal"
+          quote={story.quote}
+          name={story.name}
+          attribution={story.attribution}
+          photo={story.photo}
+          photoAlt={story.photoAlt}
+        />
+      )
+    }
+  </Section>
+
+  <!-- Leadership: four of the network's leaders, and a link to all of them (hidden on the live site for now) -->
+  <Section id="team" class="background-2" render={showLeadership() && members.length > 0}>
+    <ContentWrapper class="reveal">
+      <Eyebrow>{team.eyebrow}</Eyebrow>
+      <Heading class="margin-bottom-3">{team.heading}</Heading>
+      <Paragraph variant="large" maxWidth={58}>{team.lead}</Paragraph>
+    </ContentWrapper>
+    <TeamList members={members} button={team.button} />
+  </Section>
+
+  <Fragment slot="after">
+    <AdjustPanelGroups />
+    <script is:inline src="/scripts/groups-panel.js"></script>
+    <script is:inline src="/scripts/groups-page.js"></script>
+  </Fragment>
+</Layout>

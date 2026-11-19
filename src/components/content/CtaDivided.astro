@@ -1,0 +1,52 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import Button from "@/components/Button.astro";
+
+type CtaButton = { label: string; href: string; placeholder?: boolean };
+
+interface Props extends HTMLAttributes<"div"> {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+  /** The question or line above the button. */
+  text: string;
+  /** Link under the text. */
+  button?: CtaButton;
+}
+
+const { render = true, text, button, class: className, ...rest } = Astro.props;
+---
+
+{
+  render && text && (
+    <div class:list={["cta-divided_wrap", className]} {...rest}>
+      <p class="cta-divided_text text-style-h4">{text}</p>
+      {button && (
+        <Button
+          element="link"
+          href={button.href}
+          emphasis="secondary"
+          data-placeholder={button.placeholder ? "" : undefined}
+        >
+          {button.label}
+        </Button>
+      )}
+    </div>
+  )
+}
+
+<style is:global>
+  @layer components {
+    /* A closing line and button, centred under a rule */
+    .cta-divided_wrap {
+      margin-top: 0.5rem;
+      padding-top: 3.5rem;
+      border-top: var(--border-width) solid var(--border);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.375rem;
+      width: 100%;
+      text-align: center;
+    }
+  }
+</style>

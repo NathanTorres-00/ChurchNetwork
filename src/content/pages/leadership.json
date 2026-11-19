@@ -1,0 +1,57 @@
+{
+  "top": {
+    "heading": "Leadership",
+    "lead": "The people leading The Rock Network, and the leaders of its church groups.",
+    "key": {
+      "network": "Network leaders",
+      "group": "Group leaders"
+    }
+  },
+  "network": {
+    "heading": "Network leaders",
+    "people": [
+      "jerry-dirmann",
+      "kimberly-dirmann",
+      "jonathan-dirmann",
+      "carl-mcaulay",
+      "corey-theetge",
+      "jim-scott",
+      "jose-isabel-oneill",
+      "manny-andrea-orozco",
+      "tristan-fenholt"
+    ]
+  },
+  "group": {
+    "heading": "Group leaders",
+    "people": [
+      "alex",
+      "ben-flores",
+      "brian-palacios",
+      "christine-chen",
+      "christy",
+      "david-paulina-cadena",
+      "david-roxy",
+      "helen",
+      "jared",
+      "jeff-jennifer-little",
+      "jerry-dirmann",
+      "jose-isabel-oneill",
+      "manny-andrea-orozco",
+      "marylee",
+      "michael-gomez",
+      "michael-jaimes",
+      "misti",
+      "nicole"
+    ]
+  },
+  "join": {
+    "heading": "Lead a group with us",
+    "lead": "A church group gathers, grows, gives and goes together, using the Jesus Disciple App.",
+    "photo": "../../assets/images/leaders/team-at-the-rock.jpg",
+    "photoAlt": "Members of The Rock Network team standing outside The Rock",
+    "button": {
+      "label": "Start a group",
+      "href": "/groups#start"
+    }
+  }
+}

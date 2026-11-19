@@ -1,0 +1,64 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import type { ImageMetadata } from "astro";
+import TeamMember from "@/components/content/TeamMember.astro";
+import Button from "@/components/Button.astro";
+
+type Member = { name: string; role?: string; photo?: ImageMetadata };
+type Link = { label: string; href: string; placeholder?: boolean };
+
+interface Props extends HTMLAttributes<"div"> {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+  /** People, in the order they show. An empty list leaves the component out. */
+  members: Member[];
+  /** Link under the list, to everyone. */
+  button?: Link;
+}
+
+const { render = true, members, button, class: className, ...rest } = Astro.props;
+---
+
+{
+  render && members.length > 0 && (
+    <div class:list={["team-list_wrap", className]} {...rest}>
+      <ul class="team-list_list">
+        {members.map((member, i) => (
+          <TeamMember class="reveal" style={`--i: ${i}`} name={member.name} role={member.role} photo={member.photo} />
+        ))}
+      </ul>
+      {button && (
+        <p class="team-list_more reveal">
+          <Button element="link" href={button.href} emphasis="secondary" data-placeholder={button.placeholder ? "" : undefined}>
+            {button.label}
+          </Button>
+        </p>
+      )}
+    </div>
+  )
+}
+
+<style is:global>
+  @layer components {
+    /* Four across, two below 960px; sits 3.5rem under the heading (the section's gap is 4rem) */
+    .team-list_wrap {
+      margin-top: -0.5rem;
+      width: 100%;
+    }
+    .team-list_list {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 2.5rem 1.5rem;
+      @media (max-width: 60em) {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 2rem 1rem;
+      }
+    }
+    .team-list_more {
+      margin-top: 3.5rem;
+      margin-bottom: 1.0625rem;   /* the old page's paragraph kept the browser's 1em bottom margin */
+      display: flex;
+      justify-content: center;
+    }
+  }
+</style>

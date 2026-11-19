@@ -1,0 +1,109 @@
+/* The hover card: Stacki's popover (its fill, radius and shadow) on a transparent page.
+   The frame is larger than the card by a margin, so the shadow is not cut off. */
+html,
+body {
+  margin: 0;
+  overflow: hidden;
+  background: transparent;
+  color: var(--stacki-text);
+  font-family: var(--stacki-font);
+  font-size: var(--stacki-font-size);
+}
+
+/* Matches the app's HOVER_CARD_MARGIN_PX: the room the popover shadow needs. */
+body {
+  padding: 20px;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--stacki-space-2);
+  box-sizing: border-box;
+  width: 260px;
+  padding: var(--stacki-space-3) var(--stacki-space-4);
+  border-radius: var(--stacki-radius);
+  background: var(--stacki-bg-popover);
+  box-shadow: var(--stacki-shadow-popover);
+}
+
+.card[hidden] {
+  display: none;
+}
+
+.byline {
+  display: flex;
+  align-items: center;
+  gap: var(--stacki-space-2);
+  min-width: 0;
+}
+
+.avatar {
+  position: relative;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  overflow: hidden;
+  border-radius: var(--stacki-radius-round);
+  background: var(--stacki-bg-input);
+  color: var(--stacki-text-muted);
+  font-size: var(--stacki-font-size-tiny);
+  font-weight: var(--stacki-font-weight-strong);
+}
+
+.avatar img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: var(--stacki-font-weight-medium);
+}
+
+.time,
+.meta {
+  flex: none;
+  color: var(--stacki-text-faint);
+  font-size: var(--stacki-font-size-small);
+}
+
+.body {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  overflow: hidden;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+/* Shown at its natural size (set on the element), never stretched. */
+.snapshot {
+  display: block;
+  max-width: 100%;
+  border-radius: var(--stacki-radius-control);
+  background: var(--stacki-bg-input);
+}
+
+/* The AI badge beside an agent's name: a sparkle and the agent's name, on a soft accent fill. */
+.agent-badge {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 6px;
+  border-radius: var(--stacki-radius-round);
+  background: var(--stacki-accent-soft);
+  color: var(--stacki-accent);
+  font-size: var(--stacki-font-size-tiny);
+  font-weight: var(--stacki-font-weight-medium);
+  white-space: nowrap;
+}

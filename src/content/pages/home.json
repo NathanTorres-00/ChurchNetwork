@@ -1,0 +1,152 @@
+{
+  "top": {
+    "lead": "A New Testament Church Network",
+    "title": {
+      "label": "Multiplying disciples, leaders, churches, and movements",
+      "prefix": "Multiplying",
+      "words": [
+        "Disciples",
+        "Leaders",
+        "Churches",
+        "Movements"
+      ]
+    },
+    "tagline": "A New Testament Church Network",
+    "body": "A network of disciples, leaders, churches, and movements.",
+    "buttons": [
+      {
+        "label": "Learn more",
+        "href": "#church-network"
+      },
+      {
+        "label": "Start a group",
+        "href": "/groups"
+      }
+    ]
+  },
+  "churchNetwork": {
+    "eyebrow": "What is it?",
+    "videoTitle": "Welcome to the Rock Network"
+  },
+  "whatWeDo": {
+    "heading": "What we do",
+    "subtitle": "We are a four-stage ministry",
+    "lead": "We multiply disciples, leaders, churches, and movements.",
+    "photo": {
+      "src": "../../assets/images/iglesia-mi-ciudad-group.webp",
+      "alt": "A smiling group at Iglesia Mi Ciudad"
+    },
+    "stats": [
+      {
+        "value": "7,088",
+        "label": "Disciples joined"
+      },
+      {
+        "value": "1,559",
+        "label": "Groups started"
+      },
+      {
+        "value": "25",
+        "label": "Missions workers"
+      },
+      {
+        "value": "3",
+        "label": "Subnetworks"
+      }
+    ]
+  },
+  "how": {
+    "heading": "How we do it",
+    "lead": "Four ingredients working together to enable multiplication",
+    "items": [
+      {
+        "heading": "A Clear Process",
+        "body": "to Multiply in each stage",
+        "photo": "assets/network-photos/globe/house-church-living-room.webp",
+        "button": {
+          "label": "Learn more",
+          "href": "#",
+          "placeholder": true
+        }
+      },
+      {
+        "heading": "Effective Tools",
+        "body": "to use the process",
+        "photo": "assets/network-photos/outdoor-group-study.webp",
+        "button": {
+          "label": "Learn more",
+          "href": "#",
+          "placeholder": true
+        }
+      },
+      {
+        "heading": "Available Training",
+        "body": "to get started and retain momentum",
+        "photo": "assets/network-photos/globe/january-gathering.webp",
+        "button": {
+          "label": "Learn more",
+          "href": "#",
+          "placeholder": true
+        }
+      },
+      {
+        "heading": "On-going Coaching",
+        "body": "for encouragement and guidance",
+        "photo": "assets/network-photos/table-discussion.webp",
+        "button": {
+          "label": "Learn more",
+          "href": "#",
+          "placeholder": true
+        }
+      }
+    ]
+  },
+  "app": {
+    "logo": {
+      "src": "../../assets/images/jesus-disciple-logo.png",
+      "alt": "Jesus Disciple"
+    },
+    "heading": "A Four-Stage Ministry tool",
+    "subtitle": "Are you a Pastor?",
+    "lead": "Use the Jesus Disciple App to Launch your own New Testament Network",
+    "university": {
+      "heading": "Jesus Disciple University",
+      "body": "JDU provides online training for disciple-makers, leaders, pastors, and missionaries from churches and ministries globally.",
+      "photo": "../../assets/images/jdu-banner.jpg",
+      "button": {
+        "label": "Learn more",
+        "href": "#",
+        "placeholder": true
+      }
+    }
+  },
+  "hubs": {
+    "heading": "Find a hub",
+    "lead": "Hubs are where our groups and churches gather locally. Find the one nearest you."
+  },
+  "story": {
+    "heading": "How we got started",
+    "items": [
+      {
+        "when": "Multiplied disciples",
+        "heading": "One local church",
+        "body": "began making disciples who make disciples"
+      },
+      {
+        "when": "Multiplied leaders",
+        "heading": "Disciples became leaders",
+        "body": "that started new groups"
+      },
+      {
+        "when": "Multiplied churches",
+        "heading": "Groups became churches",
+        "body": "forming a network"
+      },
+      {
+        "when": "Multiplied movements",
+        "heading": "Network sent missionaries",
+        "body": "to repeat the process"
+      }
+    ]
+  }
+}

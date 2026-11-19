@@ -1,0 +1,113 @@
+---
+import type { ComponentProps } from "astro/types";
+import Section from "@/components/wrapper/Section.astro";
+import ContentWrapper from "@/components/wrapper/ContentWrapper.astro";
+import Eyebrow from "@/components/typography/Eyebrow.astro";
+import Heading from "@/components/typography/Heading.astro";
+
+type SectionProps = Pick<ComponentProps<typeof Section>, "render" | "theme" | "paddingTop" | "paddingBottom">;
+
+type Props = SectionProps & {
+  /** Section title. */
+  heading: string;
+  /** Short label above the title. */
+  eyebrow?: string;
+  /** YouTube video id: the part after youtu.be/. Without one the section is left out. */
+  youtubeId: string;
+  /** The video's title, read out for the player. */
+  title?: string;
+  /** Label of the play button. */
+  playLabel?: string;
+  class?: string;
+  [key: string]: unknown;
+};
+
+const {
+  render = true,
+  heading,
+  eyebrow,
+  youtubeId,
+  title,
+  playLabel = "Play this week's network video",
+  class: className,
+  ...rest
+} = Astro.props;
+---
+
+{
+  render && youtubeId && (
+    <Section id="video" class:list={["background-2", className]} {...rest}>
+      <ContentWrapper>
+        <Eyebrow class="reveal">{eyebrow}</Eyebrow>
+        <Heading class="reveal" style="--i: 1">
+          {heading}
+        </Heading>
+        {/* public/scripts/groups-page.js reads #network-video, its img and .play, and plays the video in place */}
+        <div
+          class="frame network-video_frame reveal"
+          style="--i: 2"
+          id="network-video"
+          data-youtube={youtubeId}
+          data-title={title}
+        >
+          <img src={`https://i.ytimg.com/vi/${youtubeId}/maxresdefault.jpg`} alt="" loading="lazy" />
+          <button class="play" type="button" aria-label={playLabel} />
+        </div>
+      </ContentWrapper>
+    </Section>
+  )
+}
+
+<style is:global>
+  @layer components {
+    .network-video_frame {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      margin-top: 3.5rem;
+      &::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: rgb(31 31 35 / 0.12);
+        pointer-events: none;
+      }
+      &.is-started::after {
+        display: none;
+      }
+      & iframe {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        border: 0;
+      }
+      & .play {
+        position: absolute;
+        z-index: 1;
+        left: 50%;
+        top: 50%;
+        translate: -50% -50%;
+        width: 5.5rem;
+        height: 5.5rem;
+        border-radius: 50%;
+        border: 0;
+        cursor: pointer;
+        background: rgb(255 255 255 / 0.94);
+        display: grid;
+        place-items: center;
+        transition: transform 0.3s ease;
+        &:hover {
+          transform: scale(1.05);
+        }
+        &::before {
+          content: "";
+          margin-left: 0.375rem;
+          border-left: 1.375rem solid var(--heading);
+          border-top: 0.875rem solid transparent;
+          border-bottom: 0.875rem solid transparent;
+        }
+      }
+    }
+  }
+</style>

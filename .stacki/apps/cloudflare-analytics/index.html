@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Cloudflare Analytics</title>
+    <link rel="stylesheet" href="__stacki/ui.css" />
+    <link rel="stylesheet" href="app.css" />
+    <script src="stacki-sdk.js"></script>
+    <script src="__stacki/ui.js"></script>
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <header class="bar">
+      <stacki-tabs id="range" value="7" label="Time range">
+        <button value="1">24 h</button>
+        <button value="7">7 days</button>
+        <button value="30">30 days</button>
+      </stacki-tabs>
+      <stacki-tabs id="compare" value="0" label="Compare with">
+        <button value="0">Cards: no comparison</button>
+        <button value="1" id="compare-on">vs previous 24 h</button>
+      </stacki-tabs>
+      <span class="grow"></span>
+      <stacki-button id="refresh" variant="ghost" icon="refresh" aria-label="Refresh"></stacki-button>
+      <stacki-button id="settings" variant="ghost" icon="settings" aria-label="Settings"></stacki-button>
+    </header>
+
+    <p id="status" class="status" role="status"></p>
+
+    <section id="setup" class="empty" hidden>
+      <h2>Connect Cloudflare</h2>
+      <p>Add your API token and zone ID once. The token stays on this computer.</p>
+      <stacki-button id="open-settings" variant="primary">Open settings</stacki-button>
+    </section>
+
+    <section id="cards-view" class="cards-view">
+      <div class="settings-head">
+        <h2>Settings</h2>
+        <stacki-button id="settings-back" variant="ghost">Back to dashboard</stacki-button>
+      </div>
+      <stacki-tabs id="settings-tab" value="connection" label="Settings">
+        <button value="connection">Connection</button>
+        <button value="cards">Cards</button>
+      </stacki-tabs>
+      <div id="tab-connection" class="tab-body">
+        <p>Your API token, zone ID, account ID and hostnames are kept in Stacki's app settings.</p>
+        <stacki-button id="open-native" variant="primary">Open connection settings</stacki-button>
+      </div>
+      <div id="tab-cards" class="tab-body" hidden>
+        <p>Choose which cards the dashboard shows. You can also hide a card with the ⋯ menu in its corner. Your choice is remembered on this computer.</p>
+        <ul class="toggles" id="toggles"></ul>
+        <stacki-button id="show-all" variant="ghost">Show all cards</stacki-button>
+      </div>
+    </section>
+
+    <main id="dash" hidden>
+      <div class="top">
+        <section class="card stat" data-card="pageviews">
+          <h2>Pageviews</h2>
+          <p class="stat-row"><span class="stat-n" id="w-pv">–</span><span class="stat-d" id="w-pv-d"></span></p>
+          <svg class="spark" id="w-pv-spark" viewBox="0 0 100 30" preserveAspectRatio="none" aria-hidden="true"></svg>
+        </section>
+        <section class="card stat" data-card="visits">
+          <h2>Total visits</h2>
+          <p class="stat-row"><span class="stat-n" id="w-visits">–</span><span class="stat-d" id="w-visits-d"></span></p>
+          <svg class="spark" id="w-visits-spark" viewBox="0 0 100 30" preserveAspectRatio="none" aria-hidden="true"></svg>
+        </section>
+      </div>
+      <p class="web-msg" id="web-msg" hidden></p>
+
+      <section class="wide" data-card="human-ai">
+        <h2>Human vs AI</h2>
+        <div class="kpis">
+          <div class="kpi"><span class="kpi-n" id="k-human">–</span><span class="kpi-l">Human page views</span><span class="kpi-d" id="d-human"></span></div>
+          <div class="kpi"><span class="kpi-n" id="k-ai">–</span><span class="kpi-l">AI page views</span><span class="kpi-d" id="d-ai"></span></div>
+          <div class="kpi"><span class="kpi-n" id="k-share">–</span><span class="kpi-l">AI share</span><span class="kpi-d" id="d-share"></span></div>
+        </div>
+        <div class="split" id="split" aria-hidden="true"><i class="s-human"></i><i class="s-ai"></i><i class="s-other"></i></div>
+        <ul class="legend">
+          <li><i class="dot s-human"></i>Human <b id="l-human">–</b></li>
+          <li><i class="dot s-ai"></i>AI crawlers <b id="l-ai">–</b></li>
+          <li><i class="dot s-other"></i>Other bots (search engines, SEO tools, link previews, monitors) <b id="l-other">–</b></li>
+        </ul>
+      </section>
+
+      <div class="cards">
+      <section class="card">
+        <h2>AI crawlers</h2>
+        <ol class="rows" id="ai-names"></ol>
+      </section>
+
+      <section class="card">
+        <h2>Why AI crawlers come</h2>
+        <ol class="rows" id="ai-purposes"></ol>
+      </section>
+
+      <section class="card">
+        <h2>Bots by type</h2>
+        <ol class="rows" id="bot-types"></ol>
+      </section>
+
+      <section class="card">
+        <h2>Top bots</h2>
+        <ol class="rows" id="bot-names"></ol>
+      </section>
+
+      <section class="card">
+        <h2>Top pages</h2>
+        <ol class="rows" id="pages"></ol>
+      </section>
+
+      <section class="card">
+        <h2>Channels</h2>
+        <ol class="rows" id="channels"></ol>
+      </section>
+
+      <section class="card">
+        <h2>Top referrers</h2>
+        <ol class="rows" id="referrers"></ol>
+      </section>
+
+      <section class="card">
+        <h2>Countries (humans only)</h2>
+        <ol class="rows" id="countries"></ol>
+      </section>
+
+      <section class="card">
+        <h2>Devices (humans only)</h2>
+        <ol class="rows" id="devices"></ol>
+      </section>
+
+      <section class="card">
+        <h2>Browsers (humans only)</h2>
+        <ol class="rows" id="browsers"></ol>
+      </section>
+      <button type="button" id="add-card" class="add-card" title="Show hidden cards" aria-label="Show hidden cards" hidden>+</button>
+      </div>
+
+      <p class="note" id="note"></p>
+    </main>
+  </body>
+</html>

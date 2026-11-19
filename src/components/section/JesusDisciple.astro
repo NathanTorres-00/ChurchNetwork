@@ -1,0 +1,218 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import type { ImageMetadata } from "astro";
+import { Image } from "astro:assets";
+
+type Link = { label: string; href: string; placeholder?: boolean };
+
+interface Props extends HTMLAttributes<"section"> {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+  /** The app's wordmark, shown as the heading. */
+  logo: { src: ImageMetadata; alt: string };
+  /** What the app is, under the wordmark. */
+  heading: string;
+  /** Bold line under the heading. */
+  subtitle?: string;
+  /** Paragraph under the heading. */
+  lead?: string;
+  /** The Jesus Disciple University banner under the video rows. */
+  university?: { heading: string; body: string; photo: ImageMetadata; button?: Link };
+}
+
+const { render = true, logo, heading, subtitle, lead, university, class: className, ...rest } = Astro.props;
+
+// The three rows of video cards stay in code for now (their links are placeholders until the videos have addresses)
+type Card = { label: string; image: string; position?: string };
+const reels: { id: string; title: string; cards: Card[] }[] = [
+  {
+    id: "reel-vision",
+    title: "Vision Videos",
+    cards: [
+      { label: "Vision video: Multiplication Matters", image: "/assets/videos/vision-multiplication-matters.jpg" },
+      { label: "Vision video: Think Small", image: "/assets/videos/vision-think-small.jpg" },
+      { label: "Vision video: New Testament Networks", image: "/assets/videos/vision-new-testament-networks.jpg" },
+      { label: "Vision video: Prayer and Persons of Peace", image: "/assets/videos/vision-prayer-and-persons-of-peace.jpg" },
+      { label: "Vision video: Healing and Miracles", image: "/assets/videos/vision-healing-and-miracles.jpg" },
+      { label: "Vision video: It's Your Turn", image: "/assets/videos/vision-its-your-turn.jpg" },
+    ],
+  },
+  {
+    id: "reel-how-to",
+    title: "How to use Jesus Disciple",
+    cards: [
+      { label: "How to use Jesus Disciple: What is it?", image: "/assets/videos/how-to-what-is-it.jpg" },
+      { label: "How to use Jesus Disciple: Why use it?", image: "/assets/videos/how-to-why-use-it.jpg" },
+      { label: "How to use Jesus Disciple: How it works", image: "/assets/videos/how-to-how-it-works.jpg" },
+    ],
+  },
+  {
+    id: "reel-stories",
+    title: "Jesus Disciple Stories",
+    cards: [
+      { label: "Anastasia's story", image: "/assets/anastasia-thumbnail.jpg", position: "50% 30%" },
+      { label: "Story 2", image: "https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?w=760&h=1170&fit=crop&q=75&auto=format" },
+      { label: "Story 3", image: "https://images.unsplash.com/photo-1491438590914-bc09fcaaf77a?w=760&h=1170&fit=crop&q=75&auto=format" },
+      { label: "Story 4", image: "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=760&h=1170&fit=crop&q=75&auto=format" },
+    ],
+  },
+];
+---
+
+{
+  render && (
+    <section class:list={["jesus-disciple_wrap", className]} id="app" {...rest}>
+      <div class="jesus-disciple_layout">
+        <h2 class="jd-heading">
+          <Image class="jd-logo" src={logo.src} alt={logo.alt} widths={[420, 840, logo.src.width]} sizes="(max-width: 1235px) 34vw, 420px" />
+          <span>{heading}</span>
+        </h2>
+        {subtitle && <h3 class="jesus-disciple_subtitle">{subtitle}</h3>}
+        {lead && <p class="jesus-disciple_lead text-style-large">{lead}</p>}
+      </div>
+      {/* public/scripts/home-jd-carousels.js reads .reel-group, .reel, .reel-btn and the cards */}
+      {reels.map((reel) => (
+        <div class="reel-group">
+          <div class="jesus-disciple_layout reel-head">
+            <h3 class="reel-title" id={reel.id}>{reel.title}</h3>
+            <div class="reel-nav">
+              <button class="reel-btn" type="button" data-dir="-1" aria-label={`Previous ${reel.title}`}>
+                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4l-6 6 6 6" /></svg>
+              </button>
+              <button class="reel-btn" type="button" data-dir="1" aria-label={`Next ${reel.title}`}>
+                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 4l6 6-6 6" /></svg>
+              </button>
+            </div>
+          </div>
+          <ul class="reel" aria-labelledby={reel.id}>
+            {reel.cards.map((card) => (
+              <li>
+                <a class="vcard" href="#" data-placeholder draggable="false" aria-label={card.label}>
+                  <img src={card.image} alt="" loading="lazy" draggable="false" style={card.position ? `object-position: ${card.position}` : undefined} />
+                  <span class="vplay" aria-hidden="true" />
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+      {university && (
+        <div class="jesus-disciple_layout">
+          <div class="jdu">
+            <Image
+              class="jdu-photo"
+              src={university.photo}
+              widths={[1200, university.photo.width]}
+              sizes="(max-width: 1180px) 100vw, 1180px"
+              alt=""
+              loading="lazy"
+            />
+            <div class="jdu-body">
+              <h3 class="jdu-title">{university.heading}</h3>
+              <p class="jdu-text">{university.body}</p>
+              {university.button && (
+                <a class="jdu-button" href={university.button.href} data-placeholder={university.button.placeholder ? "" : undefined}>
+                  {university.button.label}
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </section>
+  )
+}
+
+<style is:global>
+  @layer components {
+    /* Jesus Disciple: the app's wordmark as the heading, three rows of video cards that run off the right edge, and
+       the Jesus Disciple University banner. The rows are full-bleed, so this section lays out its own width. */
+    .jesus-disciple_wrap {
+      --section-bg: var(--background-2);
+      padding: var(--section-space-medium) 0;
+      background: var(--background-2);
+    }
+    .jesus-disciple_layout {
+      width: var(--site-width);
+      max-width: var(--max-width-main);
+      margin-inline: auto;
+    }
+    .jd-heading {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: clamp(0.875rem, 1.6vw, 1.25rem);
+    }
+    .jd-logo {
+      display: block;
+      width: clamp(15rem, 34vw, 26.25rem);
+      height: auto;
+    }
+    .jesus-disciple_subtitle {
+      margin: 0.875rem 0 0;
+      font-size: clamp(1.25rem, 2vw, 1.625rem);
+      line-height: 1.25;
+      font-weight: 700;
+      letter-spacing: -0.015em;
+    }
+    .jesus-disciple_lead {
+      margin: 1.125rem 0 0;
+      max-width: 58ch;
+    }
+    /* Jesus Disciple: three rows of video cards. Each row is a sideways carousel that lines up with the page's text on
+     the left and runs off the right edge of the window. Scroll it with a trackpad, a swipe, a mouse drag, the arrow
+     buttons, or Tab through the cards. */
+    .reel-group { margin-top: clamp(3.5rem, 7vw, 5.5rem); }
+    /* Jesus Disciple University: its own mention under the video rows, not one of the videos */
+    /* A wide photo panel: the text sits on the photo's dark navy wall (top left) and the speaker stands to the right.
+     A soft navy wash from the left keeps the text readable wherever the crop lands. */
+    .jdu { position: relative; isolation: isolate; overflow: hidden; margin-top: clamp(3.5rem, 7vw, 5.5rem); border-radius: var(--radius-main); background: #04101C; color: #fff; min-height: clamp(22.5rem, 40vw, 31.25rem); display: flex; align-items: flex-start; padding: clamp(2rem, 5vw, 4rem); }
+    .jdu-photo { position: absolute; inset: 0; z-index: -1; width: 100%; height: 100%; object-fit: cover; object-position: 70% 40%; }
+    .jdu::after { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: linear-gradient(90deg, rgba(4,16,28,.72) 0%, rgba(4,16,28,.35) 38%, rgba(4,16,28,0) 60%); }
+    .jdu-body { max-width: 36rem; }
+    .jdu-title { margin: 0; font-size: clamp(2.5rem, 5.6vw, 4.75rem); line-height: 1; font-weight: 700; letter-spacing: -0.035em; color: #fff; text-wrap: balance; }
+    .jdu-text { margin: 1.375rem 0 0; max-width: 36ch; font-size: clamp(1.125rem, 1.6vw, 1.375rem); line-height: 1.45; color: rgba(255,255,255,.78); }
+    .jdu .jdu-button { display: inline-flex; align-items: center; justify-content: center; gap: 0.625rem; font: var(--primary-medium) 0.9375rem/1 var(--primary-family); text-decoration: none; cursor: pointer; padding: 0.9375rem 1.5rem; border-radius: var(--radius-round); border: var(--border-width) solid transparent; transition: background .25s ease, border-color .25s ease; margin-top: clamp(1.5rem, 3vw, 2rem); background: #fff; color: #1F1F23; }
+    .jdu .jdu-button:hover { background: #E4E4E7; }
+    .jdu .jdu-button:focus-visible { outline: 0.125rem solid #fff; outline-offset: 0.1875rem; }
+    /* Phones: the text on the navy at the top, the photo below it (fading up into the navy), so nothing covers the
+     speaker */
+    @media (max-width: 40em) {
+      .jdu { min-height: 0; flex-direction: column; padding: 2rem 1.5rem 0; }
+      .jdu-photo { position: relative; inset: auto; z-index: auto; align-self: stretch; margin: 0.5rem -1.5rem 0; width: auto; max-width: none; height: auto; aspect-ratio: 5 / 4; object-position: 68% 30%; -webkit-mask-image: linear-gradient(transparent, #000 30%); mask-image: linear-gradient(transparent, #000 30%); }
+      .jdu-body { order: -1; }
+      .jdu::after { display: none; }
+    }
+    .reel-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 1.5rem; }
+    .reel-title { margin: 0; font-size: clamp(1.5rem, 2.6vw, 2.125rem); line-height: 1.15; font-weight: 700; color: var(--heading); letter-spacing: -0.02em; }
+    .reel-nav { display: flex; gap: 0.625rem; }
+    .reel-group.is-static .reel-nav { visibility: hidden; }
+    /* every card fits: nothing to scroll */
+    .reel-btn { width: 2.75rem; height: 2.75rem; padding: 0; border-radius: 50%; border: 0.0625rem solid #D4D4D8; cursor: pointer; display: grid; place-items: center; background: transparent; color: var(--heading); transition: background .2s ease, color .2s ease, border-color .2s ease, opacity .2s ease; }
+    .reel-btn svg { width: 1.125rem; height: 1.125rem; }
+    .reel-btn:hover:not(:disabled) { background: var(--heading); border-color: var(--heading); color: #fff; }
+    .reel-btn:disabled { opacity: .35; cursor: default; }
+    .reel { --edge: max(1.5rem, calc((100% - (var(--max-width-main) + 2 * var(--site-margin))) / 2 + 1.5rem)); /* the .wrap's left edge */ list-style: none; margin: 1.375rem 0 0; padding: 0.375rem var(--edge) 0.625rem; display: flex; gap: clamp(1rem, 2.7vw, 2.4375rem); overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scroll-padding-inline: var(--edge); scrollbar-width: none; }
+    .reel::-webkit-scrollbar { display: none; }
+    .reel li { flex: none; scroll-snap-align: start; }
+    @media (hover: hover) and (pointer: fine) {
+      .reel { cursor: grab; }
+    }
+    .reel.is-dragging { cursor: grabbing; scroll-snap-type: none; user-select: none; }
+    .vcard { position: relative; display: block; width: clamp(13.75rem, 25.2vw, 22.625rem); aspect-ratio: 7 / 10; /* the video posters' shape, so their titles aren't cropped */ border-radius: var(--radius-main); overflow: hidden; background: #B5B5B5; -webkit-user-drag: none; user-select: none; }
+    .vcard img { width: 100%; height: 100%; object-fit: cover; transition: transform .6s ease; -webkit-user-drag: none; }
+    .vcard:hover img { transform: scale(1.04); }
+    .vcard:focus-visible { outline: 0.125rem solid var(--heading); outline-offset: 0.1875rem; }
+    .vplay { position: absolute; right: 1rem; bottom: 1rem; /* a corner, clear of the poster's title */ width: 3.5rem; height: 3.5rem; border-radius: 50%; background: rgba(255,255,255,.94); box-shadow: 0 0.375rem 1.125rem -0.375rem rgba(31,31,35,.45); display: grid; place-items: center; transition: transform .3s ease; }
+    .vplay::before { content: ''; margin-left: 0.25rem; border-left: 0.875rem solid var(--heading); border-top: 0.5625rem solid transparent; border-bottom: 0.5625rem solid transparent; }
+    .vcard:hover .vplay { transform: scale(1.08); }
+    @media (hover: none) {
+      .reel-nav { display: none; }
+    }
+    /* touch: swipe instead */
+    @media (prefers-reduced-motion: reduce) {
+      .vcard img, .vplay { transition: none; }
+      .vcard:hover img { transform: none; }
+    }
+  }
+</style>

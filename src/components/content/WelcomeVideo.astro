@@ -1,0 +1,96 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+interface Props extends HTMLAttributes<"div"> {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+  /** The video's title, read out for the player and the play button. */
+  title: string;
+  /** Address of the video file. */
+  src?: string;
+  /** Address of the still shown until play is pressed. */
+  poster?: string;
+}
+
+const {
+  render = true,
+  title,
+  src = "/assets/welcome-to-the-rock-network.mp4",
+  poster = "/assets/what-is-a-new-testament-church-network.jpg",
+  class: className,
+  ...rest
+} = Astro.props;
+---
+
+{
+  render && src && (
+    <div class:list={["frame welcome-video_wrap", className]} id="intro-video" {...rest}>
+      {/* public/scripts/home-welcome-video.js reads #intro-video, its video and .play: nothing downloads until play */}
+      <video src={src} poster={poster} preload="none" playsinline aria-label={title} />
+      <button class="play" type="button" aria-label={`Play video: ${title}`} />
+    </div>
+  )
+}
+
+<style is:global>
+  @layer components {
+    /* The welcome video: its poster until play is pressed, then the browser's own controls */
+    .welcome-video_wrap {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      margin-top: 1.25rem;
+      &::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: transparent;   /* the poster is finished artwork, so no darkening */
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+      }
+      & video {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        background: #000;
+      }
+      /* On this poster the button sits under the title, on its left edge (7% in, 70% down), so it doesn't cover
+         the words, and it's dark to stand out on the poster's light gray. It scales down with the box. */
+      & .play {
+        --s: clamp(2.75rem, 6.5vw, 5.5rem);
+        position: absolute;
+        z-index: 1;
+        left: 7%;
+        top: 70%;
+        width: var(--s);
+        height: var(--s);
+        border-radius: 50%;
+        border: 0;
+        cursor: pointer;
+        background: var(--heading);
+        box-shadow: 0 0.625rem 1.5rem -0.625rem rgb(31 31 35 / 0.5);
+        display: grid;
+        place-items: center;
+        transition:
+          transform 0.3s ease,
+          opacity 0.3s ease;
+        &:hover {
+          transform: scale(1.05);
+        }
+        &::before {
+          content: "";
+          margin-left: calc(var(--s) * 0.07);
+          border-left: calc(var(--s) * 0.25) solid #fff;
+          border-top: calc(var(--s) * 0.16) solid transparent;
+          border-bottom: calc(var(--s) * 0.16) solid transparent;
+        }
+      }
+      &.is-started::after,
+      &.is-started .play {
+        opacity: 0;
+        pointer-events: none;
+      }
+    }
+  }
+</style>

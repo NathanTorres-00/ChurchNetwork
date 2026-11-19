@@ -1,0 +1,96 @@
+{
+  "top": {
+    "heading": "Church Groups",
+    "tagline": "Multiplying disciples, leaders, churches, and movements",
+    "photo": {
+      "src": "../../assets/images/group-gathered.jpg",
+      "alt": ""
+    },
+    "buttons": [
+      {
+        "label": "Start a group",
+        "href": "#start"
+      },
+      {
+        "label": "Learn more",
+        "href": "#what"
+      }
+    ]
+  },
+  "what": {
+    "eyebrow": "Groups",
+    "heading": "What are Rock Network Groups?",
+    "lead": "Rock Network groups are groups of three or more that gather, grow, give and go make disciples.",
+    "items": [
+      {
+        "heading": "Church Groups",
+        "intro": "This group:",
+        "traits": [
+          "Consists of believers",
+          "Is ready to gather, grow, give and go together",
+          "Agrees to meet long term",
+          "Uses the Jesus Disciple App"
+        ],
+        "button": {
+          "label": "Start a church group",
+          "href": "#",
+          "placeholder": true
+        }
+      },
+      {
+        "heading": "Discipleship Groups",
+        "intro": "This group:",
+        "traits": [
+          "Has someone who believes in Jesus leading others who do not",
+          "Agrees to meet together for a set period",
+          "Uses the Jesus Disciple App"
+        ],
+        "button": {
+          "label": "Start a discipleship group",
+          "href": "#",
+          "placeholder": true
+        }
+      }
+    ],
+    "already": {
+      "body": "Already a part of a group?",
+      "button": {
+        "label": "Find resources for you",
+        "href": "#",
+        "placeholder": true
+      }
+    }
+  },
+  "video": {
+    "eyebrow": "Weekly",
+    "heading": "Network Video",
+    "playLabel": "Play this week's network video"
+  },
+  "team": {
+    "eyebrow": "Connect with the Network",
+    "heading": "Rock Groups Leadership Team",
+    "lead": "Providing practical and prayer support to our groups.",
+    "people": [
+      {
+        "leader": "jerry-dirmann",
+        "role": "Director"
+      },
+      {
+        "leader": "tina-shubin",
+        "role": "Asst. Director"
+      },
+      {
+        "leader": "eryne-nevarez",
+        "role": "Operations"
+      },
+      {
+        "leader": "crissy-shubin",
+        "role": "Admin Asst."
+      }
+    ],
+    "button": {
+      "label": "See all our leaders",
+      "href": "/leadership"
+    }
+  }
+}

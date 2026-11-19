@@ -1,4 +1,90 @@
-# Network Multiply
+# The Rock Network
+
+The Rock Network's website: **Home** (`/`) and **Groups** (`/groups`), built with [Astro](https://astro.build) and
+[Lumos for Astro](https://lumosframework.com) 1.0.4, so the pages can be designed in **Stacki** and their content
+edited without touching markup. The animated globe demos that are pasted into Wix live alongside it, unchanged.
+
+## Running it
+
+Node 22.23.4 or newer.
+
+```sh
+npm install
+npm run dev        # http://localhost:4321, reloads as you edit
+npm run build      # the static site, into dist/
+npm run preview    # serve dist/ (add --ignore-lock when an AI agent runs it, or it starts in the background)
+npm run check      # Astro's type and template checks
+npm test           # unit tests (Vitest)
+npm run test:e2e   # browser tests (Playwright; builds the site and serves it on port 4321)
+```
+
+To design visually, open this folder in **Stacki**. `LUMOS.md` explains how pages are put together (sections
+from Lumos components; a custom component only when it owns CSS or a script).
+
+## Where things live
+
+| What | Where |
+|---|---|
+| Pages | `src/pages/index.astro` (Home), `src/pages/groups.astro`, `src/pages/[leadership].astro`, `src/pages/embed/globe.astro`, `src/pages/404.astro` |
+| Page sections | `src/components/section/` (sections with their own CSS or script), `src/components/content/` (smaller blocks) |
+| Header, footer | `src/components/global/SiteHeader.astro`, `SiteFooter.astro` |
+| Loading screen, Adjust panels, hub cursor | `src/components/utility/` |
+| Look (colors, type, spacing) | `src/styles/base.css`: Lumos's token names with the site's values |
+| Page scripts (globe, panels, carousels…) | `public/scripts/`: the old pages' scripts, one file per original `<script>`, unchanged in behavior |
+| Images used from markup | `src/assets/images/` (Astro optimizes them); files scripts load by path are in `public/assets/` |
+| The Wix demos | `public/network-*.html` and `public/assets/network-gallery.js`, byte for byte as before |
+
+## Content
+
+Everything an admin will edit is in `src/content/` as JSON, with its shape declared in `src/content.config.ts`
+(Stacki's CMS panel can edit these; a later project moves them to Sanity with the same shapes):
+
+- **This week's Network Video:** `src/content/weekly-video.json`. Change `youtubeId` to the part after
+  `youtu.be/` (and the `title`), each week. Without a `youtubeId` the section is left out.
+- **Leaders:** one file per person in `src/content/leaders/` (`name` and a `photo` from
+  `src/assets/images/leaders/`). Pages list them by file name: the four on Groups in `groups.json`
+  (`team.people`), and the Leadership page's two lists in `pages/leadership.json`. Someone can be in both lists.
+- **Group stories:** `src/content/group-stories/` (the quote on Groups, Anastasia's on Home).
+- **Page copy:** `src/content/pages/home.json` and `groups.json`, one object per section.
+- **Footer:** `src/content/footer.json`.
+
+The hubs and the Jesus Disciple video rows are still in code (`src/pages/index.astro` and
+`src/components/section/JesusDisciple.astro`).
+
+## Leadership
+
+`/leadership` shows the network's leaders on two orbits and in lists; Groups shows the Rock Groups Leadership Team
+(leaders and their roles in `groups.json`). It's on everywhere, the live site included. To hide it on the live
+site again, change `showLeadership()` in `src/utils/leadership.ts` as its comment says.
+
+## Adjust panels
+
+Home and Groups each have an **Adjust** button (bottom right) with the same settings as before; `?controls=0`
+hides it, and any setting can also come from the address (`/?heroArt=gallery`, `/groups?heroArt=globe`).
+**Copy settings** gives a block to paste over the `CONFIG` at the top of `public/scripts/home-main.js` or
+`public/scripts/groups-config.js`. Footer and page-transition choices are shared by both pages.
+
+`/embed/globe` is Home's globe on its own (no loading screen, header, copy or footer); the Groups hero's Pins
+globe and the footer's globe show it in a frame. It isn't indexed by search engines.
+
+## Old addresses
+
+`vercel.json` keeps clean URLs on and sends `/hero` to `/`, so old links still land: `/hero.html`, `/hero`,
+`/hero.html#app` → Home (and its section), `/groups.html` → `/groups`, `/network-*.html` → unchanged.
+
+## Deploying (Vercel)
+
+Vercel detects Astro and runs `astro build`; there is no build command in `vercel.json` any more. The production
+address is `https://therocknetwork.com` (`SITE_URL` in `src/consts.ts`).
+
+## Comment mode and the Versions panel
+
+They didn't move to Astro. Their code (and Convex's) is at tag `pre-astro`:
+`git checkout pre-astro -- review convex versions scripts` brings it back.
+
+---
+
+# Network Multiply (Wix demo)
 
 A self-contained, embeddable animation of multiplication: one soft gray dot divides into two, each new dot
 divides again, out to the 5th generation (1 → 2 → 4 → 8 → 16 → 32, 63 dots in all). Thin bowed threads
@@ -6,61 +92,10 @@ connect every dot to its parent. Motion is calm and eased, with a slow idle drif
 When fully grown, the network rests, fades back to the first dot, and grows again in a slightly different
 shape.
 
-## Files
-- **`network-multiply.html`**: the entire component (HTML + CSS + vanilla JS on a canvas, no build step, no
-  dependencies except the Geist webfont).
-- **`network-globe.html`**: the globe riff (see [Network Globe](#network-globe) below).
-- **`network-globe-pins.html`**: the globe with photo pins on hover (see [Network Pins](#network-pins) below).
-- **`network-gallery.html`**: a close-up of the globe as a gallery, its dots opening into photos (see [Network Gallery](#network-gallery) below).
-- **`hero.html`**: a sample landing page with the Pins globe as its hero (see [Hero](#hero-sample-webpage) below).
-- **`groups.html`**: the Groups page, opened by the home page's **Start a group**. Its flow and copy follow the
-  TR-ANAHEIM "Groups" Figma frame; its look is the home page's (Geist, the four headline colors, gray surfaces,
-  24px corners, pill buttons). Sections: a photo hero (Church Groups), What are Rock Network Groups? with the
-  Church Groups and Discipleship Groups cards and "Already a part of a group?", the weekly Network Video
-  (a YouTube video: its thumbnail until play, then YouTube's player; change `data-youtube` each week), a group member's quote over the photo of three friends at a table (the hero is now the
-  group's own photo, `assets/group-gathered.jpg`), and the **Rock Groups Leadership Team** with portraits, roles,
-  and **See all our leaders** (to `leadership.html`). Links not built yet are marked `data-placeholder`.
-  - **Adjust panel** (bottom right; `?controls=0` hides it), with its own CONFIG at the top of `groups.html`:
-    - **Hero › Art:** **Photo** (default) or **Pins globe**, the home page's own globe and photo pins behind the
-      title. It's `hero.html?embed=globe` in a frame, loaded only when chosen; its pins keep clear of the Groups
-      title, tagline, buttons and header (the frame asks `window.rnHeroTextRects`). **Shape:** Full width (default) or Card; Full width ends in the Home hero's curved bottom arc,
-      its depth set by **Bottom curve** (`heroCurve`, in vw, 0 = straight).
-    - **Page load:** Rise, Reveal (the hero opens out from its middle), Fade or None, with speed and stagger, and
-      **Sections rise in on scroll**. **Replay** plays it again.
-    - **Page transition:** Rise, Slide, Fade or None, and its speed, between Home and Groups. It uses the
-      browser's cross-document View Transitions (`assets/page-transition.css` and `.js`, loaded on both pages), so
-      it plays in Chrome, Edge and Safari 18.2+; the choice is kept in this browser (`localStorage`) for both pages.
-- **`leadership.html`**: the directory starts with the **Rock Groups Leadership Team**, followed by **Regional
-  Overseers** (by region and by ministry or online) and **Sub-Networks**. **The Rock Leaders** roster is hidden.
-  The hero orbit links once to each leader with an anchored Groups card, including Jerry Dirmann as Director.
-  Leave repeat assignments and directory-only entries without an ID. Web portraits are
-  480px square crops in `assets/leaders/`; the roster reference and source photos are in `Leadership/`.
-  Home and Groups link to Leadership in their headers and footers.
-- **Site footer** (Home and Groups; `assets/site-footer.css` and `.js`): tagline, social links, a newsletter form
-  (not connected to a mailing list yet; it says so on submit), Explore / Connect / Policy links, and the big
-  wordmark (`assets/the-rock-network-large.png`, 1944px wide so it stays sharp). Links not built yet are
-  `data-placeholder`. Both Adjust panels have a **Footer** section, kept in this browser for both pages; Copy
-  settings adds it as a comment for `DEFAULT` in `site-footer.js`:
-  - **Colors:** Light (default), Grey (with **Grey shade**; dark shades switch the text to light) or Inverted (the dark of
-    the site's headings).
-  - **Animation:** Pins globe (the Home hero's globe, `hero.html?embed=globe` recoloured to the footer with `?bg=`,
-    drawn at 1x with `?dpr=1` since it's faint; it loads once in idle time after the page opens, rests off screen and
-    replays its growth each time the footer comes back into view, without reloading; its pins avoid the footer's
-    text) or Off, with **Animation strength** (default 20%).
-  - **Top edge:** Flat or Curved (default): the last section above the footer ends in the Home hero's downward arc, with
-    the footer showing past its sides. **Curve depth** sets it (in vw, like the hero's Bottom curve).
-  - **Logo:** Full or Clipped (default; copyright first, the wordmark running off the bottom edge, Figma-style), with
-    **Logo scale**, and for Clipped, **Clip** (how much is cut off) and **Position** (moves it up or down).
-  - **Reveal:** Slide out (default; the page sits above the footer; the footer starts tucked up under the last section and
-    slides down into place as you scroll to it) or Off, with **Slide distance** and **Shade while tucked**.
-    Reduced motion turns the slide off.
-- **Home's loading screen** plays when arriving from outside the site; arriving from another of its pages (Groups →
-  Home) the page opens straight away with the page transition.
-
 ## Embedding in Wix
 1. Wix Editor → **Add → Embed Code → Embed HTML**.
 2. Choose **Code** (not "Website address").
-3. Open `network-multiply.html`, tune it with the **Adjust** panel, then click **Copy settings**.
+3. Open `public/network-multiply.html`, tune it with the **Adjust** panel, then click **Copy settings**.
 4. Paste the copied block over the `CONFIG` block at the top of the `<script>`, and set
    `SHOW_CONTROLS = false` just below it so visitors don't see the panel.
 5. Paste the full file contents into the embed, then **Apply** and publish.
@@ -94,26 +129,11 @@ All of these are in the `CONFIG` block and the Adjust panel. Any of them can als
 ## Keyboard
 - **Space** pauses or plays, **R** replays, **Esc** closes the panel.
 
-## Deploying (Vercel)
-
-The repo deploys to Vercel as a static site. `vercel.json` serves `hero.html` at the site's root and turns on
-clean URLs (`/hero`, `/network-globe`, `/network-globe-pins`, `/network-gallery`, `/network-multiply`; the `.html` addresses redirect
-to them). Its build command, `npx convex deploy --cmd 'node scripts/build-static.js'`, pushes the comment mode
-backend to Convex and then copies the pages, `assets/`, `review/`, `versions/` and `convex/limits.js` (the shared limits; nothing else from `convex/`) into `dist/`, which Vercel serves (see
-[Comment mode](#comment-mode)). It also writes `dist/versions.json`, the list of builds for the
-[Versions panel](#versions-panel).
-
-Production and preview builds include `leadership.html` and the Leadership links on Home and Groups.
-
-Vercel Authentication is off for the project, so every build's own address (e.g.
-`churchnetwork-a79hy0ryt-nathan-torres-projects.vercel.app`) opens for anyone with the link, branch previews included.
-That's what lets the Versions panel show old builds.
-
 ---
 
 # Network Globe
 
-`network-globe.html` is a riff on the flat view. A camera flies low over a pale, rotating globe. As new
+`public/network-globe.html` is a riff on the flat view. A camera flies low over a pale, rotating globe. As new
 ground comes over the horizon, dots appear at sites around the world, and each one grows into its own network
 with the same dividing animation. Networks that pass out of view regrow, in a new shape, the next time they come
 around. The **Flat / Globe** switch at the top left moves between the two pages.
@@ -164,14 +184,14 @@ viewport size.
 
 # Network Pins
 
-`network-globe-pins.html` is a riff on the globe. Everything flies and grows the same way, and hovering any dot
+`public/network-globe-pins.html` is a riff on the globe. Everything flies and grows the same way, and hovering any dot
 raises a photo pin above it (the frame and pointer come from the reference pin artwork). Random pins also open
 on their own across the view, at a rate you choose. The pin rides along with
 its dot, the dot deepens in color, and the flight eases to a stop while the pin is open, then picks back up when
 you move away. On touch screens, tap a dot to open its pin and tap empty ground to close it.
 
 The pins use photos of house groups, youth groups, and larger church gatherings. The Pins and Gallery pages
-share the list in `assets/network-globe-photos.js` and the WebP crops in `assets/network-photos/globe/`.
+share the list in `public/assets/network-globe-photos.js` and the WebP crops in `public/assets/network-photos/globe/`.
 Each dot is assigned a photo by its network and position.
 
 | Parameter | What it does |
@@ -216,7 +236,7 @@ All the globe parameters apply as well.
 
 # Network Gallery
 
-`network-gallery.html` turns the globe into a gallery. The camera sits so close that the rim and horizon stay out
+`public/network-gallery.html` turns the globe into a gallery. The camera sits so close that the rim and horizon stay out
 of view: what you see is one section of a slowly turning globe, with networks of pale dots forming as new ground
 turns into view (or, with **Lines** set to Grid, a hand-drawn grid with dots at its crossings). New dots keep
 turning into view, which is what carries the sense of how big the network is.
@@ -253,20 +273,20 @@ turning into view, which is what carries the sense of how big the network is.
   - `lineStyle`: `arc` (bow set by `arch`), `straight`, `s` (S-curve) or `grid` (traces the grid through the empty
     crossing between two diagonal dots). Sent-out lines have their own bow, `sentArch`.
   - Photo openings and hover work the same in both modes, on dots that have fully grown in.
-- **Shared engine.** The drawing and motion live in `assets/network-gallery.js` (an ES module), which the hero also
+- **Shared engine.** The drawing and motion live in `public/assets/network-gallery.js` (an ES module), which the hero also
   uses for its Gallery art. The page keeps its own CONFIG, panel and keys; the panel's controls come from the
   module's `GALLERY_CONTROLS`.
 
 ---
 
-# Hero (sample webpage)
+# Home page reference
 
-`hero.html` is a sample church-network landing page with the Pins globe as its hero (the Gallery globe is one click away). Sections:
+Home (`/`) is a sample church-network landing page with the Pins globe as its hero (the Gallery globe is one click away). Sections:
 
 1. **Hero:** the flying globe with pins behind the title "A New Testament Church Network", a headline
    ("Multiplying Disciples / Leaders / Churches / Movements", each word in its own color), and **Learn more**
-   (scrolls to section 2) and **Start a group** (opens `groups.html`). The one-line statement under them is hidden for
-   now (one CSS line in `hero.html` brings it back).
+   (scrolls to section 2) and **Start a group** (opens Groups (`/groups`)). The one-line statement under them is hidden for
+   now (one CSS line in Home (`/`) brings it back).
 
    **Art: Pins globe or Gallery.** The Adjust panel's **Hero layout** section has an **Art** row: **Pins globe** (the
    default, `heroArt: 'pins'`), or **Gallery** (`heroArt: 'gallery'`, or `?heroArt=gallery`), the close-up
@@ -292,24 +312,24 @@ turning into view, which is what carries the sense of how big the network is.
    - **Phones** (≤ 640 px): photos open only above and below the copy, or not at all
      (`galleryPhoneOpenings: 'off'`). A touch that moves is a scroll, not a tap.
    - **Reduced motion:** a still view; hovering still opens dots.
-2. **What is it?** Rounded video box with the **Welcome to the Rock Network** video (`assets/welcome-to-the-rock-network.mp4`, an H.264 copy of the original, about 15 MB). Its poster is the "What is a New Testament Church Network?" thumbnail (`assets/what-is-a-new-testament-church-network.jpg`), shown undimmed, with a dark play button under the poster's title on its left edge so it doesn't cover the words. Nothing downloads until the play button is pressed; then it plays with the browser's controls, and pauses when scrolled out of view.
+2. **What is a New Testament Church Network?:** rounded video box with the **Welcome to the Rock Network** video (`public/assets/welcome-to-the-rock-network.mp4`, an H.264 copy of the original, about 15 MB). Its poster is the "What is a New Testament Church Network?" thumbnail (`public/assets/what-is-a-new-testament-church-network.jpg`), shown undimmed, with a dark play button under the poster's title on its left edge so it doesn't cover the words. Nothing downloads until the play button is pressed; then it plays with the browser's controls, and pauses when scrolled out of view.
 3. **What we do:** image, the line "We are a four-stage ministry", and stats (7,088 Disciples joined, 1,559 Groups started, 25 Missions workers, 3 Four-Stage Subnetworks) that count up from 0 as they scroll into view (once; straight to the numbers with reduced motion).
 4. **How we do it:** four rows, **A Clear Process**, **Effective Tools**, **Available Training** and **On-going Coaching** (links are
    placeholders), built and behaving exactly like the Find a hub rows: the same hover fill, ring-dots and cursor.
-5. **Testimony:** Anastasia, group leader in Anaheim: her portrait (`assets/anastasia.jpg`) and quote.
+5. **Testimony:** Anastasia, group leader in Anaheim: her portrait (`public/assets/anastasia.jpg`) and quote.
 6. **Jesus Disciple – A Four-Stage Ministry tool** (`#app`): headed by the Jesus Disciple wordmark
-   (`assets/jesus-disciple-logo.png`) with "A Four-Stage Ministry tool" under it; three rows of tall video cards, **Vision Videos**,
+   (`public/assets/jesus-disciple-logo.png`) with "A Four-Stage Ministry tool" under it; three rows of tall video cards, **Vision Videos**,
    **How to use Jesus Disciple** and **Jesus Disciple Stories**. Each row is a sideways carousel that starts at the
    text's left edge and runs off the right of the window: trackpad, swipe, mouse drag, the arrow buttons beside the
    row title (hidden on touch screens, greyed at a row's ends), or Tab. Each card is a thumbnail with a play button
    linking to its video, in the posters' 7:10 shape so their titles aren't cropped (the play button sits in the
    bottom corner, off the titles). Vision Videos and How to use Jesus Disciple use the English video posters
-   (`assets/videos/`, web-sized copies of the `Vision & How-To English` folder): Multiplication Matters, Think Small,
+   (`public/assets/videos/`, web-sized copies of the `Vision & How-To English` folder): Multiplication Matters, Think Small,
    New Testament Networks, Prayer and Persons of Peace, Healing and Miracles and It's Your Turn; then What is it?,
-   Why use it? and How it works. Stories has Anastasia (`assets/anastasia-thumbnail.jpg`) and stock photos. Every
+   Why use it? and How it works. Stories has Anastasia (`public/assets/anastasia-thumbnail.jpg`) and stock photos. Every
    card's link is a placeholder until its video has an address (set the card's `href` and remove `data-placeholder`).
    Under the rows, separate from the videos, a **Jesus Disciple University** banner: a wide photo
-   (`assets/jdu-banner.jpg`, 1200px copy `jdu-banner-1200.jpg`) with the title, a short description of JDU and **Learn more** (a
+   (`public/assets/jdu-banner.jpg`, 1200px copy `jdu-banner-1200.jpg`) with the title, a short description of JDU and **Learn more** (a
    placeholder link for now) on its navy wall. On phones the text sits above the photo so it doesn't cover the speaker.
 7. **Find a hub:** full-width rows for Anaheim, Anaheim West, jChurch and Iglesia Mi Ciudad (details to come).
    **Hidden by default**, along with its header link: turn it on with **Show Find a hub** in the Adjust panel's Page
@@ -325,13 +345,8 @@ turning into view, which is what carries the sense of how big the network is.
 
    Photos are placeholders, set per row with `data-photo`. Tabbing to a row fills it and raises its pin over the
    hub's dot. Touch screens keep the plain rows.
-8. **How we got started** (the last section before the footer): the Story stage. A wide panel shows one network dividing one more generation per
-   stage, the newest generation in that stage's color, crossfading through a soft blur, with the stage's name
-   decoding in at its corner. Under it the four stages (Multiplied disciples, leaders, churches, movements): the
-   current one lifts, a mark on the dashed rule slides to it, and a ring fills over 6 seconds before it moves on.
-   Hovering the stages pauses it; clicking one stops the autoplay. It waits until it's on screen, and holds still
-   (already shown, not playing) while comment mode is open so marks stay on their words. Reduced motion: no
-   autoplay or blur.
+8. **How we got started** (the last section before the footer): a four-step timeline from one local church to a global movement. The milestone dots
+   grow and step through the four headline colors.
 
 All copy, names, stats and photos are placeholders to replace. Links marked `data-placeholder` (Start a group, store
 buttons, directions) go nowhere until you add real URLs.
@@ -361,7 +376,7 @@ motion get a still network and a quick fade.
   speed.
 - `heroLayout` (`stacked`, `rotating`, `typed`), `heroTitle` (`multiplying`, `network`) and `heroAlign` (`left`,
   `center`) are saved with Copy settings, and can be set in the address, e.g.
-  `hero.html?heroLayout=typed&heroTitle=network&heroAlign=center`.
+  `/?heroLayout=typed&heroTitle=network&heroAlign=center`.
 
 **Adjust panel:** the **Headline** group has a color picker for each of the four words (and for "Multiplying"),
 plus headline size, colored-word weight, line spacing, title size, text block width and position, the white
@@ -408,109 +423,3 @@ jsDelivr). The Page group has a **Smooth scrolling** switch and a **Scroll glide
 scrolls on its own.
 
 ---
-
-# Versions panel
-
-The hero has a **Versions** pill at the bottom left, mirroring Adjust at the bottom right. It opens a panel from the
-left listing every build of `main`, newest first, each with its date and time (in the viewer's time zone) and a
-plain summary of what changed. Clicking an earlier build shows that build, live (globe and all), beside the panel,
-under a dark bar naming it with **Back to current**; the panel stays open so you can step from build to build. The
-live page's globe holds still while it's covered. **Back to current**, the **Current** row, **Close** or **Esc**
-return to the live page. On phones the panel covers the screen and a build opens full screen, with **Versions** in
-its bar to pick another. A build shown in the panel never shows its own Versions pill, and embeds that hide the
-Adjust panel (`SHOW_CONTROLS = false` or `?controls=0`) hide the pill too.
-
-**Where the list comes from:** Vercel keeps every build at its own address. At build time,
-`scripts/versions.js` asks the Vercel API for the project's READY production builds (one row per commit, newest
-redeploy wins), adds the build being made from Vercel's build environment, and `build-static.js` writes them to
-`dist/versions.json`. The API needs a token in the `VERCEL_VERSIONS_TOKEN` environment variable on the Vercel
-project (it's used only at build time and never shipped). Without it, or if the API doesn't answer, the build still
-succeeds and the panel shows just the current build and "Version history isn't available right now". Run locally,
-the panel always says that, since only the build writes the list. **History covers about the last 30 days:**
-the project is on Vercel's Hobby plan, which deletes production builds 30 days after they're made (Deployment
-Retention, Project → Settings → Security), and deleted builds drop out of the list at the next build. Moving the
-project to Pro allows unlimited retention, with no code changes.
-
-**Summaries:** each row's summary is, in order of preference:
-1. its entry in `versions.json` at the repo root (`[{ "sha": "<full commit SHA>", "summary": "..." }]`), used for
-   past builds and to correct a summary later. An entry can also give a `path` for a build whose root isn't the
-   hero (the first build, from before `/` served it, has `"path": "/hero.html"`);
-2. a `Version: <summary>` line in the commit message of the push's last commit. Put it **right after the subject
-   line**: Vercel keeps only about the first 300 characters of a message;
-3. the commit's subject line.
-
-Every push to `main` should end with a commit carrying a `Version:` line written for overseers, e.g.
-`Version: New Rock Network logo and How we do it section`.
-
-Opening comment mode puts the live page back and hides Versions until comment mode closes. Esc pressed inside a
-shown build reaches the panel for builds from this one on; in older builds, use **Back to current**.
-
-**Comment mode in an old build** uses that build's own code against today's comment backend, so marks made there
-land in the live review.
-
----
-
-# Comment mode
-
-Home, Groups, and Leadership each have a **Comment** button in the header and their own review thread. It turns
-the page into a workspace where overseers mark it up and see each other's marks as they're posted. The workspace
-loads only when opened, and marks stay with the page they were posted on.
-
-- **Four kinds of marks**, from the tools on the left:
-  - **Comment**: click the page to pin a typed comment.
-  - **Voice memo**: click the page, record from the mic (up to 3 minutes), listen back, then post. The card has a
-    play button and the length.
-  - **Arrow**: drag from where it starts to what it points at, with an optional note. Its width is set with the
-    size slider beside it.
-  - **Marker**: draw on the page with the **Pen** (circle a word, underline it) or the **Highlighter**. A drawing
-    can have many strokes (up to 40, 6,000 points in all) and one optional note. The **Eraser** rubs out the ink
-    it passes over, as wide as the eraser, in the drawing not yet posted (a posted drawing is deleted and redrawn
-    instead): a stroke it crosses is cut in two, and a highlight over text keeps the words on either side. Pen,
-    Highlighter and Eraser each have a size slider, remembered on the device; the width is posted with each
-    stroke. **Undo** (or Cmd/Ctrl+Z) takes back the last change: a stroke, or everything one sweep of the eraser
-    rubbed out.
-    Strokes follow the words they mark when the text rewraps, and a highlighter
-    stroke along text is drawn line by line over it. When things a pen stroke circled side by side have split
-    apart at another width (stacked on a phone, say), the card is badged **Drawn on a wider screen** or
-    **Drawn on a narrower screen**.
-- Every mark appears on the page and as a card in the **Review activity** sidebar, with counts of what's open.
-  Clicking a card scrolls to its mark. Marks are tied to the element they were made on, so they stay on target at
-  any window width; if that part of the page is removed, the card says **Moved**.
-- Reviewers type their name once per device. They can delete their own marks.
-- **Share review** copies a link that opens the current page straight into comment mode (for example, `/groups?comment`).
-- **Copy for agent**, at the foot of the thread, copies every open mark as one Markdown task list to paste into a
-  chat with a coding agent (`review/agent-brief.js`). Each item has the reviewer's words, the text near the mark
-  and the CSS path of its element, the words a highlight covers, and the window width it was made at. Voice memos
-  go in as their title and length only.
-- **Esc** backs out one step: cancels a stroke being drawn, closes the composer, then the tool, then comment
-  mode. Leaving with something unsent asks first. While a drawing is posting, new strokes are turned away with a
-  short message.
-- On phones the tools sit in a bar along the bottom and Review activity slides up as a sheet. With the Marker on,
-  one finger draws and two fingers scroll (pinch-zoom is off). Below 1280px a slim drawing bar replaces the
-  sidebar, and picking Marker closes the sheet. On an iPad in Safari the Pencil draws while one finger scrolls;
-  in other browsers, once a pen has drawn, the pen draws, fingers don't, and two fingers scroll.
-
-**Owner link:** opening the site once with `?owner=<key>` remembers the owner key on that device (and removes it
-from the address bar). The owner can **Resolve** marks (hidden unless **Show resolved** is on) and delete any mark.
-The key is stored in Convex as the `OWNER_KEY` environment variable on both deployments; change it there with
-`npx convex env set OWNER_KEY <new key>` (add `--prod` for production).
-
-**How it's built:** `review/` holds the browser side as plain ES modules (no bundler): `comment-mode.js` opens
-and closes the workspace, `workspace.js` is the toolbar, tools and sidebar, `marks-layer.js` draws the marks,
-`placing.js` turns clicks and drags into marks, `anchor.js` ties them to elements, `marker.js` turns pointer
-input into strokes, `ink.js` smooths them and builds the pen's tapered outline, `stroke-anchor.js` ties a stroke
-to its word or element, `voice.js` and `recorder.js`
-record and play memos, and `store.js` talks to [Convex](https://convex.dev) through its browser bundle
-(`convex@1.47.0` from unpkg). `convex/` is the backend: one `marks` table, file storage for the audio, and the
-rules (length limits, drawing limits in `convex/limits.js`, 10 marks per device and 60 overall per minute, voice memos must be audio files of at most
-10 MB, owner-only resolve). Device IDs never leave the backend, so only the device that made a mark (or the owner)
-can delete it. `convex/crons.js` deletes uploaded recordings that were never posted, once an hour. Convex was set up through the Vercel
-Marketplace, so its deploy keys live in the Vercel project.
-
-**Working on it locally:**
-- `npm install`, then `npx convex dev` to sync the functions to your development deployment (it also writes
-  `.env.local`).
-- `npm run dev:config` writes `review/config.js` pointing at that deployment; serve the folder (for example
-  `python3 -m http.server`) and open `hero.html`.
-- `npm test` runs the backend and helper tests (Vitest, convex-test); `npm run test:e2e` runs the browser tests
-  (Playwright, with an in-memory store instead of Convex). Run `npx playwright install chromium` once first.

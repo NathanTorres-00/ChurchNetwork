@@ -1,8 +1,8 @@
-import { defineConfig } from 'vitest/config';
+import { getViteConfig } from 'astro/config';
 
-export default defineConfig({
+// Astro's own Vite setup, so unit tests can render .astro components with the container API
+export default getViteConfig({
   test: {
-    include: ['convex/**/*.test.js', 'tests/unit/**/*.test.js'],
-    server: { deps: { inline: ['convex-test'] } },
+    include: ['tests/unit/**/*.test.js'],
   },
 });

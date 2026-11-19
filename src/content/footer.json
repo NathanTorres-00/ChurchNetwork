@@ -1,0 +1,75 @@
+{
+  "tagline": "A New Testament Church Network returning to the original model.",
+  "social": [
+    {
+      "label": "Facebook",
+      "href": "#",
+      "placeholder": true
+    },
+    {
+      "label": "Instagram",
+      "href": "#",
+      "placeholder": true
+    },
+    {
+      "label": "YouTube",
+      "href": "#",
+      "placeholder": true
+    }
+  ],
+  "newsletter": {
+    "label": "Stay in the loop",
+    "placeholder": "Enter your email",
+    "button": "Subscribe",
+    "notice": "Thanks! Sign-up isn’t connected yet, so this address wasn’t saved."
+  },
+  "columns": [
+    {
+      "label": "Explore",
+      "links": [
+        {
+          "label": "Home",
+          "href": "/"
+        },
+        {
+          "label": "Groups",
+          "href": "/groups"
+        },
+        {
+          "label": "Leadership",
+          "href": "/leadership"
+        }
+      ]
+    },
+    {
+      "label": "Connect",
+      "links": [
+        {
+          "label": "The Rock App",
+          "href": "/#app"
+        },
+        {
+          "label": "Contact",
+          "href": "#",
+          "placeholder": true
+        }
+      ]
+    },
+    {
+      "label": "Policy",
+      "links": [
+        {
+          "label": "Privacy",
+          "href": "#",
+          "placeholder": true
+        },
+        {
+          "label": "Terms",
+          "href": "#",
+          "placeholder": true
+        }
+      ]
+    }
+  ],
+  "copyright": "© 2026 The Rock Network"
+}
