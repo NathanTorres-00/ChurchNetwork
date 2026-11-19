@@ -96,6 +96,25 @@ test('scrolling shrinks, hides and returns the pill without opening it', async (
   await expect(nav.getByRole('link', { name: 'Home', exact: true })).toBeInViewport();
 });
 
+test('closing the pill under the mouse keeps it closed until the mouse leaves', async ({ page }) => {
+  await page.goto('/groups', { waitUntil: 'domcontentloaded' });
+  const { nav, brand } = navOf(page);
+  await toPill(page);
+  const pill = await nav.boundingBox();
+  const x = pill.x + pill.width / 2;
+  const y = pill.y + pill.height / 2;
+  await page.mouse.move(x, y);
+  await expect(brand).toHaveAttribute('aria-expanded', 'true');
+  await brand.click(); // pins it open
+  await brand.click(); // closes it
+  await expect(brand).toHaveAttribute('aria-expanded', 'false');
+  await page.mouse.move(x + 3, y);
+  await expect(brand).toHaveAttribute('aria-expanded', 'false');
+  await page.mouse.move(x + 3, y + 300); // leave
+  await page.mouse.move(x, y); // and come back
+  await expect(brand).toHaveAttribute('aria-expanded', 'true');
+});
+
 test('scrolling closes a menu opened by click', async ({ page }) => {
   await page.goto('/groups', { waitUntil: 'domcontentloaded' });
   const { brand } = navOf(page);
@@ -173,7 +192,28 @@ test('a page restored mid-scroll shows the pill without animating', async ({ pag
   await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(500);
   const { nav, brand } = navOf(page);
   await expect(brand).toHaveAttribute('aria-expanded', 'false');
-  expect(await nav.evaluate(el => el.getAnimations().length)).toBe(0);
+  expect(await nav.evaluate(el => el.getAnimations({ subtree: true }).length)).toBe(0);
+});
+
+// Playwright's Chromium runs without the back/forward cache, so the restore event is sent by hand
+test('a back/forward restore mid-page redraws the pill without animating', async ({ page }) => {
+  await page.goto('/groups', { waitUntil: 'domcontentloaded' });
+  const { nav, brand } = navOf(page);
+  await toPill(page);
+  await brand.click();
+  await expect(brand).toHaveAttribute('aria-expanded', 'true');
+  await scrollTo(page, 900);
+  await expect(nav).toHaveClass(/is-scroll-hidden/);
+  await nav.evaluate(el => el.getAnimations({ subtree: true }).forEach(animation => animation.finish()));
+  // Read the state in the same task as the restore, before transitions switch back on
+  const restored = await nav.evaluate(el => {
+    window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true }));
+    return { classes: el.className, animations: el.getAnimations({ subtree: true }).length };
+  });
+  expect(restored.animations).toBe(0);
+  expect(restored.classes).not.toMatch(/is-ready|is-scroll-hidden|is-open/);
+  await expect(brand).toHaveAttribute('aria-expanded', 'false');
+  await expect(nav).toHaveClass(/is-ready/);
 });
 
 test('the nav holds still while changing pages', async ({ page }) => {

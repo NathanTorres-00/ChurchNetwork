@@ -92,6 +92,8 @@ const right = [
     let hidden = false;
     let hovered = false;
     let pinned = false;
+    // After closing it under the mouse (logo, Escape or a link), hover waits until the mouse leaves
+    let hoverBlocked = false;
 
     const sync = () => {
       const asked = pinned || hovered || Boolean(links.querySelector(":focus-visible"));
@@ -107,6 +109,7 @@ const right = [
 
     const close = () => {
       pinned = hovered = false;
+      if (nav.matches(":hover")) hoverBlocked = true;
       if (links.contains(document.activeElement)) brand.focus({ preventScroll: true });
       sync();
     };
@@ -133,12 +136,12 @@ const right = [
       const moved = event.clientX !== pointerX || event.clientY !== pointerY;
       pointerX = event.clientX;
       pointerY = event.clientY;
-      if (!moved || hovered || !nav.contains(event.target as Node)) return;
+      if (!moved || hovered || hoverBlocked || !nav.contains(event.target as Node)) return;
       hovered = true;
       sync();
     });
     nav.addEventListener("pointerleave", () => {
-      hovered = false;
+      hovered = hoverBlocked = false;
       sync();
     });
     nav.addEventListener("focusout", (event) => {
