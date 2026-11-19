@@ -89,6 +89,8 @@ const homePage = defineCollection({
         /** Bold line under the heading ("Are you a Pastor?"). */
         subtitle: z.string().optional(),
         lead: z.string(),
+        /** Where the lead line links to, if anywhere. */
+        leadHref: z.string().optional(),
         university: z.object({
           heading: z.string(),
           body: z.string(),

@@ -16,11 +16,13 @@ interface Props extends HTMLAttributes<"section"> {
   subtitle?: string;
   /** Paragraph under the heading. */
   lead?: string;
+  /** Where the paragraph links to, if anywhere. */
+  leadHref?: string;
   /** The Jesus Disciple University banner under the video rows. */
   university?: { heading: string; body: string; photo: ImageMetadata; button?: Link };
 }
 
-const { render = true, logo, heading, subtitle, lead, university, class: className, ...rest } = Astro.props;
+const { render = true, logo, heading, subtitle, lead, leadHref, university, class: className, ...rest } = Astro.props;
 
 type Card = { label: string; image: string; position?: string; vimeoId?: string };
 const reels: { id: string; title: string; cards: Card[] }[] = [
@@ -67,7 +69,17 @@ const reels: { id: string; title: string; cards: Card[] }[] = [
           <span>{heading}</span>
         </h2>
         {subtitle && <h3 class="jesus-disciple_subtitle">{subtitle}</h3>}
-        {lead && <p class="jesus-disciple_lead text-style-large">{lead}</p>}
+        {lead && (
+          <p class="jesus-disciple_lead text-style-large">
+            {leadHref ? (
+              <a class="jesus-disciple_lead-link" href={leadHref}>
+                {lead}
+              </a>
+            ) : (
+              lead
+            )}
+          </p>
+        )}
       </div>
       {/* public/scripts/home-jd-carousels.js reads .reel-group, .reel, .reel-btn and the cards */}
       {reels.map((reel) => (
@@ -218,6 +230,15 @@ const reels: { id: string; title: string; cards: Card[] }[] = [
     .jesus-disciple_lead {
       margin: 1.125rem 0 0;
       max-width: 58ch;
+    }
+    .jesus-disciple_lead-link {
+      color: inherit;
+      text-decoration: underline;
+      text-decoration-thickness: 0.0625rem;
+      text-underline-offset: 0.18em;
+      &:hover {
+        text-decoration-thickness: 0.125rem;
+      }
     }
     /* Jesus Disciple: three rows of video cards. Each row is a sideways carousel that lines up with the page's text on
      the left and runs off the right edge of the window. Scroll it with a trackpad, a swipe, a mouse drag, the arrow

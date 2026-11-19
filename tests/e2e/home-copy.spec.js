@@ -8,6 +8,8 @@ test('Jesus Disciple shows the pastor heading, bold subheadings and updated JDU 
   for (const name of ['Are you a Pastor?', 'Vision Videos', 'How to use Jesus Disciple', 'Jesus Disciple Stories', 'Jesus Disciple University']) {
     await expect(app.getByRole('heading', { name, level: 3, exact: true })).toHaveCSS('font-weight', '700');
   }
+  await expect(app.getByRole('link', { name: 'Use the Jesus Disciple App to Launch your own New Testament Network' }))
+    .toHaveAttribute('href', 'https://app.jesusdisciple.com');
   await expect(app.locator('.jdu-text')).toHaveText('JDU provides online training for disciple-makers, leaders, pastors, and missionaries from churches and ministries globally.');
 });
 
