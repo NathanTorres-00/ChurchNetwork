@@ -30,7 +30,7 @@ const right = [
   render && page !== "embed" && (
     <header class:list={["site-header", className]} {...rest}>
       <div class="site-header_position">
-        <nav class="site-nav" aria-label="Site navigation">
+        <nav class="site-nav is-top" aria-label="Site navigation">
           <button
             class="site-nav_brand"
             type="button"
@@ -68,6 +68,9 @@ const right = [
 }
 
 <script>
+  // Option B (docs/superpowers/specs/2026-11-19-floating-nav-behavior-design.md): at the top of a wide screen the
+  // bar is open; while reading it's a pill that hides on the way down and returns, closed, on the way up. Only
+  // hover, a click or tap, or keyboard focus open the pill. Scrolling never does.
   const nav = document.querySelector<HTMLElement>(".site-nav");
   const brand = nav?.querySelector<HTMLButtonElement>(".site-nav_brand");
   const links = nav?.querySelector<HTMLElement>(".site-nav_links");
@@ -77,49 +80,86 @@ const right = [
       const limit = document.documentElement.scrollHeight - window.innerHeight;
       return Math.max(0, Math.min(window.scrollY, limit));
     };
+    // Within 5rem of the top counts as the top
+    const atTop = (y: number) => y < 5 * parseFloat(getComputedStyle(document.documentElement).fontSize);
+    // The pill's container query says whether the full bar fits (see --site-nav-mode below)
+    const readWide = () => getComputedStyle(nav).getPropertyValue("--site-nav-mode").trim() !== "narrow";
+
     let previousY = readScroll();
     let distance = 0;
-    let stayOpen = false;
+    let wide = readWide();
+    let isTop = atTop(previousY);
+    let hidden = false;
     let hovered = false;
+    let pinned = false;
 
-    const render = () => {
-      const open = stayOpen || hovered || Boolean(links.querySelector(":focus-visible"));
+    const sync = () => {
+      const asked = pinned || hovered || Boolean(links.querySelector(":focus-visible"));
+      const open = asked || (isTop && wide);
       if (!open && links.contains(document.activeElement)) brand.focus({ preventScroll: true });
-      nav.classList.toggle("is-open", open);
+      nav.classList.toggle("is-top", isTop);
+      nav.classList.toggle("is-open", asked);
+      nav.classList.toggle("is-scroll-hidden", hidden);
       brand.setAttribute("aria-expanded", String(open));
       links.inert = !open;
       links.setAttribute("aria-hidden", String(!open));
     };
 
     const close = () => {
-      stayOpen = hovered = false;
+      pinned = hovered = false;
       if (links.contains(document.activeElement)) brand.focus({ preventScroll: true });
-      render();
+      sync();
     };
 
-    nav.addEventListener("pointerenter", (event) => {
+    // Draw the right state before transitions switch on, so a load or restore mid-page doesn't animate
+    const settle = () => {
+      nav.classList.remove("is-ready");
+      previousY = readScroll();
+      distance = 0;
+      wide = readWide();
+      isTop = atTop(previousY);
+      hidden = hovered = pinned = false;
+      sync();
+      requestAnimationFrame(() => requestAnimationFrame(() => nav.classList.add("is-ready")));
+    };
+
+    // Hover opens the pill only when the mouse really moves onto it. When the pill scrolls back in under a
+    // resting mouse, the browser still reports the pointer entering and moving, at the same spot on screen;
+    // that must not open it, since scrolling never opens the nav
+    let pointerX = NaN;
+    let pointerY = NaN;
+    document.addEventListener("pointermove", (event) => {
       if (event.pointerType !== "mouse") return;
+      const moved = event.clientX !== pointerX || event.clientY !== pointerY;
+      pointerX = event.clientX;
+      pointerY = event.clientY;
+      if (!moved || hovered || !nav.contains(event.target as Node)) return;
       hovered = true;
-      render();
+      sync();
     });
     nav.addEventListener("pointerleave", () => {
       hovered = false;
-      render();
+      sync();
     });
     nav.addEventListener("focusout", (event) => {
       if (nav.contains(event.relatedTarget as Node | null)) return;
       requestAnimationFrame(() => {
         if (nav.contains(document.activeElement)) return;
-        stayOpen = false;
-        render();
+        pinned = false;
+        sync();
       });
     });
     brand.addEventListener("click", () => {
-      if (stayOpen) close();
+      if (isTop && wide) return; // the bar is already open
+      if (pinned) close();
       else {
-        stayOpen = true;
-        render();
+        pinned = true;
+        sync();
       }
+    });
+    // Picking a link closes the menu (a Home section link then scrolls to its section)
+    links.addEventListener("click", (event) => {
+      if ((event.target as Element).closest("a")) close();
     });
     document.addEventListener("click", (event) => {
       if (!nav.contains(event.target as Node)) close();
@@ -134,16 +174,27 @@ const right = [
         const delta = y - previousY;
         previousY = y;
         if (!delta) return;
+        isTop = atTop(y);
+        if (isTop) hidden = false;
         distance = Math.sign(delta) === Math.sign(distance) ? distance + delta : delta;
-        if (Math.abs(distance) < scrollThreshold && y !== 0) return;
-        stayOpen = distance < 0;
-        nav.classList.toggle("is-scroll-hidden", distance > 0);
-        hovered = false;
-        distance = 0;
-        render();
+        if (Math.abs(distance) >= scrollThreshold) {
+          pinned = false;
+          hidden = distance > 0 && !isTop;
+          if (hidden) hovered = false;
+          distance = 0;
+        }
+        sync();
       },
       { passive: true },
     );
+    window.addEventListener("resize", () => {
+      wide = readWide();
+      sync();
+    });
+    window.addEventListener("pageshow", (event) => {
+      if (event.persisted) settle();
+    });
+    settle();
   }
 </script>
 
@@ -175,6 +226,8 @@ const right = [
       --site-nav-reveal: 0.22;
       --site-nav-transition: var(--site-nav-time) cubic-bezier(0.22, 1, 0.36, 1);
       --site-nav-wide: min(56.25rem, calc(100cqw - 1.5rem));
+      /* Read by the script: whether the full bar fits */
+      --site-nav-mode: wide;
       position: relative;
       display: flex;
       align-items: flex-start;
@@ -190,13 +243,25 @@ const right = [
       box-shadow: 0 0.0625rem 0.25rem rgb(31 31 35 / 8%);
       color: var(--heading);
       pointer-events: auto;
-      transition:
-        width var(--site-nav-transition),
-        height var(--site-nav-transition),
-        translate var(--site-nav-transition),
-        opacity var(--site-nav-transition);
+      /* No transitions until the first state is drawn, so a load or restore mid-page doesn't animate */
+      &.is-ready {
+        transition:
+          width var(--site-nav-transition),
+          height var(--site-nav-transition),
+          translate var(--site-nav-transition),
+          opacity var(--site-nav-transition);
+        @media (prefers-reduced-motion: reduce) {
+          transition: none;
+        }
+      }
       &.is-open {
         width: var(--site-nav-wide);
+      }
+      /* At the top of the page the full bar is open, where it fits */
+      @container not (max-width: 56.25rem) {
+        &.is-top {
+          width: var(--site-nav-wide);
+        }
       }
       &.is-scroll-hidden:not(:has(:focus-visible)) {
         translate: 0 calc(-100% - max(0.875rem, env(safe-area-inset-top)) - 0.25rem);
@@ -230,6 +295,7 @@ const right = [
       /* The pill's own width, not the screen's: the open menu stacks into two columns */
       @container (max-width: 56.25rem) {
         --site-nav-wide: min(26.25rem, calc(100cqw - 1.5rem));
+        --site-nav-mode: narrow;
         max-height: calc(100dvh - max(0.875rem, env(safe-area-inset-top)) - 0.75rem);
         &.is-open {
           height: calc(var(--site-nav-bar) + 11.9375rem);
@@ -238,9 +304,6 @@ const right = [
           white-space: normal;
           text-align: center;
         }
-      }
-      @media (prefers-reduced-motion: reduce) {
-        transition: none;
       }
     }
     .site-nav_brand {
@@ -278,10 +341,21 @@ const right = [
       grid-template-columns: minmax(0, 1fr) 11.5rem minmax(0, 1fr);
       align-items: center;
       opacity: 0;
-      transition: opacity calc(var(--site-nav-time) * 0.22) ease;
+      .site-nav.is-ready & {
+        transition: opacity calc(var(--site-nav-time) * 0.22) ease;
+        @media (prefers-reduced-motion: reduce) {
+          transition: none;
+        }
+      }
       .site-nav.is-open & {
         opacity: 1;
         transition-delay: calc(var(--site-nav-time) * var(--site-nav-reveal));
+      }
+      @container not (max-width: 56.25rem) {
+        .site-nav.is-top & {
+          opacity: 1;
+          transition-delay: calc(var(--site-nav-time) * var(--site-nav-reveal));
+        }
       }
       @container (max-width: 56.25rem) {
         inset: var(--site-nav-bar) 0.625rem 0.5rem;
@@ -293,9 +367,6 @@ const right = [
         grid-template-columns: repeat(2, minmax(0, 1fr));
         align-content: start;
         gap: 0.25rem;
-      }
-      @media (prefers-reduced-motion: reduce) {
-        transition: none;
       }
     }
     .site-nav_side {
