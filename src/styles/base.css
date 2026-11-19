@@ -68,8 +68,8 @@
 
   /* Typography styles */
   --display: clamp(3.25rem, 7.4vw, 6rem);
-  --display-min: 52;
-  --display-max: 96;
+  --display-min: 70;
+  --display-max: 121;
   --display-line-height: var(--line-height-small);
   --display-letter-spacing: var(--letter-spacing-tight);
   --display-text-transform: none;
@@ -92,8 +92,8 @@
   --h1-text-wrap: wrap;
 
   --h2: clamp(2rem, 4.2vw, 3.125rem);
-  --h2-min: 32;
-  --h2-max: 50;
+  --h2-min: 41;
+  --h2-max: 60;
   --h2-line-height: 1.08;
   --h2-letter-spacing: var(--letter-spacing-tight);
   --h2-text-transform: none;

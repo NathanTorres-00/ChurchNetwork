@@ -47,7 +47,7 @@ const looks = ["button-primary", "button-secondary"];
       </div>
       <div class="hero-copy" id="hero-copy">
         <h1 class="hero-lead">{lead}</h1>
-        <h1 class="hero-title" aria-label={title.label}>
+        <h2 class="hero-title" aria-label={title.label}>
           <span class="stacked" aria-hidden="true">
             {title.words.map((word, i) => (
               <span class="line">
@@ -59,7 +59,7 @@ const looks = ["button-primary", "button-secondary"];
             {title.prefix} <span class="slot" id="slot"><span class="cursor" id="cursor" /></span>
           </span>
           <span class="solo solo-meter" id="solo-meter" aria-hidden="true" />
-        </h1>
+        </h2>
         <div class="word-dots" id="word-dots" role="group" aria-label="Show a word">
           {title.words.map((word, i) => (
             <button class="word-dot" type="button" style={`--dc: var(--c-${colors[i]})`} aria-label={word}>

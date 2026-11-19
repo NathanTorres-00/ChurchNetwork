@@ -12,3 +12,6 @@ playwright-report/
 
 # local agent settings
 .claude/settings.local.json
+
+# Cloudflare local state
+.wrangler/

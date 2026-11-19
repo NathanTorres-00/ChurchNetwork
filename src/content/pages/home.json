@@ -56,48 +56,53 @@
     ]
   },
   "how": {
+    "_type": "how",
     "heading": "How we do it",
     "lead": "Four ingredients working together to enable multiplication",
     "items": [
       {
+        "_type": "items",
         "heading": "A Clear Process",
-        "body": "to Multiply in each stage",
         "photo": "assets/network-photos/globe/house-church-living-room.webp",
         "button": {
           "label": "Learn more",
           "href": "#",
           "placeholder": true
-        }
+        },
+        "body": "To Multiply in each stage"
       },
       {
+        "_type": "items",
         "heading": "Effective Tools",
-        "body": "to use the process",
         "photo": "assets/network-photos/outdoor-group-study.webp",
         "button": {
           "label": "Learn more",
           "href": "#",
           "placeholder": true
-        }
+        },
+        "body": "To use the process"
       },
       {
+        "_type": "items",
         "heading": "Available Training",
-        "body": "to get started and retain momentum",
         "photo": "assets/network-photos/globe/january-gathering.webp",
         "button": {
           "label": "Learn more",
           "href": "#",
           "placeholder": true
-        }
+        },
+        "body": "To get started and retain momentum"
       },
       {
+        "_type": "items",
         "heading": "On-going Coaching",
-        "body": "for encouragement and guidance",
         "photo": "assets/network-photos/table-discussion.webp",
         "button": {
           "label": "Learn more",
           "href": "#",
           "placeholder": true
-        }
+        },
+        "body": "For encouragement and guidance"
       }
     ]
   },
