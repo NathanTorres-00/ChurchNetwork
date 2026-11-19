@@ -22,28 +22,27 @@ interface Props extends HTMLAttributes<"section"> {
 
 const { render = true, logo, heading, subtitle, lead, university, class: className, ...rest } = Astro.props;
 
-// The three rows of video cards stay in code for now (their links are placeholders until the videos have addresses)
-type Card = { label: string; image: string; position?: string };
+type Card = { label: string; image: string; position?: string; vimeoId?: string };
 const reels: { id: string; title: string; cards: Card[] }[] = [
   {
     id: "reel-vision",
     title: "Vision Videos",
     cards: [
-      { label: "Vision video: Multiplication Matters", image: "/assets/videos/vision-multiplication-matters.jpg" },
-      { label: "Vision video: Think Small", image: "/assets/videos/vision-think-small.jpg" },
+      { label: "Vision video: Multiplication Matters", image: "/assets/videos/vision-multiplication-matters.jpg", vimeoId: "1248454493" },
+      { label: "Vision video: Think Small", image: "/assets/videos/vision-think-small.jpg", vimeoId: "1248454430" },
       { label: "Vision video: New Testament Networks", image: "/assets/videos/vision-new-testament-networks.jpg" },
-      { label: "Vision video: Prayer and Persons of Peace", image: "/assets/videos/vision-prayer-and-persons-of-peace.jpg" },
+      { label: "Vision video: Prayer and Persons of Peace", image: "/assets/videos/vision-prayer-and-persons-of-peace.jpg", vimeoId: "1248454393" },
       { label: "Vision video: Healing and Miracles", image: "/assets/videos/vision-healing-and-miracles.jpg" },
-      { label: "Vision video: It's Your Turn", image: "/assets/videos/vision-its-your-turn.jpg" },
+      { label: "Vision video: It's Your Turn", image: "/assets/videos/vision-its-your-turn.jpg", vimeoId: "1248454477" },
     ],
   },
   {
     id: "reel-how-to",
     title: "How to use Jesus Disciple",
     cards: [
-      { label: "How to use Jesus Disciple: What is it?", image: "/assets/videos/how-to-what-is-it.jpg" },
-      { label: "How to use Jesus Disciple: Why use it?", image: "/assets/videos/how-to-why-use-it.jpg" },
-      { label: "How to use Jesus Disciple: How it works", image: "/assets/videos/how-to-how-it-works.jpg" },
+      { label: "How to use Jesus Disciple: What is it?", image: "/assets/videos/how-to-what-is-it.jpg", vimeoId: "1248454398" },
+      { label: "How to use Jesus Disciple: Why use it?", image: "/assets/videos/how-to-why-use-it.jpg", vimeoId: "1248454392" },
+      { label: "How to use Jesus Disciple: How it works", image: "/assets/videos/how-to-how-it-works.jpg", vimeoId: "1248454391" },
     ],
   },
   {
@@ -87,7 +86,15 @@ const reels: { id: string; title: string; cards: Card[] }[] = [
           <ul class="reel" aria-labelledby={reel.id}>
             {reel.cards.map((card) => (
               <li>
-                <a class="vcard" href="#" data-placeholder draggable="false" aria-label={card.label}>
+                <a
+                  class="vcard"
+                  href={card.vimeoId ? `https://player.vimeo.com/video/${card.vimeoId}?autopause=0&player_id=0&app_id=58479` : "#"}
+                  data-vimeo={card.vimeoId ? "" : undefined}
+                  data-placeholder={card.vimeoId ? undefined : ""}
+                  aria-haspopup={card.vimeoId ? "dialog" : undefined}
+                  draggable="false"
+                  aria-label={card.label}
+                >
                   <img src={card.image} alt="" loading="lazy" draggable="false" style={card.position ? `object-position: ${card.position}` : undefined} />
                   <span class="vplay" aria-hidden="true" />
                 </a>
@@ -96,6 +103,21 @@ const reels: { id: string; title: string; cards: Card[] }[] = [
           </ul>
         </div>
       ))}
+      <dialog class="jesus-disciple_player" aria-label="Jesus Disciple video" closedby="any" data-lenis-prevent>
+        <form method="dialog">
+          <button class="jesus-disciple_player-close" type="submit" autofocus>Close video</button>
+        </form>
+        <div class="jesus-disciple_player-screen">
+          <template>
+            <iframe
+              title="Jesus Disciple video"
+              allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share"
+              referrerpolicy="strict-origin-when-cross-origin"
+              allowfullscreen
+            ></iframe>
+          </template>
+        </div>
+      </dialog>
       {university && (
         <div class="jesus-disciple_layout">
           <div class="jdu">
@@ -122,6 +144,44 @@ const reels: { id: string; title: string; cards: Card[] }[] = [
     </section>
   )
 }
+
+<script>
+  for (const dialog of document.querySelectorAll<HTMLDialogElement>(".jesus-disciple_player")) {
+    const section = dialog.closest<HTMLElement>(".jesus-disciple_wrap");
+    const template = dialog.querySelector("template");
+    const screen = template?.parentElement;
+    const frame = template?.content.querySelector("iframe");
+    if (!section || !screen || !frame) continue;
+
+    let trigger: HTMLAnchorElement | undefined;
+    section.addEventListener("click", (event) => {
+      if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      const target = event.target;
+      const card = target instanceof Element && target.closest<HTMLAnchorElement>("a[data-vimeo]");
+      if (!card || dialog.open) return;
+
+      const player = frame.cloneNode() as HTMLIFrameElement;
+      const title = card.getAttribute("aria-label") ?? "Jesus Disciple video";
+      const url = new URL(card.href);
+      url.searchParams.set("autoplay", "1");
+      player.title = title;
+      player.src = url.href;
+      dialog.setAttribute("aria-label", title);
+      dialog.showModal();
+      event.preventDefault();
+      trigger = card;
+      screen.querySelector("iframe")?.remove();
+      screen.append(player);
+    });
+
+    dialog.addEventListener("close", () => {
+      if (dialog.open) return;
+      screen.querySelector("iframe")?.remove();
+      trigger?.focus({ preventScroll: true });
+      trigger = undefined;
+    });
+  }
+</script>
 
 <style is:global>
   @layer components {
@@ -206,6 +266,45 @@ const reels: { id: string; title: string; cards: Card[] }[] = [
     .vplay { position: absolute; right: 1rem; bottom: 1rem; /* a corner, clear of the poster's title */ width: 3.5rem; height: 3.5rem; border-radius: 50%; background: rgba(255,255,255,.94); box-shadow: 0 0.375rem 1.125rem -0.375rem rgba(31,31,35,.45); display: grid; place-items: center; transition: transform .3s ease; }
     .vplay::before { content: ''; margin-left: 0.25rem; border-left: 0.875rem solid var(--heading); border-top: 0.5625rem solid transparent; border-bottom: 0.5625rem solid transparent; }
     .vcard:hover .vplay { transform: scale(1.08); }
+    html:has(.jesus-disciple_player[open]) {
+      overflow: hidden;
+    }
+    .jesus-disciple_player {
+      width: min(60rem, calc(100% - 2 * var(--site-margin)), max(15rem, calc((100dvh - 6rem) * 16 / 9)));
+      max-width: none;
+      margin: auto;
+      padding: 0;
+      border: 0;
+      border-radius: var(--radius-main);
+      background: #04101c;
+      color: #fff;
+    }
+    .jesus-disciple_player::backdrop {
+      background: rgb(0 0 0 / 80%);
+    }
+    .jesus-disciple_player form {
+      display: flex;
+      justify-content: flex-end;
+      padding: 0.5rem;
+    }
+    .jesus-disciple_player-close {
+      padding: 0.625rem 0.875rem;
+      border: 0;
+      border-radius: var(--radius-round);
+      background: #fff;
+      color: #1f1f23;
+      cursor: pointer;
+    }
+    .jesus-disciple_player-screen {
+      aspect-ratio: 16 / 9;
+      background: #000;
+    }
+    .jesus-disciple_player-screen iframe {
+      display: block;
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
     @media (hover: none) {
       .reel-nav { display: none; }
     }
