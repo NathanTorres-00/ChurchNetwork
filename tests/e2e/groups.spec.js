@@ -21,8 +21,12 @@ test('the Groups page has its sections in order and no errors', async ({ page })
   await expect(page).toHaveURL(/#start$/);
   await expect(page.locator('#start')).toBeInViewport();
 
+  // both kinds of group start on the Jesus Way page in the Jesus Disciple App
+  for (const name of ['Start a church group', 'Start a discipleship group'])
+    await expect(page.getByRole('link', { name })).toHaveAttribute('href', 'https://app.jesusdisciple.com/jesus-way');
+
   // links still to be built stay put
-  await page.getByRole('link', { name: 'Start a church group' }).click();
+  await page.getByRole('link', { name: 'Find resources for you' }).click();
   await expect(page).toHaveURL(/#start$/);
   expect(errors).toEqual([]);
 });

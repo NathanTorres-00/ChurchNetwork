@@ -33,8 +33,7 @@
         ],
         "button": {
           "label": "Start a church group",
-          "href": "#",
-          "placeholder": true
+          "href": "https://app.jesusdisciple.com/jesus-way"
         }
       },
       {
@@ -47,8 +46,7 @@
         ],
         "button": {
           "label": "Start a discipleship group",
-          "href": "#",
-          "placeholder": true
+          "href": "https://app.jesusdisciple.com/jesus-way"
         }
       }
     ],
