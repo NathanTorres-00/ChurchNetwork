@@ -138,3 +138,30 @@ decision Nathan should know about. Each item is marked **fixed**, **accepted** o
   - Clearing this week's `youtubeId` fails the build rather than leaving the video section out.
   - The demos' "Hero" link goes to `hero.html`, which reaches Home on Vercel but not under `npm run preview`
     (the demos stay byte-identical to `main`).
+
+## Cutover branch (`astro-cutover`, 2026-11-19)
+
+Merged AstroMigrate into the last legacy main (`dc5b9f5`), then ported what was left. Nathan's decisions: legacy is
+frozen, Comment mode and Versions stay behind, the floating nav and Groups card trace ship, hosting moves to Cloudflare.
+
+- **Stacki edits and Cloudflare setup** (from the Astro worktree's uncommitted work): How we do it capitalization,
+  larger display and h2 sizes, the hero title as an h2, Tina Shubin's new photo, `wrangler.jsonc`.
+- **Floating nav** (from the live folder, uncommitted there): the header is a centered pill with the logo; links open on
+  hover, click, tap or keyboard; it tucks away scrolling down and comes back open scrolling up. Home's link list gains
+  "Home". **Fixed:** the `.logo` mask moved to `patterns.css`, since the footer and Leadership hero use it.
+  Compared at 390 and 1440: same.
+- **Groups card trace** (from the live folder, uncommitted there): a dash grows around a group card from where the
+  pointer enters, or from the top on keyboard focus. **Not ported:** the button's focus ring in the card's color (Lumos
+  library buttons keep their own focus style).
+- **How we got started story stage** (main dc5b9f5): `StoryStage` replaces `Timeline`. Comment mode's pause is left
+  out. The stages' text follows the Adjust panel's body size (1px under it); on main it was a fixed 16px.
+- **Leadership** (main 49ae49e, 77af76e, 01d9ead): team with roles and photo, Regional Overseers cards by region,
+  ministry and sub-network, The Rock Leaders hidden (`network.show: false`), a short Start a group row, one orbit, and
+  the dot field. **Accepted difference:** the orbit has 20 people, not 18. Main's orbit skipped Manny & Andrea Orozco
+  and Jose & Isabel O'Neill only because their anchors sat in the hidden Rock Leaders list; here each person is
+  anchored where they first appear on the page. The hero's grey now runs behind the floating nav too.
+- **Routes on Cloudflare:** `public/_redirects` sends `/hero`, `/hero.html`, `/index.html`, `/groups.html` and
+  `/leadership.html` to the Astro pages (query and #section kept). Cloudflare drops trailing slashes
+  (`html_handling`), and `trailingSlash: "never"` makes canonical URLs and the sitemap match. The Wix demos at
+  `/network-*.html` redirect once to `/network-*` and still load.
+- **Unit tests** read the old pages from `dc5b9f5` instead of `main`, so they keep working once main is Astro.
