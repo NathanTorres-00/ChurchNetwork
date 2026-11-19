@@ -10,6 +10,7 @@ test('Jesus Disciple shows the pastor heading, bold subheadings and updated JDU 
   }
   await expect(app.getByRole('link', { name: 'Use the Jesus Disciple App to Launch your own New Testament Network' }))
     .toHaveAttribute('href', 'https://app.jesusdisciple.com');
+  await expect(app.locator('.jdu').getByRole('link', { name: 'Learn more' })).toHaveAttribute('href', 'https://www.jesusdisciple.com/jdu');
   await expect(app.locator('.jdu-text')).toHaveText('JDU provides online training for disciple-makers, leaders, pastors, and missionaries from churches and ministries globally.');
 });
 

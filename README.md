@@ -330,8 +330,8 @@ Home (`/`) is a sample church-network landing page with the Pins globe as its he
    with a Vimeo ID open the video in a dialog; every Vision and How-to card has one. The Stories cards have
    placeholder links.
    Under the rows, separate from the videos, a **Jesus Disciple University** banner: a wide photo
-   (`public/assets/jdu-banner.jpg`, 1200px copy `jdu-banner-1200.jpg`) with the title, a short description of JDU and **Learn more** (a
-   placeholder link for now) on its navy wall. On phones the text sits above the photo so it doesn't cover the speaker.
+   (`public/assets/jdu-banner.jpg`, 1200px copy `jdu-banner-1200.jpg`) with the title, a short description of JDU and **Learn more** (links to
+   https://www.jesusdisciple.com/jdu) on its navy wall. On phones the text sits above the photo so it doesn't cover the speaker.
 7. **Find a hub:** full-width rows for Anaheim, Anaheim West, jChurch and Iglesia Mi Ciudad (details to come).
    **Hidden by default**, along with its header link: turn it on with **Show Find a hub** in the Adjust panel's Page
    group (`showHubs` in CONFIG, or `?showHubs=1`). Each row is one link. Hovering a row fills it with that hub's color (the Figma "Hub Row=Hover"), turns its text

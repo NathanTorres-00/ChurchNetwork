@@ -121,8 +121,7 @@
       "photo": "../../assets/images/jdu-banner.jpg",
       "button": {
         "label": "Learn more",
-        "href": "#",
-        "placeholder": true
+        "href": "https://www.jesusdisciple.com/jdu"
       }
     }
   },
