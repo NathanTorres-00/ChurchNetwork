@@ -165,3 +165,29 @@ test.describe('touch navigation', () => {
     await expect(navOf(page).brand).toHaveAttribute('aria-expanded', 'false');
   });
 });
+
+test('a page restored mid-scroll shows the pill without animating', async ({ page }) => {
+  await page.goto('/groups', { waitUntil: 'domcontentloaded' });
+  await scrollTo(page, 900);
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(500);
+  const { nav, brand } = navOf(page);
+  await expect(brand).toHaveAttribute('aria-expanded', 'false');
+  expect(await nav.evaluate(el => el.getAnimations().length)).toBe(0);
+});
+
+test('the nav holds still while changing pages', async ({ page }) => {
+  await page.addInitScript(() => {
+    window.addEventListener('pagereveal', async event => {
+      if (!event.viewTransition) return;
+      await event.viewTransition.ready;
+      window.__navAnims = document
+        .getAnimations()
+        .filter(animation => String(animation.effect?.pseudoElement).includes('site-header')).length;
+    });
+  });
+  await openPage(page);
+  await navOf(page).nav.getByRole('link', { name: 'Groups' }).click();
+  await expect(page).toHaveURL(/\/groups$/);
+  await expect.poll(() => page.evaluate(() => window.__navAnims)).toBe(0);
+});

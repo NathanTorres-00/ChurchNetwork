@@ -1,11 +1,15 @@
 // How we got started: the Story stage (ported from main dc5b9f5)
 import { expect, test } from '@playwright/test';
+import { openPage } from './helpers.js';
 
 const on = page => page.locator('#story .story-stage_step.is-on h3');
 
 test('the stages play by themselves, hold while hovered, and stop once one is chosen', async ({ page }) => {
   await page.clock.install();
-  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  await openPage(page);
+  // From here time stands still unless the test moves it, so a busy machine can't let the stages advance on
+  // their own (the loading screen needed it running)
+  await page.clock.pauseAt((await page.evaluate(() => Date.now())) + 10_000); // ahead of the page clock, which keeps running meanwhile
   const stage = page.locator('#story .story-stage_wrap');
   await stage.scrollIntoViewIfNeeded();
   await expect(stage).toHaveClass(/is-in/);
@@ -15,7 +19,8 @@ test('the stages play by themselves, hold while hovered, and stop once one is ch
 
   await page.clock.runFor(6100);
   await expect(on(page)).toHaveText('Disciples became leaders');
-  await expect(page.locator('#story .story-stage_caption span')).toHaveText('Disciples became leaders', { timeout: 3000 });
+  await page.clock.runFor(600); // the caption decodes over 0.52s
+  await expect(page.locator('#story .story-stage_caption span')).toHaveText('Disciples became leaders');
 
   await page.locator('#story .story-stage_steps').hover();
   await expect(stage).toHaveClass(/is-holding/);

@@ -21,6 +21,16 @@ const { render = true } = Astro.props;
     .site-nav {
       view-transition-name: site-header;
     }
+    /* The nav holds still while the page under it changes: it shows straight away in the new page's state (open
+       at the top on wide screens, a pill on narrow ones) with no morph from the old page's nav */
+    ::view-transition-group(site-header),
+    ::view-transition-new(site-header) {
+      animation: none;
+    }
+    ::view-transition-old(site-header) {
+      animation: none;
+      opacity: 0;
+    }
 
     ::view-transition-group(*) {
       animation-duration: var(--vt-duration, 0.6s);
