@@ -1,5 +1,6 @@
 ---
 import { getEntry } from "astro:content";
+import { getVideos } from "@/utils/videos.ts";
 import Layout from "@/layouts/BaseLayout.astro";
 import Loader from "@/components/utility/Loader.astro";
 import HomeHero from "@/components/section/HomeHero.astro";
@@ -32,6 +33,7 @@ const hubRows = [
   body: "Meeting times and location coming soon.",
   button: { label: "Get directions", href: "#", placeholder: true },
 }));
+const videos = await getVideos();
 ---
 
 <Layout page="home">
@@ -94,7 +96,7 @@ const hubRows = [
   </Section>
 
   <!-- Jesus Disciple: the wordmark, video rows and the Jesus Disciple University banner -->
-  <JesusDisciple logo={app.logo} heading={app.heading} subtitle={app.subtitle} lead={app.lead} leadHref={app.leadHref} university={app.university} />
+  <JesusDisciple logo={app.logo} heading={app.heading} subtitle={app.subtitle} lead={app.lead} leadHref={app.leadHref} series={videos.series} university={app.university} />
 
   <!-- Find a hub (hidden unless turned on in the Adjust panel) -->
   <Section id="hubs">

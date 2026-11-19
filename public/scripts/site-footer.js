@@ -99,7 +99,7 @@
   // Curved edge: mark the last visible section above the footer and make sure it has a solid background
   let above = null;
   function markAbove() {
-    const want = f.edge === 'curve' ? [...main.children].filter(el => el.getClientRects().length).pop() : null;
+    const want = f.edge === 'curve' ? [...main.children].filter(el => el.localName !== 'dialog' && el.getClientRects().length).pop() : null;   // not a pop-up (the video player)
     if (want === above) return;
     if (above) { above.classList.remove('footer-above'); above.style.removeProperty('background-color'); }
     above = want;

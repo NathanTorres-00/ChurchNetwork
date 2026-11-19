@@ -1,0 +1,369 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { formatDuration, type Video } from "@/utils/videos.ts";
+
+interface Props extends HTMLAttributes<"section"> {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+  /** The page's name, read by screen readers (the featured title is the big type). */
+  heading: string;
+  /** The videos the hero shows, one at a time, in order. */
+  videos: Video[];
+  /** Seconds each video stays before the next, while nobody is choosing. */
+  time?: number;
+}
+
+const { render = true, heading, videos, time = 8, class: className, ...rest } = Astro.props;
+---
+
+{
+  render && videos.length > 0 && (
+    <section
+      class:list={["videos-hero_wrap", className]}
+      aria-roledescription="carousel"
+      aria-label="Featured videos"
+      data-time={time}
+      {...rest}
+    >
+      <h1 class="sr-only">{heading}</h1>
+      {videos.map((video, i) => (
+        <article
+          class:list={["videos-hero_slide", i === 0 && "is-on"]}
+          aria-roledescription="slide"
+          aria-label={`${i + 1} of ${videos.length}: ${video.title}`}
+          inert={i !== 0}
+        >
+          {/* The poster, blurred and enlarged, lights the hero in its own colours */}
+          <img class="videos-hero_glow" src={video.poster} alt="" aria-hidden="true" loading={i === 0 ? "eager" : "lazy"} />
+          <div class="videos-hero_layout">
+            <div class="videos-hero_text">
+              <p class="videos-hero_series">{video.series}</p>
+              <h2 class="videos-hero_title">{video.title}</h2>
+              <p class="videos-hero_meta">{formatDuration(video.duration)}</p>
+              {video.description && <p class="videos-hero_description">{video.description}</p>}
+              <a
+                class="videos-hero_play"
+                href={video.src}
+                data-vimeo
+                data-video-title={video.label}
+                aria-haspopup="dialog"
+              >
+                <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+                  <path d="M4 2.5v11l9.5-5.5z" fill="currentColor" />
+                </svg>
+                Play
+              </a>
+            </div>
+            <img
+              class="videos-hero_poster"
+              src={video.poster}
+              alt=""
+              width="760"
+              height="1086"
+              loading={i === 0 ? "eager" : "lazy"}
+            />
+          </div>
+        </article>
+      ))}
+      {videos.length > 1 && (
+        <div class="videos-hero_controls">
+          <button class="videos-hero_arrow" type="button" data-step="-1" aria-label="Previous featured video">
+            <svg viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M12.5 4l-6 6 6 6" />
+            </svg>
+          </button>
+          <div class="videos-hero_dots">
+            {videos.map((video, i) => (
+              <button
+                class="videos-hero_dot"
+                type="button"
+                aria-label={`Show ${video.title}`}
+                aria-current={i === 0 ? "true" : undefined}
+              />
+            ))}
+          </div>
+          <button class="videos-hero_arrow" type="button" data-step="1" aria-label="Next featured video">
+            <svg viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M7.5 4l6 6-6 6" />
+            </svg>
+          </button>
+        </div>
+      )}
+    </section>
+  )
+}
+
+<script>
+  // One featured video at a time. It moves on by itself while nobody is choosing: it waits while the pointer or
+  // keyboard focus is in the hero or the tab is hidden, stops for good once someone picks one, and never moves on
+  // its own with reduced motion.
+  for (const hero of document.querySelectorAll<HTMLElement>(".videos-hero_wrap")) {
+    const slides = [...hero.querySelectorAll<HTMLElement>(".videos-hero_slide")];
+    const dots = [...hero.querySelectorAll<HTMLButtonElement>(".videos-hero_dot")];
+    if (slides.length < 2) continue;
+    const time = Number(hero.dataset.time || 8) * 1000;
+    const still = matchMedia("(prefers-reduced-motion: reduce)");
+    let current = 0;
+    let chosen = false;
+    let holding = false;
+    let timer = 0;
+
+    const show = (index: number) => {
+      current = (index + slides.length) % slides.length;
+      slides.forEach((slide, i) => {
+        slide.classList.toggle("is-on", i === current);
+        slide.inert = i !== current;
+      });
+      dots.forEach((dot, i) => dot.toggleAttribute("aria-current", i === current));
+      dots[current]?.setAttribute("aria-current", "true");
+      schedule();
+    };
+    const schedule = () => {
+      clearTimeout(timer);
+      if (chosen || holding || still.matches || document.hidden) return;
+      timer = window.setTimeout(() => show(current + 1), time);
+    };
+    const choose = (index: number) => {
+      chosen = true;
+      show(index);
+    };
+
+    dots.forEach((dot, i) => dot.addEventListener("click", () => choose(i)));
+    for (const arrow of hero.querySelectorAll<HTMLButtonElement>("[data-step]"))
+      arrow.addEventListener("click", () => choose(current + Number(arrow.dataset.step)));
+    hero.addEventListener("pointerenter", () => {
+      holding = true;
+      schedule();
+    });
+    hero.addEventListener("pointerleave", () => {
+      holding = hero.contains(document.activeElement);
+      schedule();
+    });
+    hero.addEventListener("focusin", () => {
+      holding = true;
+      schedule();
+    });
+    hero.addEventListener("focusout", (event) => {
+      if (hero.contains(event.relatedTarget as Node | null)) return;
+      holding = hero.matches(":hover");
+      schedule();
+    });
+    document.addEventListener("visibilitychange", schedule);
+    still.addEventListener("change", schedule);
+    schedule();
+  }
+</script>
+
+<style is:global>
+  @layer components {
+    /* Videos: a screening room in Jesus Disciple's navy. The featured video's poster lights the hero */
+    .videos-hero_wrap {
+      --videos-night: #04101c;
+      --videos-edge: max(var(--site-margin), calc((100% - var(--max-width-main)) / 2));
+      position: relative;
+      display: grid;
+      overflow: hidden;
+      isolation: isolate;
+      min-height: min(52rem, 92svh);
+      background: var(--videos-night);
+      color: #fff;
+    }
+    .videos-hero_slide {
+      grid-area: 1 / 1;
+      position: relative;
+      display: grid;
+      opacity: 0;
+      visibility: hidden;
+      transition:
+        opacity 0.9s ease,
+        visibility 0s linear 0.9s;
+      &.is-on {
+        opacity: 1;
+        visibility: visible;
+        transition:
+          opacity 0.9s ease,
+          visibility 0s;
+      }
+      /* Readable text on the left, and the light fading into the rows below */
+      &::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        background:
+          linear-gradient(to top, var(--videos-night) 0%, transparent 35%),
+          linear-gradient(to right, rgb(4 16 28 / 85%) 0%, rgb(4 16 28 / 35%) 55%, rgb(4 16 28 / 10%) 100%);
+      }
+    }
+    .videos-hero_glow {
+      position: absolute;
+      inset: -15%;
+      z-index: -2;
+      width: 130%;
+      height: 130%;
+      object-fit: cover;
+      filter: blur(4.5rem) saturate(1.5) brightness(0.62);
+      transform: scale(1.1);
+    }
+    .videos-hero_layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: clamp(2rem, 6vw, 6rem);
+      padding: calc(var(--nav-height) + 3rem) var(--videos-edge) 7rem;
+      @media (max-width: 47.9375em) {
+        grid-template-columns: 1fr;
+        align-content: end;
+        gap: 2rem;
+        padding-bottom: 6.5rem;
+      }
+    }
+    .videos-hero_text {
+      max-width: 36rem;
+      @media (max-width: 47.9375em) {
+        order: 2;
+      }
+    }
+    .videos-hero_series {
+      margin: 0;
+      color: rgb(255 255 255 / 72%);
+      font-size: 1.0625rem;
+      font-weight: var(--primary-medium);
+    }
+    .videos-hero_title {
+      margin: 0.5rem 0 0;
+      color: #fff;
+      font-size: clamp(2.75rem, 7vw, 5.5rem);
+      font-weight: 700;
+      line-height: 0.95;
+      letter-spacing: -0.04em;
+      text-wrap: balance;
+    }
+    .videos-hero_meta {
+      margin: 1.125rem 0 0;
+      color: rgb(255 255 255 / 72%);
+      font-size: 0.9375rem;
+    }
+    .videos-hero_description {
+      max-width: 46ch;
+      margin: 1rem 0 0;
+      color: rgb(255 255 255 / 86%);
+      font-size: 1.0625rem;
+      line-height: 1.5;
+    }
+    .videos-hero_play {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.625rem;
+      margin-top: 1.75rem;
+      padding: 0.9375rem 2.25rem 0.9375rem 1.75rem;
+      border-radius: var(--radius-round);
+      background: #fff;
+      color: var(--videos-night, #04101c);
+      font-size: 1.0625rem;
+      font-weight: var(--primary-bold);
+      text-decoration: none;
+      transition: transform 0.2s ease;
+      &:hover {
+        transform: scale(1.03);
+      }
+      &:focus-visible {
+        outline: 0.1875rem solid #fff;
+        outline-offset: 0.25rem;
+      }
+    }
+    .videos-hero_poster {
+      width: clamp(13rem, 24vw, 21rem);
+      height: auto;
+      aspect-ratio: 760 / 1086;
+      object-fit: cover;
+      border-radius: calc(var(--radius-main) * 0.75);
+      box-shadow: 0 2rem 4rem -1.5rem rgb(0 0 0 / 65%);
+      @media (max-width: 47.9375em) {
+        width: min(13rem, 52vw);
+        order: 1;
+      }
+    }
+    .videos-hero_controls {
+      position: absolute;
+      left: var(--videos-edge);
+      bottom: 2.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .videos-hero_dots {
+      display: flex;
+      gap: 0.25rem;
+    }
+    .videos-hero_dot {
+      position: relative;
+      width: 1.5rem;
+      height: 1.5rem;
+      padding: 0;
+      border: 0;
+      background: none;
+      cursor: pointer;
+      &::before {
+        content: "";
+        position: absolute;
+        inset: 50% auto auto 50%;
+        width: 0.5rem;
+        height: 0.5rem;
+        border-radius: 50%;
+        background: rgb(255 255 255 / 40%);
+        translate: -50% -50%;
+        transition:
+          width 0.3s ease,
+          background 0.3s ease;
+      }
+      &[aria-current]::before {
+        width: 1.25rem;
+        border-radius: 0.25rem;
+        background: #fff;
+      }
+      &:focus-visible {
+        outline: 0.125rem solid #fff;
+        outline-offset: 0;
+        border-radius: 50%;
+      }
+    }
+    .videos-hero_arrow {
+      display: grid;
+      place-items: center;
+      width: 2.5rem;
+      height: 2.5rem;
+      padding: 0;
+      border: 0.0625rem solid rgb(255 255 255 / 28%);
+      border-radius: 50%;
+      background: rgb(255 255 255 / 8%);
+      color: #fff;
+      cursor: pointer;
+      & svg {
+        width: 1.125rem;
+        height: 1.125rem;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.8;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      &:hover {
+        background: rgb(255 255 255 / 16%);
+      }
+      &:focus-visible {
+        outline: 0.125rem solid #fff;
+        outline-offset: 0.125rem;
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .videos-hero_slide,
+      .videos-hero_slide.is-on {
+        transition: none;
+      }
+      .videos-hero_play:hover {
+        transform: none;
+      }
+    }
+  }
+</style>

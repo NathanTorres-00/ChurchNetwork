@@ -1,0 +1,46 @@
+{
+  "heading": "Videos",
+  "featured": [
+    "multiplication-matters",
+    "what-is-it",
+    "think-small",
+    "its-your-turn"
+  ],
+  "series": [
+    {
+      "id": "vision",
+      "heading": "Vision Videos",
+      "label": "Vision video",
+      "videos": [
+        "multiplication-matters",
+        "think-small",
+        "new-testament-networks",
+        "prayer-and-persons-of-peace",
+        "healing-and-miracles",
+        "its-your-turn"
+      ]
+    },
+    {
+      "id": "how-to",
+      "heading": "How to use Jesus Disciple",
+      "label": "How to use Jesus Disciple",
+      "videos": [
+        "what-is-it",
+        "why-use-it",
+        "how-it-works"
+      ]
+    },
+    {
+      "id": "stories",
+      "heading": "Jesus Disciple Stories",
+      "label": "Jesus Disciple story",
+      "videos": [
+        "story-helen-horton-leslie-bley",
+        "story-anita-and-jose",
+        "story-anastasia-brownbridge",
+        "story-jose-serrano",
+        "story-brandon-and-rocco"
+      ]
+    }
+  ]
+}

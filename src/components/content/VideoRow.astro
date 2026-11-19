@@ -1,0 +1,216 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { formatDuration, type Video } from "@/utils/videos.ts";
+
+interface Props extends HTMLAttributes<"section"> {
+  /** Set to `false` to omit the component. */
+  render?: boolean;
+  /** Used for the heading's id. */
+  id: string;
+  /** The series' name, above the row. */
+  heading: string;
+  /** The videos, in order. Each opens in the page's VideoPlayer. */
+  videos: Video[];
+}
+
+const { render = true, id, heading, videos, class: className, ...rest } = Astro.props;
+const headingId = `video-row-${id}`;
+---
+
+{
+  render && videos.length > 0 && (
+    <section class:list={["video-row_wrap", className]} aria-labelledby={headingId} {...rest}>
+      <div class="video-row_head">
+        <h2 class="video-row_title" id={headingId}>
+          {heading}
+        </h2>
+        <div class="video-row_nav">
+          <button class="video-row_arrow" type="button" data-step="-1" aria-label={`Scroll ${heading} back`}>
+            <svg viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M12.5 4l-6 6 6 6" />
+            </svg>
+          </button>
+          <button class="video-row_arrow" type="button" data-step="1" aria-label={`Scroll ${heading} forward`}>
+            <svg viewBox="0 0 20 20" aria-hidden="true">
+              <path d="M7.5 4l6 6-6 6" />
+            </svg>
+          </button>
+        </div>
+      </div>
+      <ul class="video-row_list">
+        {videos.map((video) => (
+          <li class="video-row_item">
+            <a class="video-row_tile" href={video.src} data-vimeo aria-haspopup="dialog" aria-label={video.label}>
+              <img class="video-row_poster" src={video.poster} alt="" width="760" height="1086" loading="lazy" />
+              <span class="video-row_name" aria-hidden="true">
+                {video.title}
+              </span>
+              <span class="video-row_length" aria-hidden="true">
+                {formatDuration(video.duration, true)}
+              </span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )
+}
+
+<script>
+  // The arrows page the row by about a screenful; trackpads, swipes and Tab scroll it as usual
+  for (const row of document.querySelectorAll<HTMLElement>(".video-row_wrap")) {
+    const list = row.querySelector<HTMLElement>(".video-row_list");
+    const arrows = [...row.querySelectorAll<HTMLButtonElement>(".video-row_arrow")];
+    if (!list) continue;
+    const update = () => {
+      const end = list.scrollWidth - list.clientWidth;
+      arrows[0].disabled = list.scrollLeft <= 1;
+      arrows[1].disabled = list.scrollLeft >= end - 1;
+      row.classList.toggle("is-static", end <= 1);
+    };
+    for (const arrow of arrows)
+      arrow.addEventListener("click", () =>
+        list.scrollBy({ left: Number(arrow.dataset.step) * list.clientWidth * 0.8, behavior: "smooth" }),
+      );
+    list.addEventListener("scroll", update, { passive: true });
+    new ResizeObserver(update).observe(list);
+    update();
+  }
+</script>
+
+<style is:global>
+  @layer components {
+    /* A series of tall posters that runs off the right edge. Hover or focus lifts a poster, like a TV's focus */
+    .video-row_wrap {
+      --video-row-edge: max(var(--site-margin), calc((100% - var(--max-width-main)) / 2));
+      color: #fff;
+      & + & {
+        margin-top: clamp(3rem, 6vw, 4.5rem);
+      }
+    }
+    .video-row_head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding-inline: var(--video-row-edge);
+    }
+    .video-row_title {
+      margin: 0;
+      color: #fff;
+      font-size: clamp(1.375rem, 2.6vw, 1.75rem);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .video-row_nav {
+      display: flex;
+      gap: 0.5rem;
+      .video-row_wrap.is-static & {
+        display: none;
+      }
+      @media (hover: none) {
+        display: none;
+      }
+    }
+    .video-row_arrow {
+      display: grid;
+      place-items: center;
+      width: 2.5rem;
+      height: 2.5rem;
+      padding: 0;
+      border: 0.0625rem solid rgb(255 255 255 / 28%);
+      border-radius: 50%;
+      background: transparent;
+      color: #fff;
+      cursor: pointer;
+      & svg {
+        width: 1.125rem;
+        height: 1.125rem;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.8;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      &:hover:not(:disabled) {
+        background: rgb(255 255 255 / 10%);
+      }
+      &:disabled {
+        opacity: 0.3;
+        cursor: default;
+      }
+      &:focus-visible {
+        outline: 0.125rem solid #fff;
+        outline-offset: 0.125rem;
+      }
+    }
+    .video-row_list {
+      display: flex;
+      gap: clamp(1rem, 2vw, 1.5rem);
+      margin: 0;
+      /* Room for a lifted poster and its shadow, so the scroller doesn't clip them */
+      padding: 1.25rem var(--video-row-edge) 1.5rem;
+      overflow-x: auto;
+      list-style: none;
+      scroll-snap-type: x mandatory;
+      scroll-padding-inline: var(--video-row-edge);
+      scrollbar-width: none;
+      &::-webkit-scrollbar {
+        display: none;
+      }
+    }
+    .video-row_item {
+      flex: none;
+      width: clamp(9.5rem, 17vw, 14.5rem);
+      scroll-snap-align: start;
+    }
+    .video-row_tile {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 0.75rem 0.5rem;
+      color: #fff;
+      text-decoration: none;
+      outline: none;
+    }
+    .video-row_poster {
+      grid-column: 1 / -1;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 760 / 1086;
+      object-fit: cover;
+      border-radius: calc(var(--radius-main) * 0.6);
+      box-shadow: 0 0.75rem 1.5rem -1rem rgb(0 0 0 / 50%);
+      transition:
+        transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1),
+        box-shadow 0.35s ease;
+      .video-row_tile:hover &,
+      .video-row_tile:focus-visible & {
+        transform: translateY(-0.375rem) scale(1.04);
+        box-shadow: 0 1.75rem 2.5rem -1.25rem rgb(0 0 0 / 75%);
+      }
+      .video-row_tile:focus-visible & {
+        outline: 0.1875rem solid #fff;
+        outline-offset: 0.25rem;
+      }
+    }
+    .video-row_name {
+      font-size: 0.9375rem;
+      font-weight: var(--primary-medium);
+      line-height: 1.3;
+    }
+    .video-row_length {
+      color: rgb(255 255 255 / 60%);
+      font-size: 0.875rem;
+      font-variant-numeric: tabular-nums;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .video-row_poster {
+        transition: none;
+      }
+      .video-row_tile:hover .video-row_poster,
+      .video-row_tile:focus-visible .video-row_poster {
+        transform: none;
+      }
+    }
+  }
+</style>

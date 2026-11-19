@@ -6,7 +6,7 @@ interface Props extends HTMLAttributes<"header"> {
   /** Set to `false` to omit the component. */
   render?: boolean;
   /** The page the header sits on. Home links to its own sections; other pages link back to them. */
-  page: "home" | "groups" | "leadership" | "embed" | "other";
+  page: "home" | "groups" | "leadership" | "videos" | "embed" | "other";
 }
 
 const { render = true, page, class: className, ...rest } = Astro.props;
@@ -22,6 +22,7 @@ const left = [
 const right = [
   { label: "Groups", href: "/groups", current: page === "groups" },
   { label: "Leadership", href: "/leadership", current: page === "leadership", render: showLeadership() },
+  { label: "Videos", href: "/videos", current: page === "videos" },
   { label: "App", href: `${home}#app` },
 ].filter((link) => link.render !== false);
 ---

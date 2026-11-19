@@ -189,6 +189,39 @@ const leadershipPage = defineCollection({
     }),
 });
 
+/** The site's videos, one entry each (the file name is the id). Played on Vimeo; the poster is the tall artwork. */
+const videos = defineCollection({
+  loader: glob({ pattern: "*.json", base: "./src/content/videos" }),
+  schema: z.object({
+    title: z.string(),
+    vimeoId: z.string(),
+    /** Tall poster (7:10) in public/, e.g. /assets/videos/… */
+    poster: z.string(),
+    /** Length in seconds. */
+    duration: z.number().int().positive(),
+    /** One or two sentences about the video, shown in the Videos page's hero when it's featured. */
+    description: z.string().optional(),
+  }),
+});
+
+/** The Videos page: which videos the hero features, and the rows, in order. Home's Jesus Disciple rows use the same series. */
+const videosPage = defineCollection({
+  loader: one("pages/videos.json", "videos"),
+  schema: z.object({
+    heading: z.string(),
+    featured: z.array(reference("videos")).min(1),
+    series: z.array(
+      z.object({
+        id: z.string(),
+        heading: z.string(),
+        /** How a video in this series is named to screen readers, before its title ("Vision video: Think Small"). */
+        label: z.string(),
+        videos: z.array(reference("videos")).min(1),
+      }),
+    ),
+  }),
+});
+
 const footer = defineCollection({
   loader: one("footer.json", "footer"),
   schema: z.object({
@@ -210,4 +243,4 @@ const footer = defineCollection({
   }),
 });
 
-export const collections = { weeklyVideo, leaders, groupStories, homePage, groupsPage, leadershipPage, footer };
+export const collections = { weeklyVideo, leaders, groupStories, homePage, groupsPage, leadershipPage, videos, videosPage, footer };

@@ -326,9 +326,8 @@ Home (`/`) is a sample church-network landing page with the Pins globe as its he
    bottom corner, off the titles). Vision Videos and How to use Jesus Disciple use the English video posters
    (`public/assets/videos/`, web-sized copies of the `Vision & How-To English` folder): Multiplication Matters, Think Small,
    New Testament Networks, Prayer and Persons of Peace, Healing and Miracles and It's Your Turn; then What is it?,
-   Why use it? and How it works. Stories has Anastasia (`public/assets/anastasia-thumbnail.jpg`) and stock photos. Cards
-   with a Vimeo ID open the video in a dialog; every Vision and How-to card has one. The Stories cards have
-   placeholder links.
+   Why use it? and How it works. Jesus Disciple Stories has five videos, with posters drawn from the stories. All three
+   series come from `src/content/pages/videos.json`, appear on Home and `/videos`, and play in the shared Vimeo dialog.
    Under the rows, separate from the videos, a **Jesus Disciple University** banner: a wide photo
    (`public/assets/jdu-banner.jpg`, 1200px copy `jdu-banner-1200.jpg`) with the title, a short description of JDU and **Learn more** (links to
    https://www.jesusdisciple.com/jdu) on its navy wall. On phones the text sits above the photo so it doesn't cover the speaker.

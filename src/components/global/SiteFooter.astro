@@ -7,7 +7,7 @@ interface Props extends HTMLAttributes<"footer"> {
   /** Set to `false` to omit the component. */
   render?: boolean;
   /** The page the footer sits on. Home's links point at its own sections. */
-  page: "home" | "groups" | "leadership" | "embed" | "other";
+  page: "home" | "groups" | "leadership" | "videos" | "embed" | "other";
 }
 
 const { render = true, page, class: className, ...rest } = Astro.props;

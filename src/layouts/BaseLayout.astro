@@ -9,7 +9,7 @@ import type { SeoProps } from "@/types.ts";
 
 type Props = SeoProps & {
   /** The page being shown. Sets the header's links and the footer's; `embed` shows neither. */
-  page: "home" | "groups" | "leadership" | "embed" | "other";
+  page: "home" | "groups" | "leadership" | "videos" | "embed" | "other";
 };
 
 const { page, ...seo } = Astro.props;

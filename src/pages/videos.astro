@@ -1,0 +1,38 @@
+---
+import Layout from "@/layouts/BaseLayout.astro";
+import VideosHero from "@/components/section/VideosHero.astro";
+import VideoRow from "@/components/content/VideoRow.astro";
+import VideoPlayer from "@/components/global/VideoPlayer.astro";
+import { getVideos } from "@/utils/videos.ts";
+
+// The videos and their order live in src/content/videos/ and src/content/pages/videos.json
+const { heading, featured, series } = await getVideos();
+---
+
+<Layout
+  title={heading}
+  description="Vision videos and how-to videos for the Jesus Disciple App, from The Rock Network."
+  page="videos"
+>
+  <div class="videos-page_wrap">
+    <VideosHero heading={heading} videos={featured} />
+    <div class="videos-page_rows">
+      {series.map((group) => <VideoRow id={group.id} heading={group.heading} videos={group.videos} />)}
+    </div>
+  </div>
+  <Fragment slot="after">
+    <VideoPlayer />
+  </Fragment>
+</Layout>
+
+<style is:global>
+  @layer components {
+    /* The whole page is the screening room, down to the footer */
+    .videos-page_wrap {
+      background: #04101c;
+    }
+    .videos-page_rows {
+      padding-block: clamp(1rem, 3vw, 2rem) clamp(5rem, 10vw, 8rem);
+    }
+  }
+</style>

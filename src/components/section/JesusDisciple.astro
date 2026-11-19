@@ -2,6 +2,8 @@
 import type { HTMLAttributes } from "astro/types";
 import type { ImageMetadata } from "astro";
 import { Image } from "astro:assets";
+import VideoPlayer from "@/components/global/VideoPlayer.astro";
+import type { VideoSeries } from "@/utils/videos.ts";
 
 type Link = { label: string; href: string; placeholder?: boolean };
 
@@ -18,46 +20,14 @@ interface Props extends HTMLAttributes<"section"> {
   lead?: string;
   /** Where the paragraph links to, if anywhere. */
   leadHref?: string;
+  /** The video rows, from the Videos page's series (src/content/pages/videos.json). */
+  series?: VideoSeries[];
   /** The Jesus Disciple University banner under the video rows. */
   university?: { heading: string; body: string; photo: ImageMetadata; button?: Link };
 }
 
-const { render = true, logo, heading, subtitle, lead, leadHref, university, class: className, ...rest } = Astro.props;
+const { render = true, logo, heading, subtitle, lead, leadHref, series = [], university, class: className, ...rest } = Astro.props;
 
-type Card = { label: string; image: string; position?: string; vimeoId?: string };
-const reels: { id: string; title: string; cards: Card[] }[] = [
-  {
-    id: "reel-vision",
-    title: "Vision Videos",
-    cards: [
-      { label: "Vision video: Multiplication Matters", image: "/assets/videos/vision-multiplication-matters.jpg", vimeoId: "1248454493" },
-      { label: "Vision video: Think Small", image: "/assets/videos/vision-think-small.jpg", vimeoId: "1248454430" },
-      { label: "Vision video: New Testament Networks", image: "/assets/videos/vision-new-testament-networks.jpg", vimeoId: "1248457128" },
-      { label: "Vision video: Prayer and Persons of Peace", image: "/assets/videos/vision-prayer-and-persons-of-peace.jpg", vimeoId: "1248454393" },
-      { label: "Vision video: Healing and Miracles", image: "/assets/videos/vision-healing-and-miracles.jpg", vimeoId: "1248457129" },
-      { label: "Vision video: It's Your Turn", image: "/assets/videos/vision-its-your-turn.jpg", vimeoId: "1248454477" },
-    ],
-  },
-  {
-    id: "reel-how-to",
-    title: "How to use Jesus Disciple",
-    cards: [
-      { label: "How to use Jesus Disciple: What is it?", image: "/assets/videos/how-to-what-is-it.jpg", vimeoId: "1248454398" },
-      { label: "How to use Jesus Disciple: Why use it?", image: "/assets/videos/how-to-why-use-it.jpg", vimeoId: "1248454392" },
-      { label: "How to use Jesus Disciple: How it works", image: "/assets/videos/how-to-how-it-works.jpg", vimeoId: "1248454391" },
-    ],
-  },
-  {
-    id: "reel-stories",
-    title: "Jesus Disciple Stories",
-    cards: [
-      { label: "Anastasia's story", image: "/assets/anastasia-thumbnail.jpg", position: "50% 30%" },
-      { label: "Story 2", image: "https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?w=760&h=1170&fit=crop&q=75&auto=format" },
-      { label: "Story 3", image: "https://images.unsplash.com/photo-1491438590914-bc09fcaaf77a?w=760&h=1170&fit=crop&q=75&auto=format" },
-      { label: "Story 4", image: "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?w=760&h=1170&fit=crop&q=75&auto=format" },
-    ],
-  },
-];
 ---
 
 {
@@ -82,32 +52,31 @@ const reels: { id: string; title: string; cards: Card[] }[] = [
         )}
       </div>
       {/* public/scripts/home-jd-carousels.js reads .reel-group, .reel, .reel-btn and the cards */}
-      {reels.map((reel) => (
+      {series.map((reel) => (
         <div class="reel-group">
           <div class="jesus-disciple_layout reel-head">
-            <h3 class="reel-title" id={reel.id}>{reel.title}</h3>
+            <h3 class="reel-title" id={`reel-${reel.id}`}>{reel.heading}</h3>
             <div class="reel-nav">
-              <button class="reel-btn" type="button" data-dir="-1" aria-label={`Previous ${reel.title}`}>
+              <button class="reel-btn" type="button" data-dir="-1" aria-label={`Previous ${reel.heading}`}>
                 <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4l-6 6 6 6" /></svg>
               </button>
-              <button class="reel-btn" type="button" data-dir="1" aria-label={`Next ${reel.title}`}>
+              <button class="reel-btn" type="button" data-dir="1" aria-label={`Next ${reel.heading}`}>
                 <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 4l6 6-6 6" /></svg>
               </button>
             </div>
           </div>
-          <ul class="reel" aria-labelledby={reel.id}>
-            {reel.cards.map((card) => (
+          <ul class="reel" aria-labelledby={`reel-${reel.id}`}>
+            {reel.videos.map((video) => (
               <li>
                 <a
                   class="vcard"
-                  href={card.vimeoId ? `https://player.vimeo.com/video/${card.vimeoId}?autopause=0&player_id=0&app_id=58479` : "#"}
-                  data-vimeo={card.vimeoId ? "" : undefined}
-                  data-placeholder={card.vimeoId ? undefined : ""}
-                  aria-haspopup={card.vimeoId ? "dialog" : undefined}
+                  href={video.src}
+                  data-vimeo
+                  aria-haspopup="dialog"
                   draggable="false"
-                  aria-label={card.label}
+                  aria-label={video.label}
                 >
-                  <img src={card.image} alt="" loading="lazy" draggable="false" style={card.position ? `object-position: ${card.position}` : undefined} />
+                  <img src={video.poster} alt="" loading="lazy" draggable="false" />
                   <span class="vplay" aria-hidden="true" />
                 </a>
               </li>
@@ -115,25 +84,7 @@ const reels: { id: string; title: string; cards: Card[] }[] = [
           </ul>
         </div>
       ))}
-      <dialog class="jesus-disciple_player" aria-label="Jesus Disciple video" closedby="any" data-lenis-prevent>
-        <form method="dialog">
-          <button class="jesus-disciple_player-close" type="submit" aria-label="Close video" autofocus>
-            <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
-              <path d="M3.5 3.5l9 9M12.5 3.5l-9 9" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
-            </svg>
-          </button>
-        </form>
-        <div class="jesus-disciple_player-screen">
-          <template>
-            <iframe
-              title="Jesus Disciple video"
-              allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media; web-share"
-              referrerpolicy="strict-origin-when-cross-origin"
-              allowfullscreen
-            ></iframe>
-          </template>
-        </div>
-      </dialog>
+      <VideoPlayer />
       {university && (
         <div class="jesus-disciple_layout">
           <div class="jdu">
@@ -160,44 +111,6 @@ const reels: { id: string; title: string; cards: Card[] }[] = [
     </section>
   )
 }
-
-<script>
-  for (const dialog of document.querySelectorAll<HTMLDialogElement>(".jesus-disciple_player")) {
-    const section = dialog.closest<HTMLElement>(".jesus-disciple_wrap");
-    const template = dialog.querySelector("template");
-    const screen = template?.parentElement;
-    const frame = template?.content.querySelector("iframe");
-    if (!section || !screen || !frame) continue;
-
-    let trigger: HTMLAnchorElement | undefined;
-    section.addEventListener("click", (event) => {
-      if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-      const target = event.target;
-      const card = target instanceof Element && target.closest<HTMLAnchorElement>("a[data-vimeo]");
-      if (!card || dialog.open) return;
-
-      const player = frame.cloneNode() as HTMLIFrameElement;
-      const title = card.getAttribute("aria-label") ?? "Jesus Disciple video";
-      const url = new URL(card.href);
-      url.searchParams.set("autoplay", "1");
-      player.title = title;
-      player.src = url.href;
-      dialog.setAttribute("aria-label", title);
-      dialog.showModal();
-      event.preventDefault();
-      trigger = card;
-      screen.querySelector("iframe")?.remove();
-      screen.append(player);
-    });
-
-    dialog.addEventListener("close", () => {
-      if (dialog.open) return;
-      screen.querySelector("iframe")?.remove();
-      trigger?.focus({ preventScroll: true });
-      trigger = undefined;
-    });
-  }
-</script>
 
 <style is:global>
   @layer components {
@@ -291,68 +204,6 @@ const reels: { id: string; title: string; cards: Card[] }[] = [
     .vplay { position: absolute; right: 1rem; bottom: 1rem; /* a corner, clear of the poster's title */ width: 3.5rem; height: 3.5rem; border-radius: 50%; background: rgba(255,255,255,.94); box-shadow: 0 0.375rem 1.125rem -0.375rem rgba(31,31,35,.45); display: grid; place-items: center; transition: transform .3s ease; }
     .vplay::before { content: ''; margin-left: 0.25rem; border-left: 0.875rem solid var(--heading); border-top: 0.5625rem solid transparent; border-bottom: 0.5625rem solid transparent; }
     .vcard:hover .vplay { transform: scale(1.08); }
-    html:has(.jesus-disciple_player[open]) {
-      overflow: hidden;
-    }
-    /* The player is just the video: a 16:9 box it fills edge to edge, with a small round close button outside its
-       top-right corner (Vimeo keeps its own buttons in the video's top-right corner) */
-    .jesus-disciple_player {
-      --player-close: 2.5rem;
-      width: min(
-        60rem,
-        calc(100% - 2 * var(--site-margin)),
-        max(15rem, calc((100dvh - 2 * var(--player-close) - 3rem) * 16 / 9))
-      );
-      max-width: none;
-      max-height: none;
-      margin: auto;
-      padding: 0;
-      overflow: visible;
-      border: 0;
-      background: transparent;
-      color: #fff;
-    }
-    .jesus-disciple_player::backdrop {
-      background: rgb(0 0 0 / 80%);
-    }
-    .jesus-disciple_player form {
-      position: absolute;
-      right: 0;
-      bottom: 100%;
-      padding-bottom: 0.625rem;
-    }
-    .jesus-disciple_player-close {
-      display: grid;
-      place-items: center;
-      width: var(--player-close);
-      height: var(--player-close);
-      padding: 0;
-      border: 0;
-      border-radius: 50%;
-      background: rgb(255 255 255 / 92%);
-      color: #1f1f23;
-      cursor: pointer;
-      transition: background 0.2s ease;
-      &:hover {
-        background: #fff;
-      }
-      &:focus-visible {
-        outline: 0.125rem solid #fff;
-        outline-offset: 0.1875rem;
-      }
-    }
-    .jesus-disciple_player-screen {
-      aspect-ratio: 16 / 9;
-      overflow: hidden;
-      border-radius: var(--radius-main);
-      background: #000;
-    }
-    .jesus-disciple_player-screen iframe {
-      display: block;
-      width: 100%;
-      height: 100%;
-      border: 0;
-    }
     @media (hover: none) {
       .reel-nav { display: none; }
     }
