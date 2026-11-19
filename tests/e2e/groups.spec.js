@@ -16,18 +16,15 @@ test('the Groups page has its sections in order and no errors', async ({ page })
   await expect(page.locator('#story blockquote')).toContainText('closest thing to family');
   await expect(page.locator('#team .team-member_wrap')).toHaveCount(4);   // four leaders (main 5f3b046)
 
-  // the hero's Start a group jumps to the two kinds of group
-  await page.locator('.hero-card').getByRole('link', { name: 'Start a group' }).click();
-  await expect(page).toHaveURL(/#start$/);
-  await expect(page.locator('#start')).toBeInViewport();
-
-  // both kinds of group start on the Jesus Way page in the Jesus Disciple App
+  // the hero's Start a group and both kinds of group start on the Jesus Way page in the Jesus Disciple App
+  const jesusWay = 'https://app.jesusdisciple.com/jesus-way';
+  await expect(page.locator('.hero-card').getByRole('link', { name: 'Start a group' })).toHaveAttribute('href', jesusWay);
   for (const name of ['Start a church group', 'Start a discipleship group'])
-    await expect(page.getByRole('link', { name })).toHaveAttribute('href', 'https://app.jesusdisciple.com/jesus-way');
+    await expect(page.getByRole('link', { name })).toHaveAttribute('href', jesusWay);
 
   // links still to be built stay put
   await page.getByRole('link', { name: 'Find resources for you' }).click();
-  await expect(page).toHaveURL(/#start$/);
+  await expect(page).toHaveURL(/\/groups#?$/);
   expect(errors).toEqual([]);
 });
 
