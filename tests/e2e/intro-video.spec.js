@@ -1,8 +1,8 @@
-// What is a New Testament Church Network?: the welcome video, poster first, playing on the play button.
+// What is a New Testament Church Network?: the welcome video, poster first, playing when clicked.
 import { expect, test } from '@playwright/test';
 import { openPage } from './helpers.js';
 
-test('the welcome video shows its poster and starts on the play button', async ({ page }) => {
+test('the welcome video shows its poster and starts when clicked away from the play icon', async ({ page }) => {
   await openPage(page);
   const box = page.locator('#intro-video');
   const video = box.locator('video');
@@ -15,8 +15,9 @@ test('the welcome video shows its poster and starts on the play button', async (
   expect(file.ok()).toBe(true);
 
   await box.scrollIntoViewIfNeeded();
-  await box.locator('.play').click();
+  await box.click({ position: { x: 32, y: 32 } });
   await expect(box).toHaveClass(/is-started/);
   expect(await video.evaluate(v => v.controls)).toBe(true);
+  await expect.poll(() => video.evaluate(v => v.paused)).toBe(false);
   await expect(box.locator('.play')).toHaveCSS('opacity', '0');
 });

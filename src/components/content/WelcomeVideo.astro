@@ -34,12 +34,15 @@ const {
 
 <style is:global>
   @layer components {
-    /* The welcome video: its poster until play is pressed, then the browser's own controls */
+    /* The welcome video: a clickable preview, then the browser's own controls */
     .welcome-video_wrap {
       position: relative;
       width: 100%;
       aspect-ratio: 16 / 9;
       margin-top: 1.25rem;
+      &:not(.is-started) {
+        cursor: pointer;
+      }
       &::after {
         content: "";
         position: absolute;
