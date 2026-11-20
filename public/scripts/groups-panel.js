@@ -60,9 +60,9 @@
 
   /* ---------- Adjust panel ---------- */
   (() => {
-    const showControls = SHOW_CONTROLS && new URLSearchParams(location.search).get('controls') !== '0';
     const adjust = document.getElementById('adjust'), panel = document.getElementById('panel');
-    if (!showControls) { adjust.remove(); panel.remove(); return; }
+    if (!adjust || !panel) return;
+    if (new URLSearchParams(location.search).get('controls') === '0') { adjust.remove(); panel.remove(); return; }
     adjust.hidden = false;
     const open = on => { panel.classList.toggle('is-open', on); adjust.setAttribute('aria-expanded', String(on)); };
     adjust.addEventListener('click', () => open(true));

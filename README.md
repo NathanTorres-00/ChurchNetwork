@@ -60,8 +60,9 @@ site again, change `showLeadership()` in `src/utils/leadership.ts` as its commen
 
 ## Adjust panels
 
-Home and Groups each have an **Adjust** button (bottom right) with the same settings as before; `?controls=0`
-hides it, and any setting can also come from the address (`/?heroArt=gallery`, `/groups?heroArt=globe`).
+Public builds omit the **Adjust** button and panel. They are available on Home, Groups, and the globe in local
+development, or in a local preview built with `ADJUST_CONTROLS=1 npm run build`. In those builds, `?controls=0`
+hides them. Existing address settings (`/?heroArt=gallery`, `/groups?heroArt=globe`) still work.
 **Copy settings** gives a block to paste over the `CONFIG` at the top of `public/scripts/home-main.js` or
 `public/scripts/groups-config.js`. Footer and page-transition choices are shared by both pages.
 

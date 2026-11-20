@@ -5,10 +5,11 @@ interface Props {
 }
 
 const { render = true } = Astro.props;
+const showControls = import.meta.env.DEV || import.meta.env.ADJUST_CONTROLS === "1";
 ---
 
 {
-  render && (
+  render && showControls && (
     <Fragment>
   <button class="adjust" id="adjust" type="button" aria-expanded="false" aria-controls="panel" hidden>
     <span class="dot" aria-hidden="true"></span>Adjust

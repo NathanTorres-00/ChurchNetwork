@@ -192,9 +192,6 @@ const CONFIG = {
   galleryPhoneOpenings: 'around',   // phones: 'around' (above and below the text) or 'off'
 };
 
-// Set to false for embeds to hide the Adjust panel (or add ?controls=0 to the address)
-const SHOW_CONTROLS = true;
-
 const pct = v => Math.round(v * 100) + '%';
 // Headline and Page controls write straight to the page's CSS variables
 const PAGE_CONTROLS = [
@@ -358,7 +355,7 @@ function heroGalleryGroups(GALLERY_CONTROLS) {
     else if (typeof def === 'boolean') cfg[key] = raw === '1' || raw === 'true';
     else cfg[key] = /^[0-9a-f]{6}$/i.test(raw) ? '#' + raw : raw;
   }
-  const showControls = SHOW_CONTROLS && params.get('controls') !== '0';
+  const showControls = document.getElementById('panel') !== null && params.get('controls') !== '0';
   // The background the globe's haze and edge fade melt into: white, or the embedding page's ?bg=RRGGBB
   const BG = /^[0-9a-f]{6}$/i.test(params.get('bg') || '') ? '#' + params.get('bg') : '#FFFFFF';
 

@@ -13,7 +13,6 @@ const CONFIG = {
   loadStagger: 0.09,        // seconds between one piece and the next
   scrollReveal: true,       // sections below the hero rise in as they scroll into view
 };
-const SHOW_CONTROLS = true;  // false hides the Adjust button (so does ?controls=0)
 
 // Any setting can also come from the address, e.g. /groups?heroArt=globe&loadStyle=fade
 const DEFAULTS = { ...CONFIG };
