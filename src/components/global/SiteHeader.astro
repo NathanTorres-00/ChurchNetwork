@@ -207,7 +207,7 @@ const phoneSections = [...left.slice(1), ...right.filter((link) => link.label ==
         sync();
       }
     });
-    toggle.addEventListener("click", () => setMenu(!menuOpen));
+    toggle.addEventListener("click", () => setMenu(!menuOpen, true));
     menu.addEventListener("click", (event) => {
       if ((event.target as Element).closest("a")) setMenu(false);
     });

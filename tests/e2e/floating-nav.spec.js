@@ -218,6 +218,17 @@ test.describe('phone menu', () => {
     }).toBe(true);
   });
 
+  test('the close button restores focus from a menu link', async ({ page }) => {
+    await page.goto('/groups', { waitUntil: 'domcontentloaded' });
+    const { toggle, card } = phone(page);
+    await toggle.tap();
+    await card.getByRole('link', { name: 'Videos' }).focus();
+    // Some browsers dispatch the click without focusing the button.
+    await toggle.dispatchEvent('click');
+    await expect(card).toBeHidden();
+    await expect(toggle).toBeFocused();
+  });
+
   test('the menu closes on the dim, Escape, scrolling and a link', async ({ page }) => {
     await page.goto('/leadership', { waitUntil: 'domcontentloaded' });
     const { toggle, card } = phone(page);
