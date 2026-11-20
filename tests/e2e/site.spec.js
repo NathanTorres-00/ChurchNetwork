@@ -16,12 +16,12 @@ for (const demo of ['network-multiply', 'network-globe', 'network-globe-pins', '
   });
 }
 
-// The floating nav's links, as the live folder's floating nav has them (Home also has a hidden Find a hub)
+// The floating nav's links, as the live folder's floating nav has them (Home also has a hidden Find a hub), then Give
 const NAV = {
-  '/': ['Home', 'What we do', 'How we do it', 'Our story', 'Groups', 'Leadership', 'Videos', 'App', 'Find a hub'],
-  '/groups': ['Home', 'What we do', 'How we do it', 'Our story', 'Groups', 'Leadership', 'Videos', 'App'],
-  '/leadership': ['Home', 'What we do', 'How we do it', 'Our story', 'Groups', 'Leadership', 'Videos', 'App'],
-  '/videos': ['Home', 'What we do', 'How we do it', 'Our story', 'Groups', 'Leadership', 'Videos', 'App'],
+  '/': ['Home', 'What we do', 'How we do it', 'Our story', 'Groups', 'Leadership', 'Videos', 'App', 'Find a hub', 'Give'],
+  '/groups': ['Home', 'What we do', 'How we do it', 'Our story', 'Groups', 'Leadership', 'Videos', 'App', 'Give'],
+  '/leadership': ['Home', 'What we do', 'How we do it', 'Our story', 'Groups', 'Leadership', 'Videos', 'App', 'Give'],
+  '/videos': ['Home', 'What we do', 'How we do it', 'Our story', 'Groups', 'Leadership', 'Videos', 'App', 'Give'],
 };
 
 for (const [path, links] of Object.entries(NAV)) {

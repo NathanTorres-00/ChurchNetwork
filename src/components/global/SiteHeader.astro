@@ -25,6 +25,8 @@ const right = [
   { label: "Videos", href: "/videos", current: page === "videos" },
   { label: "App", href: `${home}#app` },
 ].filter((link) => link.render !== false);
+// Placeholder until the giving page exists; swap in its URL here
+const giveHref = "#";
 // Phones: one list, the pages first and Home's sections under a rule (no Find a hub)
 const phonePages = [left[0], ...right.filter((link) => link.label !== "App")];
 const phoneSections = [...left.slice(1), ...right.filter((link) => link.label === "App")];
@@ -71,6 +73,9 @@ const phoneSections = [...left.slice(1), ...right.filter((link) => link.label ==
                   Find a hub
                 </a>
               )}
+              <a class="site-nav_cta site-nav_give" href={giveHref}>
+                Give
+              </a>
             </div>
           </div>
         </nav>
@@ -92,6 +97,9 @@ const phoneSections = [...left.slice(1), ...right.filter((link) => link.label ==
               </li>
             ))}
           </ul>
+          <a class="site-menu_give" href={giveHref}>
+            Give
+          </a>
         </nav>
       </div>
     </header>
@@ -514,6 +522,27 @@ const phoneSections = [...left.slice(1), ...right.filter((link) => link.label ==
         }
       }
     }
+    /* Give: the menu's one green button, across the bottom of the card */
+    .site-menu_give {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 3rem;
+      margin-top: 0.375rem;
+      border-radius: 0.875rem;
+      background: var(--c-disciples);
+      color: #fff;
+      font-size: 1rem;
+      font-weight: var(--primary-bold);
+      text-decoration: none;
+      &:hover {
+        background: color-mix(in srgb, var(--c-disciples), black 21%);
+      }
+      &:focus-visible {
+        outline: 0.125rem solid var(--c-disciples);
+        outline-offset: 0.125rem;
+      }
+    }
     .site-menu_rule {
       margin: 0.375rem 1rem;
       border: 0;
@@ -610,6 +639,7 @@ const phoneSections = [...left.slice(1), ...right.filter((link) => link.label ==
     }
     .site-nav .site-nav_cta {
       padding-inline: 0.875rem;
+      margin-inline-start: 0.25rem;
       color: #fff;
       background: var(--c-disciples);
       &:hover {

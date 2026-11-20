@@ -209,9 +209,14 @@ test.describe('phone menu', () => {
     await toggle.tap();
     await expect(toggle).toHaveAttribute('aria-expanded', 'true');
     await expect(card.getByRole('link')).toHaveText([
-      'Home', 'Groups', 'Leadership', 'Videos', 'What we do', 'How we do it', 'Our story', 'App',
+      'Home', 'Groups', 'Leadership', 'Videos', 'What we do', 'How we do it', 'Our story', 'App', 'Give',
     ]);
     await expect(card.getByRole('link', { name: 'Leadership' })).toHaveAttribute('aria-current', 'page');
+    // Give is the green button across the bottom of the card
+    const give = card.getByRole('link', { name: 'Give' });
+    await expect(give).toHaveCSS('background-color', 'rgb(47, 125, 109)');
+    const [giveBox, appBox] = [await give.boundingBox(), await card.getByRole('link', { name: 'App' }).boundingBox()];
+    expect(giveBox.y).toBeGreaterThan(appBox.y);
     await expect.poll(async () => {
       const box = await card.boundingBox();
       return Boolean(box) && 390 - (box.x + box.width) < 24 && box.width > 200 && box.width < 300;
@@ -301,4 +306,16 @@ test('the nav holds still while changing pages', async ({ page }) => {
   await navOf(page).nav.getByRole('link', { name: 'Groups' }).click();
   await expect(page).toHaveURL(/\/groups$/);
   await expect.poll(() => page.evaluate(() => window.__navAnims)).toBe(0);
+});
+
+test('Give is the green button at the right end of the open bar', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/groups', { waitUntil: 'domcontentloaded' });
+  const { nav } = navOf(page);
+  const give = nav.getByRole('link', { name: 'Give' });
+  await expect(give).toBeVisible();
+  await expect(give).toHaveCSS('background-color', 'rgb(47, 125, 109)');
+  await expect(give).toHaveCSS('color', 'rgb(255, 255, 255)');
+  const [giveBox, appBox] = [await give.boundingBox(), await nav.getByRole('link', { name: 'App' }).boundingBox()];
+  expect(giveBox.x).toBeGreaterThan(appBox.x);
 });
