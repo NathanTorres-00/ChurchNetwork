@@ -53,12 +53,15 @@ test('the hero features one video at a time and plays it', async ({ page }) => {
 });
 
 test('the hero moves on by itself until someone chooses', async ({ page }) => {
-  await page.clock.install();
+  await page.clock.install({ time: new Date('2026-11-20T12:00:00Z') });
+  await page.clock.pauseAt(new Date('2026-11-20T12:01:00Z'));
   await page.goto('/videos');
   await page.mouse.move(5, 890); // away from the hero
   const title = page.locator('.videos-hero_slide.is-on h2');
   await expect(title).toHaveText('Weekly Church Group Video | November 13 - 19, 2026');
-  await page.clock.runFor(8100);
+  await page.clock.runFor(9000);
+  await expect(title).toHaveText('Weekly Church Group Video | November 13 - 19, 2026');
+  await page.clock.runFor(1100);
   await expect(title).toHaveText('Multiplication Matters');
   await page.getByRole('button', { name: 'Show Think Small' }).click();
   await page.mouse.move(5, 890);
@@ -83,4 +86,36 @@ test('a series row plays its videos and its arrows scroll it', async ({ page }) 
   await expect(player.locator('iframe')).toHaveAttribute('src', /video\/1248454477\?/);
   await player.getByRole('button', { name: 'Close video' }).click();
   await expect(tile).toBeFocused();
+});
+
+
+test('Vimeo previews start promptly and resume without waiting for video dimensions', async ({ page }) => {
+  await page.route('**/player.vimeo.com/**', route => route.fulfill({
+    contentType: 'text/html',
+    body: `<script>
+      parent.postMessage({ event: 'ready' }, new URL(document.referrer).origin);
+      addEventListener('message', event => {
+        const { method } = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+        const send = message => parent.postMessage(message, event.origin);
+        if (method === 'ping') send({ method });
+        if (method === 'play') {
+          send({ method });
+          send({ event: 'timeupdate', data: { seconds: 4.5 } });
+        }
+      });
+    </script>`,
+  }));
+  await page.goto('/videos');
+  const hero = page.getByRole('region', { name: 'Featured videos' });
+  await expect(hero.locator('iframe')).toHaveCount(0);
+  const current = hero.locator('.videos-hero_slide.is-on');
+  for (const id of ['1248454493', '1248454398', '1248454430', '1248454477']) {
+    await hero.getByRole('button', { name: 'Next featured video' }).click();
+    await expect(current.locator('iframe')).toHaveAttribute('src', new RegExp(`/video/${id}.*background=1.*muted=1`), { timeout: 1000 });
+    await expect(current.locator('iframe')).toHaveCSS('opacity', '1');
+    await expect(hero.locator('iframe')).toHaveCount(1);
+  }
+  await current.getByRole('link', { name: 'Play' }).click();
+  await expect(page.locator('.video-player_wrap iframe')).toHaveAttribute('src', /autoplay=1#t=4s$/);
+  await expect(hero.locator('iframe')).toHaveCount(0);
 });

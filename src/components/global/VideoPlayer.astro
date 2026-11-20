@@ -48,6 +48,10 @@ const { render = true } = Astro.props;
       const title = link.dataset.videoTitle ?? link.getAttribute("aria-label") ?? link.textContent?.trim() ?? "Video";
       const url = new URL(link.href);
       url.searchParams.set("autoplay", "1");
+      const previewTime = Number(link.dataset.previewTime);
+      if (link.hasAttribute("data-vimeo") && Number.isFinite(previewTime) && previewTime > 0) {
+        url.hash = `t=${previewTime}s`;
+      }
       player.title = title;
       player.src = url.href;
       dialog.setAttribute("aria-label", title);

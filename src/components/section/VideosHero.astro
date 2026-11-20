@@ -18,7 +18,7 @@ interface Props extends HTMLAttributes<"section"> {
   time?: number;
 }
 
-const { render = true, heading, videos, time = 8, class: className, ...rest } = Astro.props;
+const { render = true, heading, videos, time = 10, class: className, ...rest } = Astro.props;
 ---
 
 {
@@ -41,6 +41,7 @@ const { render = true, heading, videos, time = 8, class: className, ...rest } = 
         >
           {/* The poster, blurred and enlarged, lights the hero in its own colours */}
           <img class="videos-hero_glow" src={video.poster} alt="" aria-hidden="true" loading={i === 0 ? "eager" : "lazy"} />
+          {!video.weekly && <div class="videos-hero_preview" aria-hidden="true" inert />}
           <div class="videos-hero_layout">
             <div class="videos-hero_text">
               <p class="videos-hero_series">{video.series}</p>
@@ -101,19 +102,31 @@ const { render = true, heading, videos, time = 8, class: className, ...rest } = 
 }
 
 <script>
+  import { mountHeroPreview } from "@/utils/hero-video-preview";
+
   // One featured video at a time. It moves on by itself while nobody is choosing: it waits while the pointer or
   // keyboard focus is in the hero or the tab is hidden, stops for good once someone picks one, and never moves on
   // its own with reduced motion.
   for (const hero of document.querySelectorAll<HTMLElement>(".videos-hero_wrap")) {
     const slides = [...hero.querySelectorAll<HTMLElement>(".videos-hero_slide")];
     const dots = [...hero.querySelectorAll<HTMLButtonElement>(".videos-hero_dot")];
-    if (slides.length < 2) continue;
-    const time = Number(hero.dataset.time || 8) * 1000;
+    if (!slides.length) continue;
+    const time = Number(hero.dataset.time || 10) * 1000;
     const still = matchMedia("(prefers-reduced-motion: reduce)");
+    const dialog = document.querySelector<HTMLDialogElement>(".video-player_wrap");
+    let inView = false;
     let current = 0;
     let chosen = false;
     let holding = false;
     let timer = 0;
+    let stopPreview: (() => void) | undefined;
+
+    const syncPreview = () => {
+      stopPreview?.();
+      stopPreview = undefined;
+      if (!inView || document.hidden || still.matches || dialog?.open) return;
+      stopPreview = mountHeroPreview(slides[current]);
+    };
 
     const show = (index: number) => {
       current = (index + slides.length) % slides.length;
@@ -123,11 +136,12 @@ const { render = true, heading, videos, time = 8, class: className, ...rest } = 
       });
       dots.forEach((dot, i) => dot.toggleAttribute("aria-current", i === current));
       dots[current]?.setAttribute("aria-current", "true");
+      syncPreview();
       schedule();
     };
     const schedule = () => {
       clearTimeout(timer);
-      if (chosen || holding || still.matches || document.hidden) return;
+      if (slides.length < 2 || chosen || holding || still.matches || document.hidden || dialog?.open) return;
       timer = window.setTimeout(() => show(current + 1), time);
     };
     const choose = (index: number) => {
@@ -155,8 +169,21 @@ const { render = true, heading, videos, time = 8, class: className, ...rest } = 
       holding = hero.matches(":hover");
       schedule();
     });
-    document.addEventListener("visibilitychange", schedule);
-    still.addEventListener("change", schedule);
+    const syncPlayback = () => {
+      syncPreview();
+      schedule();
+    };
+    document.addEventListener("visibilitychange", syncPlayback);
+    still.addEventListener("change", syncPlayback);
+    if (dialog) {
+      new MutationObserver(syncPlayback).observe(dialog, { attributes: true, attributeFilter: ["open"] });
+    }
+    if ("IntersectionObserver" in window) {
+      new IntersectionObserver(([entry]) => {
+        inView = entry.isIntersecting && entry.intersectionRatio >= 0.5;
+        syncPreview();
+      }, { threshold: 0.5 }).observe(hero);
+    }
     schedule();
   }
 </script>
@@ -211,6 +238,30 @@ const { render = true, heading, videos, time = 8, class: className, ...rest } = 
       object-fit: cover;
       filter: blur(4.5rem) saturate(1.5) brightness(0.62);
       transform: scale(1.1);
+    }
+    .videos-hero_preview {
+      position: absolute;
+      inset: 0;
+      z-index: -2;
+      overflow: hidden;
+      container-type: size;
+      pointer-events: none;
+      & iframe {
+        --preview-ratio: calc(16 / 9);
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        translate: -50% -50%;
+        width: max(100cqw, calc(100cqh * var(--preview-ratio)));
+        height: auto;
+        aspect-ratio: var(--preview-ratio);
+        border: 0;
+        opacity: 0;
+        transition: opacity 0.35s ease;
+        &.is-playing {
+          opacity: 1;
+        }
+      }
     }
     .videos-hero_layout {
       display: grid;
