@@ -35,3 +35,18 @@ test('the updated sections fit on a narrow screen', async ({ page }) => {
     }
   }
 });
+
+test('the four How we do it cards open a Coming soon dialog', async ({ page }) => {
+  await page.goto('/?smoothScroll=0');
+  const cards = page.locator('#how-list').getByRole('link', { name: /Learn more/ });
+  const dialog = page.getByRole('dialog', { name: 'Coming soon' });
+  await expect(cards).toHaveCount(4);
+  for (const card of await cards.all()) {
+    await card.getByText('Learn more').click();
+    await expect(dialog).toBeVisible();
+    await dialog.getByRole('button', { name: 'Close' }).click();
+    await expect(dialog).toBeHidden();
+    await expect(card).toBeFocused();
+  }
+  await expect(page).toHaveURL(/\/\?smoothScroll=0$/);
+});

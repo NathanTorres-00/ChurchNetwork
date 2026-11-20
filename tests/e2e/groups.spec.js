@@ -26,9 +26,14 @@ test('the Groups page has its sections in order and no errors', async ({ page })
   for (const name of ['Start a church group', 'Start a discipleship group'])
     await expect(page.getByRole('link', { name })).toHaveAttribute('href', jesusWay);
 
-  // links still to be built stay put
-  await page.getByRole('link', { name: 'Find resources for you' }).click();
-  await expect(page).toHaveURL(/\/groups#?$/);
+  const resources = page.getByRole('link', { name: 'Find resources for you' });
+  await resources.click();
+  const dialog = page.getByRole('dialog', { name: 'Coming soon' });
+  await expect(dialog).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(dialog).toBeHidden();
+  await expect(resources).toBeFocused();
+  await expect(page).toHaveURL(/\/groups$/);
   expect(errors).toEqual([]);
 });
 

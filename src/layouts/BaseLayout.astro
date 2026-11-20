@@ -4,6 +4,7 @@ import BaseHead from "@/components/utility/BaseHead.astro";
 import SkipLink from "@/components/global/SkipLink.astro";
 import SiteHeader from "@/components/global/SiteHeader.astro";
 import SiteFooter from "@/components/global/SiteFooter.astro";
+import ComingSoon from "@/components/global/ComingSoon.astro";
 import PageTransition from "@/components/utility/PageTransition.astro";
 import type { SeoProps } from "@/types.ts";
 
@@ -31,6 +32,7 @@ const { page, ...seo } = Astro.props;
       <slot />
     </main>
     <SiteFooter page={page} />
+    {(page === "home" || page === "groups") && <ComingSoon />}
     <slot name="after" />
     <script is:inline>
       // Links marked data-placeholder have nowhere to go yet: they show, but don't navigate

@@ -1,0 +1,49 @@
+---
+import Button from "@/components/Button.astro";
+---
+
+<dialog class="coming-soon_wrap" aria-labelledby="coming-soon-title" closedby="any" data-lenis-prevent>
+  <p id="coming-soon-title" class="text-style-h4">Coming soon</p>
+  <form method="dialog">
+    <Button type="submit" emphasis="secondary" autofocus>Close</Button>
+  </form>
+</dialog>
+
+<script>
+  const dialog = document.querySelector<HTMLDialogElement>(".coming-soon_wrap");
+  if (dialog) {
+    let trigger: HTMLAnchorElement | undefined;
+    document.addEventListener("click", (event) => {
+      const target = event.target;
+      const link = target instanceof Element && target.closest<HTMLAnchorElement>("a[data-coming-soon]");
+      if (!link || dialog.open) return;
+      event.preventDefault();
+      trigger = link;
+      dialog.showModal();
+    });
+    dialog.addEventListener("close", () => {
+      trigger?.focus({ preventScroll: true });
+      trigger = undefined;
+    });
+  }
+</script>
+
+<style is:global>
+  @layer components {
+    .coming-soon_wrap {
+      width: min(24rem, calc(100% - 2rem));
+      padding: clamp(2rem, 6vw, 3rem);
+      border: 0;
+      border-radius: var(--radius-main);
+      background: var(--background, #fff);
+      text-align: center;
+      box-shadow: 0 1rem 3rem rgb(0 0 0 / 20%);
+    }
+    .coming-soon_wrap::backdrop {
+      background: rgb(20 20 24 / 55%);
+    }
+    .coming-soon_wrap p {
+      margin: 0 0 1.5rem;
+    }
+  }
+</style>

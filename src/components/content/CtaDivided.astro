@@ -26,6 +26,8 @@ const { render = true, text, button, class: className, ...rest } = Astro.props;
           href={button.href}
           emphasis="secondary"
           data-placeholder={button.placeholder ? "" : undefined}
+          aria-haspopup={button.placeholder ? "dialog" : undefined}
+          data-coming-soon={button.placeholder ? "" : undefined}
         >
           {button.label}
         </Button>

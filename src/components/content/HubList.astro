@@ -10,9 +10,11 @@ interface Props extends HTMLAttributes<"ul"> {
   items: Row[];
   /** Background of the section the list sits on, for the ring around each dot. */
   ground?: "light" | "tint";
+  /** Show a Coming soon dialog for placeholder rows. */
+  comingSoon?: boolean;
 }
 
-const { render = true, items, ground = "light", class: className, ...rest } = Astro.props;
+const { render = true, items, ground = "light", comingSoon = false, class: className, ...rest } = Astro.props;
 ---
 
 {
@@ -28,6 +30,8 @@ const { render = true, items, ground = "light", class: className, ...rest } = As
             class="hub-row"
             href={item.button.href}
             data-placeholder={item.button.placeholder ? "" : undefined}
+            aria-haspopup={comingSoon && item.button.placeholder ? "dialog" : undefined}
+            data-coming-soon={comingSoon && item.button.placeholder ? "" : undefined}
             data-photo={item.photo}
           >
             <span class="glyph" aria-hidden="true" />
