@@ -7,8 +7,7 @@ interface Props {
 const { render = true } = Astro.props;
 ---
 
-{/* Plays any link marked data-vimeo on the page in this dialog: the link's href is Vimeo's player address and its
-    aria-label (or data-video-title) names the video. Put one on each page that has video links. */}
+{/* Plays links marked data-vimeo or data-youtube in this dialog. */}
 {
   render && (
   <dialog class="video-player_wrap" aria-label="Video" closedby="any" data-lenis-prevent>
@@ -43,7 +42,7 @@ const { render = true } = Astro.props;
     document.addEventListener("click", (event) => {
       if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
       const target = event.target;
-      const link = target instanceof Element && target.closest<HTMLAnchorElement>("a[data-vimeo]");
+      const link = target instanceof Element && target.closest<HTMLAnchorElement>("a[data-vimeo], a[data-youtube]");
       if (!link || dialog.open) return;
       const player = frame.cloneNode() as HTMLIFrameElement;
       const title = link.dataset.videoTitle ?? link.getAttribute("aria-label") ?? link.textContent?.trim() ?? "Video";

@@ -4,7 +4,6 @@
     const box = document.getElementById('network-video');
     if (!box) return;
     const id = box.dataset.youtube;
-    box.querySelector('img').src = `https://i.ytimg.com/vi/${id}/maxresdefault.jpg`;
     box.querySelector('.play').addEventListener('click', () => {
       const frame = document.createElement('iframe');
       frame.src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0&playsinline=1`;

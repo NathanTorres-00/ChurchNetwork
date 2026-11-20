@@ -24,8 +24,8 @@ const oldPage = (file) => new JSDOM(execFileSync('git', ['show', `${LEGACY}:${fi
 const clean = (text) => text.replace(/\s+/g, ' ').trim();
 
 describe('content collections', () => {
-  test('the weekly video is this week’s Network Video', () => {
-    expect(readJson('weekly-video.json').youtubeId).toBe('qo52gy0Gq74');
+  test('the weekly video fallback has a playable YouTube ID', () => {
+    expect(readJson('weekly-video.json').youtubeId).toMatch(/^[\w-]{11}$/);
   });
 
   test('Groups shows four leaders, and every leader the pages list has an entry', () => {

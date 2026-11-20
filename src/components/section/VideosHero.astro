@@ -2,13 +2,18 @@
 import type { HTMLAttributes } from "astro/types";
 import { formatDuration, type Video } from "@/utils/videos.ts";
 
+type FeaturedVideo = Pick<Video, "title" | "poster" | "src" | "series" | "label" | "description"> & {
+  duration?: number;
+  weekly?: boolean;
+};
+
 interface Props extends HTMLAttributes<"section"> {
   /** Set to `false` to omit the component. */
   render?: boolean;
   /** The page's name, read by screen readers (the featured title is the big type). */
   heading: string;
   /** The videos the hero shows, one at a time, in order. */
-  videos: Video[];
+  videos: FeaturedVideo[];
   /** Seconds each video stays before the next, while nobody is choosing. */
   time?: number;
 }
@@ -30,7 +35,8 @@ const { render = true, heading, videos, time = 8, class: className, ...rest } = 
         <article
           class:list={["videos-hero_slide", i === 0 && "is-on"]}
           aria-roledescription="slide"
-          aria-label={`${i + 1} of ${videos.length}: ${video.title}`}
+          aria-label={`${i + 1} of ${videos.length}: ${video.weekly ? video.series : video.title}`}
+          data-weekly-hero={video.weekly ? "" : undefined}
           inert={i !== 0}
         >
           {/* The poster, blurred and enlarged, lights the hero in its own colours */}
@@ -39,12 +45,13 @@ const { render = true, heading, videos, time = 8, class: className, ...rest } = 
             <div class="videos-hero_text">
               <p class="videos-hero_series">{video.series}</p>
               <h2 class="videos-hero_title">{video.title}</h2>
-              <p class="videos-hero_meta">{formatDuration(video.duration)}</p>
+              {video.duration && <p class="videos-hero_meta">{formatDuration(video.duration)}</p>}
               {video.description && <p class="videos-hero_description">{video.description}</p>}
               <a
                 class="videos-hero_play"
                 href={video.src}
-                data-vimeo
+                data-vimeo={video.weekly ? undefined : ""}
+                data-youtube={video.weekly ? "" : undefined}
                 data-video-title={video.label}
                 aria-haspopup="dialog"
               >
@@ -58,8 +65,8 @@ const { render = true, heading, videos, time = 8, class: className, ...rest } = 
               class="videos-hero_poster"
               src={video.poster}
               alt=""
-              width="760"
-              height="1086"
+              width={video.weekly ? 480 : 760}
+              height={video.weekly ? 360 : 1086}
               loading={i === 0 ? "eager" : "lazy"}
             />
           </div>
@@ -77,7 +84,7 @@ const { render = true, heading, videos, time = 8, class: className, ...rest } = 
               <button
                 class="videos-hero_dot"
                 type="button"
-                aria-label={`Show ${video.title}`}
+                aria-label={`Show ${video.weekly ? video.series : video.title}`}
                 aria-current={i === 0 ? "true" : undefined}
               />
             ))}
@@ -282,6 +289,13 @@ const { render = true, heading, videos, time = 8, class: className, ...rest } = 
       @media (max-width: 47.9375em) {
         width: min(13rem, 52vw);
         order: 1;
+      }
+    }
+    [data-weekly-hero] .videos-hero_poster {
+      width: min(38vw, 32rem);
+      aspect-ratio: 16 / 9;
+      @media (max-width: 47.9375em) {
+        width: min(100%, 30rem);
       }
     }
     .videos-hero_controls {

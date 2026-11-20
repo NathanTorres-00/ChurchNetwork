@@ -1,4 +1,4 @@
-// The Videos page: a featured hero and a row per series, all playing in the shared Vimeo player
+// The Videos page: a featured hero and a row per series, all playing in the shared video player
 import { expect, test } from '@playwright/test';
 
 const stubVimeo = page =>
@@ -22,9 +22,18 @@ test('the Videos page lists every Jesus Disciple video by series, from the nav',
 test('the hero features one video at a time and plays it', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' }); // keeps it from moving on by itself
   await stubVimeo(page);
+  await page.route('**/youtube-nocookie.com/**', route => route.fulfill({ contentType: 'text/html', body: '<p>player</p>' }));
   await page.goto('/videos');
   const hero = page.getByRole('region', { name: 'Featured videos' });
   const current = hero.locator('.videos-hero_slide.is-on');
+  await expect(current.getByRole('heading', { level: 2 })).toHaveText('Weekly Church Group Video | November 13 - 19, 2026');
+  const player = page.locator('.video-player_wrap');
+  await current.getByRole('link', { name: 'Play' }).click();
+  await expect(player.locator('iframe')).toHaveAttribute('src', /youtube-nocookie\.com\/embed\/P0oEK8HicGM\?.*autoplay=1/);
+  await page.keyboard.press('Escape');
+  await expect(player.locator('iframe')).toHaveCount(0);
+
+  await hero.getByRole('button', { name: 'Next featured video' }).click();
   await expect(current.getByRole('heading', { level: 2 })).toHaveText('Multiplication Matters');
   await expect(current.locator('.videos-hero_meta')).toHaveText('3 min 46 sec');
 
@@ -33,10 +42,9 @@ test('the hero features one video at a time and plays it', async ({ page }) => {
   await hero.getByRole('button', { name: 'Show Think Small' }).click();
   await expect(current.getByRole('heading', { level: 2 })).toHaveText('Think Small');
   await expect(hero.getByRole('button', { name: 'Show Think Small' })).toHaveAttribute('aria-current', 'true');
-  await expect(hero.locator('.videos-hero_slide[inert]')).toHaveCount(3);
+  await expect(hero.locator('.videos-hero_slide[inert]')).toHaveCount(4);
 
   await current.getByRole('link', { name: 'Play' }).click();
-  const player = page.locator('.video-player_wrap');
   await expect(player).toHaveAttribute('open', '');
   await expect(player).toHaveAttribute('aria-label', 'Vision video: Think Small');
   await expect(player.locator('iframe')).toHaveAttribute('src', /video\/1248454430\?.*autoplay=1/);
@@ -49,9 +57,9 @@ test('the hero moves on by itself until someone chooses', async ({ page }) => {
   await page.goto('/videos');
   await page.mouse.move(5, 890); // away from the hero
   const title = page.locator('.videos-hero_slide.is-on h2');
-  await expect(title).toHaveText('Multiplication Matters');
+  await expect(title).toHaveText('Weekly Church Group Video | November 13 - 19, 2026');
   await page.clock.runFor(8100);
-  await expect(title).toHaveText('What is it?');
+  await expect(title).toHaveText('Multiplication Matters');
   await page.getByRole('button', { name: 'Show Think Small' }).click();
   await page.mouse.move(5, 890);
   await page.clock.runFor(20000);

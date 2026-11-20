@@ -1,4 +1,5 @@
 ---
+import { getEntry } from "astro:content";
 import Layout from "@/layouts/BaseLayout.astro";
 import VideosHero from "@/components/section/VideosHero.astro";
 import VideoRow from "@/components/content/VideoRow.astro";
@@ -7,15 +8,24 @@ import { getVideos } from "@/utils/videos.ts";
 
 // The videos and their order live in src/content/videos/ and src/content/pages/videos.json
 const { heading, featured, series } = await getVideos();
+const weekly = (await getEntry("weeklyVideo", "current"))?.data;
+const heroVideos = weekly ? [{
+  title: weekly.title,
+  poster: `https://i.ytimg.com/vi/${weekly.youtubeId}/hqdefault.jpg`,
+  src: `https://www.youtube-nocookie.com/embed/${weekly.youtubeId}?rel=0&playsinline=1`,
+  series: "Weekly Network Video",
+  label: weekly.title,
+  weekly: true,
+}, ...featured] : featured;
 ---
 
 <Layout
   title={heading}
-  description="Vision videos and how-to videos for the Jesus Disciple App, from The Rock Network."
+  description="Watch the weekly church group video, Jesus Disciple Vision Videos, how-to videos, and stories from The Rock Network."
   page="videos"
 >
   <div class="videos-page_wrap">
-    <VideosHero heading={heading} videos={featured} />
+    <VideosHero heading={heading} videos={heroVideos} />
     <div class="videos-page_rows">
       {series.map((group) => <VideoRow id={group.id} heading={group.heading} videos={group.videos} />)}
     </div>

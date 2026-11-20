@@ -39,8 +39,9 @@ from Lumos components; a custom component only when it owns CSS or a script).
 Everything an admin will edit is in `src/content/` as JSON, with its shape declared in `src/content.config.ts`
 (Stacki's CMS panel can edit these; a later project moves them to Sanity with the same shapes):
 
-- **This week's Network Video:** `src/content/weekly-video.json`. Change `youtubeId` to the part after
-  `youtu.be/` (and the `title`), each week. Without a `youtubeId` the section is left out.
+- **This week's Network Video:** Cloudflare reads the most recently published video from the YouTube playlist
+  for the Videos hero and Groups player. The Worker caches the result for 15 minutes.
+  `src/content/weekly-video.json` provides the video for Astro preview and when the feed is unavailable.
 - **Leaders:** one file per person in `src/content/leaders/` (`name` and a `photo` from
   `src/assets/images/leaders/`). Pages list them by file name: the four on Groups in `groups.json`
   (`team.people`), and the Leadership page's two lists in `pages/leadership.json`. Someone can be in both lists.

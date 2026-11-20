@@ -32,10 +32,10 @@ test('the Network Video shows its YouTube thumbnail and plays in place', async (
   await page.route('**/youtube-nocookie.com/**', r => r.fulfill({ status: 200, contentType: 'text/html', body: '<p>player</p>' }));
   await page.goto('/groups');
   const box = page.locator('#network-video');
-  await expect(box.locator('img')).toHaveAttribute('src', 'https://i.ytimg.com/vi/qo52gy0Gq74/maxresdefault.jpg');
+  await expect(box.locator('img')).toHaveAttribute('src', 'https://i.ytimg.com/vi/P0oEK8HicGM/hqdefault.jpg');
   await box.locator('.play').click();
   const frame = box.locator('iframe');
-  await expect(frame).toHaveAttribute('src', /youtube-nocookie\.com\/embed\/qo52gy0Gq74\?autoplay=1/);
+  await expect(frame).toHaveAttribute('src', /youtube-nocookie\.com\/embed\/P0oEK8HicGM\?autoplay=1/);
   await expect(box.locator('.play')).toHaveCount(0);
 });
 
