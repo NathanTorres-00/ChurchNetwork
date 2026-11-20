@@ -156,9 +156,12 @@ const phoneSections = [...left.slice(1), ...right.filter((link) => link.label ==
       nav.classList.toggle("is-top", isTop);
       nav.classList.toggle("is-open", asked);
       nav.classList.toggle("is-scroll-hidden", hidden);
-      brand.setAttribute("aria-expanded", String(open));
-      links.inert = !open;
-      links.setAttribute("aria-hidden", String(!open));
+      // sync runs on every scroll; writing these when nothing changed would restyle the links each frame
+      if (links.inert !== !open) {
+        brand.setAttribute("aria-expanded", String(open));
+        links.inert = !open;
+        links.setAttribute("aria-hidden", String(!open));
+      }
     };
 
     const close = () => {

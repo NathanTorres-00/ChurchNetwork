@@ -519,8 +519,16 @@ function heroGalleryGroups(GALLERY_CONTROLS) {
       const j = Math.floor(rng() * (i + 1));
       [cands[i], cands[j]] = [cands[j], cands[i]];
     }
-    const picked = [];
-    for (const c of cands) if (picked.every(p => d3.geoDistance(p, c) >= sp)) picked.push(c);
+    // Keep a candidate only if it's at least `sp` from every one kept so far. Compared as unit vectors on the
+    // sphere (angle ≥ sp ⇔ dot ≤ cos sp): the same picks as d3.geoDistance, but ~100× faster. With geoDistance
+    // this took ~0.7s, which froze scrolling when the footer's globe started up mid-page.
+    const unit = ([lon, lat]) => { const cl = Math.cos(lat * DEG); return [cl * Math.cos(lon * DEG), cl * Math.sin(lon * DEG), Math.sin(lat * DEG)]; };
+    const cosSp = Math.cos(sp);
+    const picked = [], kept = [];
+    for (const c of cands) {
+      const v = unit(c);
+      if (kept.every(k => k[0] * v[0] + k[1] * v[1] + k[2] * v[2] <= cosSp)) { kept.push(v); picked.push(c); }
+    }
 
     return picked.map(ll => ({ ll, seed: (rng() * 1e9) | 0, angle: rng() * 360 }));
   }

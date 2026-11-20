@@ -367,6 +367,8 @@ const href = (to: string) => {
       & .site-footer {
         z-index: 0;
         transform: translateY(var(--reveal-y, 0));
+        /* its own layer, so sliding it doesn't repaint the page-tall layer it would otherwise share */
+        will-change: transform;
         @media (prefers-reduced-motion: reduce) {
           transform: none;
         }

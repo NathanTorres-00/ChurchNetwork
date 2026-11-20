@@ -108,18 +108,31 @@
     const c = getComputedStyle(above).backgroundColor;
     if (!c || c === 'transparent' || /rgba\(.*,\s*0\)$/.test(c)) above.style.backgroundColor = 'var(--bg, #fff)';
   }
-  function layout() {
+  // The reveal's position lives on the footer itself (not <html>), so moving it restyles only the footer, and it's
+  // written only when it changes: while the footer is far off screen nothing is measured or written at all.
+  let revealP = '', revealY = '';
+  function reveal(force) {
     if (!footer) return;
-    markAbove();
-    if (f.reveal !== 'on') { root.style.removeProperty('--reveal-y'); root.style.removeProperty('--reveal-p'); return; }
+    if (f.reveal !== 'on') { footer.style.removeProperty('--reveal-y'); footer.style.removeProperty('--reveal-p'); revealP = revealY = ''; return; }
+    if (!near && !force && revealP === '0.0000') return;
     const h = Math.min(footer.offsetHeight, innerHeight);
     // the footer's natural top (main's bottom, less any overlap from the Curved edge), unaffected by its slide
     const shown = innerHeight - (main.getBoundingClientRect().bottom + parseFloat(getComputedStyle(main).marginBottom || 0));
-    const p = Math.max(0, Math.min(1, shown / h));
-    root.style.setProperty('--reveal-p', p.toFixed(4));
-    root.style.setProperty('--reveal-y', (-f.revealDistance * h * (1 - p)).toFixed(1) + 'px');
+    const p = Math.max(0, Math.min(1, shown / h)).toFixed(4);
+    const y = (-f.revealDistance * h * (1 - p)).toFixed(1) + 'px';
+    if (p !== revealP) footer.style.setProperty('--reveal-p', revealP = p);
+    if (y !== revealY) footer.style.setProperty('--reveal-y', revealY = y);
   }
-  const onScroll = () => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; layout(); }); };
+  // Settings, resizes and page changes: find the Curved edge's section again, then place the footer
+  function layout() {
+    if (!footer) return;
+    markAbove();
+    reveal(true);
+  }
+  // Scrolling only moves the footer
+  const onScroll = () => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; reveal(false); }); };
+  let rafResize = 0;
+  const onResize = () => { if (!rafResize) rafResize = requestAnimationFrame(() => { rafResize = 0; layout(); }); };
 
   /* ---------- Panel controls ---------- */
   const pct = v => Math.round(v * 100) + '%';
@@ -159,6 +172,7 @@
         const back = e.isIntersecting && !near;
         near = e.isIntersecting;
         if (near) ready = true;              // once loaded, it stays
+        reveal(true);
         syncAnim();
         if (back) { const fr = animBox.querySelector('iframe'); try { fr && fr.contentWindow.rnGlobe && fr.contentWindow.rnGlobe.restart(); } catch {} }
       }, { rootMargin: '200px 0px' }).observe(footer);
@@ -172,8 +186,8 @@
       const prev = window.rnHeroTextRects;
       window.rnHeroTextRects = frame => (animBox.contains(frame) ? footerTextRects(frame) : prev ? prev(frame) : []);
       addEventListener('scroll', onScroll, { passive: true });
-      addEventListener('resize', onScroll);
-      new ResizeObserver(onScroll).observe(document.body);
+      addEventListener('resize', onResize);
+      new ResizeObserver(onResize).observe(document.body);
       layout();
     }
     syncControls();
