@@ -25,13 +25,24 @@ const right = [
   { label: "Videos", href: "/videos", current: page === "videos" },
   { label: "App", href: `${home}#app` },
 ].filter((link) => link.render !== false);
+// Phones: one list, the pages first and Home's sections under a rule (no Find a hub)
+const phonePages = [left[0], ...right.filter((link) => link.label !== "App")];
+const phoneSections = [...left.slice(1), ...right.filter((link) => link.label === "App")];
 ---
 
 {
   render && page !== "embed" && (
     <header class:list={["site-header", className]} {...rest}>
       <div class="site-header_position">
+        {/* Phones: tapping outside the open menu closes it */}
+        <div class="site-menu_dim" inert />
         <nav class="site-nav is-top" aria-label="Site navigation">
+          <a class="site-nav_home" href={onHome ? "#top" : "/"} aria-label="The Rock Network home">
+            <img src="/assets/the-rock-network.png" alt="" width="960" height="202" />
+          </a>
+          <button class="site-nav_toggle" type="button" aria-label="Menu" aria-expanded="false" aria-controls="site-menu">
+            <span aria-hidden="true" />
+          </button>
           <button
             class="site-nav_brand"
             type="button"
@@ -63,6 +74,25 @@ const right = [
             </div>
           </div>
         </nav>
+        <nav class="site-menu" id="site-menu" aria-label="Menu" inert>
+          <ul class="site-menu_list">
+            {phonePages.map((link) => (
+              <li>
+                <a href={link.href} aria-current={link.current ? "page" : undefined}>
+                  {link.label}
+                </a>
+              </li>
+            ))}
+          </ul>
+          <hr class="site-menu_rule" />
+          <ul class="site-menu_list">
+            {phoneSections.map((link) => (
+              <li>
+                <a href={link.href}>{link.label}</a>
+              </li>
+            ))}
+          </ul>
+        </nav>
       </div>
     </header>
   )
@@ -75,7 +105,11 @@ const right = [
   const nav = document.querySelector<HTMLElement>(".site-nav");
   const brand = nav?.querySelector<HTMLButtonElement>(".site-nav_brand");
   const links = nav?.querySelector<HTMLElement>(".site-nav_links");
-  if (nav && brand && links) {
+  const header = nav?.closest<HTMLElement>(".site-header");
+  const toggle = nav?.querySelector<HTMLButtonElement>(".site-nav_toggle");
+  const menu = header?.querySelector<HTMLElement>(".site-menu");
+  const dim = header?.querySelector<HTMLElement>(".site-menu_dim");
+  if (nav && brand && links && header && toggle && menu && dim) {
     const scrollThreshold = 18;
     const readScroll = () => {
       const limit = document.documentElement.scrollHeight - window.innerHeight;
@@ -96,8 +130,19 @@ const right = [
     // After closing it under the mouse (logo, Escape or a link), hover waits until the mouse leaves
     let hoverBlocked = false;
 
+    // Phones (narrow): the ☰ button opens a menu card on the right instead; the pill itself never opens
+    let menuOpen = false;
+    const setMenu = (open: boolean, returnFocus = false) => {
+      if (open === menuOpen) return;
+      menuOpen = open;
+      header.classList.toggle("is-menu-open", open);
+      toggle.setAttribute("aria-expanded", String(open));
+      menu.inert = dim.inert = !open;
+      if (!open && returnFocus) toggle.focus({ preventScroll: true });
+    };
+
     const sync = () => {
-      const asked = pinned || hovered || Boolean(links.querySelector(":focus-visible"));
+      const asked = wide && (pinned || hovered || Boolean(links.querySelector(":focus-visible")));
       const open = asked || (isTop && wide);
       if (!open && links.contains(document.activeElement)) brand.focus({ preventScroll: true });
       nav.classList.toggle("is-top", isTop);
@@ -123,6 +168,7 @@ const right = [
       wide = readWide();
       isTop = atTop(previousY);
       hidden = hovered = pinned = false;
+      setMenu(false);
       sync();
       requestAnimationFrame(() => requestAnimationFrame(() => nav.classList.add("is-ready")));
     };
@@ -161,15 +207,23 @@ const right = [
         sync();
       }
     });
+    toggle.addEventListener("click", () => setMenu(!menuOpen));
+    menu.addEventListener("click", (event) => {
+      if ((event.target as Element).closest("a")) setMenu(false);
+    });
     // Picking a link closes the menu (a Home section link then scrolls to its section)
     links.addEventListener("click", (event) => {
       if ((event.target as Element).closest("a")) close();
     });
     document.addEventListener("click", (event) => {
-      if (!nav.contains(event.target as Node)) close();
+      const target = event.target as Node;
+      if (!nav.contains(target)) close();
+      if (menuOpen && !menu.contains(target) && !toggle.contains(target)) setMenu(false);
     });
     document.addEventListener("keydown", (event) => {
-      if (event.key === "Escape" && nav.classList.contains("is-open")) close();
+      if (event.key !== "Escape") return;
+      if (menuOpen) setMenu(false, true);
+      else if (nav.classList.contains("is-open")) close();
     });
     window.addEventListener(
       "scroll",
@@ -183,6 +237,7 @@ const right = [
         distance = Math.sign(delta) === Math.sign(distance) ? distance + delta : delta;
         if (Math.abs(distance) >= scrollThreshold) {
           pinned = false;
+          setMenu(false);
           hidden = distance > 0 && !isTop;
           if (hidden) hovered = false;
           distance = 0;
@@ -193,6 +248,7 @@ const right = [
     );
     window.addEventListener("resize", () => {
       wide = readWide();
+      if (wide) setMenu(false);
       sync();
     });
     window.addEventListener("pageshow", (event) => {
@@ -296,17 +352,193 @@ const right = [
         outline: 0.125rem solid currentColor;
         outline-offset: -0.1875rem;
       }
-      /* The pill's own width, not the screen's: the open menu stacks into two columns */
+      /* Phones and narrow windows (the pill's own width, not the screen's): a full-width bar with the logo on the
+         left and the Menu button on the right; the menu opens as a card below it (.site-menu) */
       @container (max-width: 56.25rem) {
-        --site-nav-wide: min(26.25rem, calc(100cqw - 1.5rem));
         --site-nav-mode: narrow;
-        max-height: calc(100dvh - max(0.875rem, env(safe-area-inset-top)) - 0.75rem);
-        &.is-open {
-          height: calc(var(--site-nav-bar) + 11.9375rem);
+        width: calc(100cqw - 1.5rem);
+        align-items: center;
+        justify-content: space-between;
+        padding-inline: 1.125rem 0.375rem;
+      }
+    }
+    .site-nav_home,
+    .site-nav_toggle {
+      display: none;
+      @container (max-width: 56.25rem) {
+        display: grid;
+      }
+    }
+    .site-nav .site-nav_home {
+      display: none;
+      place-items: center;
+      min-height: 2.75rem;
+      padding: 0;
+      background: none;
+      & img {
+        display: block;
+        width: calc(var(--site-nav-logo-width) * 0.86);
+        height: auto;
+        filter: brightness(0) invert(12%);
+      }
+      @container (max-width: 56.25rem) {
+        display: grid;
+      }
+    }
+    /* Three bars that turn into an X while the menu is open */
+    .site-nav_toggle {
+      place-items: center;
+      width: 2.75rem;
+      height: 2.75rem;
+      padding: 0;
+      border: 0;
+      border-radius: 50%;
+      background: transparent;
+      color: var(--heading);
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      &:active {
+        background: var(--background-2);
+      }
+      & span,
+      & span::before,
+      & span::after {
+        display: block;
+        width: 1.25rem;
+        height: 0.125rem;
+        border-radius: 0.0625rem;
+        background: currentColor;
+        transition:
+          transform 0.22s ease,
+          opacity 0.22s ease;
+      }
+      & span {
+        position: relative;
+      }
+      & span::before,
+      & span::after {
+        content: "";
+        position: absolute;
+        left: 0;
+      }
+      & span::before {
+        top: -0.375rem;
+      }
+      & span::after {
+        top: 0.375rem;
+      }
+      &[aria-expanded="true"] span {
+        background: transparent;
+      }
+      &[aria-expanded="true"] span::before {
+        transform: translateY(0.375rem) rotate(45deg);
+      }
+      &[aria-expanded="true"] span::after {
+        transform: translateY(-0.375rem) rotate(-45deg);
+      }
+      @media (prefers-reduced-motion: reduce) {
+        & span,
+        & span::before,
+        & span::after {
+          transition: none;
         }
-        & a {
-          white-space: normal;
-          text-align: center;
+      }
+    }
+    /* The phone menu: one list in a card that grows out of the Menu button's corner */
+    .site-menu {
+      display: none;
+      position: absolute;
+      top: calc(var(--site-nav-bar) + 0.5rem);
+      right: 0.75rem;
+      width: clamp(13rem, 66cqw, 20rem);
+      max-height: calc(100dvh - var(--site-nav-bar) - 2.5rem);
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      padding: 0.375rem;
+      border: 0.0625rem solid var(--border);
+      border-radius: 1.25rem;
+      background: rgb(255 255 255 / 94%);
+      -webkit-backdrop-filter: blur(0.75rem);
+      backdrop-filter: blur(0.75rem);
+      box-shadow: 0 1.25rem 2.5rem -1rem rgb(31 31 35 / 30%);
+      transform-origin: top right;
+      opacity: 0;
+      scale: 0.94;
+      visibility: hidden;
+      pointer-events: none;
+      transition:
+        opacity 0.18s ease,
+        scale 0.18s ease,
+        visibility 0s linear 0.18s;
+      .site-header.is-menu-open & {
+        opacity: 1;
+        scale: 1;
+        visibility: visible;
+        pointer-events: auto;
+        transition:
+          opacity 0.18s ease,
+          scale 0.18s cubic-bezier(0.2, 0.8, 0.2, 1),
+          visibility 0s;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        transition: none;
+        .site-header.is-menu-open & {
+          transition: none;
+        }
+      }
+      @container (max-width: 56.25rem) {
+        display: block;
+      }
+    }
+    .site-menu_list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      & a {
+        display: flex;
+        align-items: center;
+        min-height: 2.75rem;
+        padding: 0 1rem;
+        border-radius: 0.875rem;
+        color: var(--heading);
+        font-size: 1rem;
+        font-weight: var(--primary-medium);
+        text-decoration: none;
+        &:hover,
+        &[aria-current="page"] {
+          background: var(--background-2);
+        }
+        &:focus-visible {
+          outline: 0.125rem solid currentColor;
+          outline-offset: -0.1875rem;
+        }
+      }
+    }
+    .site-menu_rule {
+      margin: 0.375rem 1rem;
+      border: 0;
+      border-top: 0.0625rem solid var(--border);
+    }
+    .site-menu_dim {
+      position: fixed;
+      inset: 0;
+      background: rgb(4 16 28 / 22%);
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition:
+        opacity 0.18s ease,
+        visibility 0s linear 0.18s;
+      .site-header.is-menu-open & {
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+        transition: opacity 0.18s ease;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        transition: none;
+        .site-header.is-menu-open & {
+          transition: none;
         }
       }
     }
@@ -335,6 +567,9 @@ const right = [
         height: auto;
         filter: brightness(0) invert(12%);
       }
+      @container (max-width: 56.25rem) {
+        display: none;
+      }
     }
     .site-nav_links {
       position: absolute;
@@ -362,15 +597,7 @@ const right = [
         }
       }
       @container (max-width: 56.25rem) {
-        inset: var(--site-nav-bar) 0.625rem 0.5rem;
-        translate: none;
-        width: auto;
-        min-height: 0;
-        overflow-y: auto;
-        overscroll-behavior: contain;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        align-content: start;
-        gap: 0.25rem;
+        display: none;
       }
     }
     .site-nav_side {
@@ -379,10 +606,6 @@ const right = [
       justify-content: center;
       &:last-child {
         grid-column: -2;
-      }
-      @container (max-width: 56.25rem) {
-        flex-direction: column;
-        align-items: stretch;
       }
     }
     .site-nav .site-nav_cta {

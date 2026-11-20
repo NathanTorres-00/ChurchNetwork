@@ -153,35 +153,95 @@ test('keyboard focus reveals the nav after it has scrolled out of view', async (
   await expect(nav.getByRole('link', { name: 'Home', exact: true })).toBeFocused();
 });
 
-test('resizing across the breakpoint updates the menu state', async ({ page }) => {
+test('resizing across the breakpoint swaps the bar for the phone bar', async ({ page }) => {
   await page.goto('/groups', { waitUntil: 'domcontentloaded' });
   const { nav, brand } = navOf(page);
+  const menu = nav.getByRole('button', { name: 'Menu', exact: true });
   await expect(brand).toHaveAttribute('aria-expanded', 'true');
+  await expect(menu).toBeHidden();
   await page.setViewportSize({ width: 800, height: 900 });
-  await expect(brand).toHaveAttribute('aria-expanded', 'false');
-  await expect(nav.getByRole('link')).toHaveCount(0);
+  await expect(brand).toBeHidden();
+  await expect(menu).toBeVisible();
+  await expect(menu).toHaveAttribute('aria-expanded', 'false');
   await page.setViewportSize({ width: 1440, height: 900 });
   await expect(brand).toHaveAttribute('aria-expanded', 'true');
+  await expect(menu).toBeHidden();
 });
 
-test.describe('touch navigation', () => {
-  test.use({ hasTouch: true, viewport: { width: 390, height: 844 } });
+test('a narrow window never opens the old pill on hover', async ({ page }) => {
+  await page.setViewportSize({ width: 800, height: 900 });
+  await page.goto('/groups', { waitUntil: 'domcontentloaded' });
+  const { nav } = navOf(page);
+  const box = await nav.boundingBox();
+  const width = box.width;
+  await page.mouse.move(box.x + box.width / 2 - 20, box.y + box.height / 2);
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await page.waitForTimeout(600);
+  expect((await nav.boundingBox()).width).toBeCloseTo(width, 0);
+  await expect(nav.getByRole('button', { name: 'Menu', exact: true })).toHaveAttribute('aria-expanded', 'false');
+});
 
-  test('the menu opens on tap, closes on scroll and links to the real pages', async ({ page }) => {
+// Phones: the logo goes Home and a Menu button on the right opens one list from that side
+test.describe('phone menu', () => {
+  test.use({ hasTouch: true, viewport: { width: 390, height: 844 } });
+  const phone = page => {
+    const bar = page.getByRole('navigation', { name: 'Site navigation' });
+    return {
+      bar,
+      toggle: bar.getByRole('button', { name: 'Menu', exact: true }),
+      card: page.getByRole('navigation', { name: 'Menu', exact: true }),
+    };
+  };
+
+  test('the phone bar has the logo home and a Menu button on the right', async ({ page }) => {
+    await page.goto('/groups', { waitUntil: 'domcontentloaded' });
+    const { bar, toggle, card } = phone(page);
+    await expect(bar.getByRole('link', { name: 'The Rock Network home' })).toHaveAttribute('href', '/');
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    const box = await toggle.boundingBox();
+    expect(390 - (box.x + box.width)).toBeLessThan(24);
+    await expect(card).toBeHidden();
+  });
+
+  test('Menu opens one list from the right, pages first', async ({ page }) => {
     await page.goto('/leadership', { waitUntil: 'domcontentloaded' });
-    const { nav, brand } = navOf(page);
-    await expect(brand).toHaveAttribute('aria-expanded', 'false');
-    await brand.tap();
-    await expect(brand).toHaveAttribute('aria-expanded', 'true');
-    await expect(nav.getByRole('link', { name: 'Leadership' })).toHaveAttribute('aria-current', 'page');
+    const { toggle, card } = phone(page);
+    await toggle.tap();
+    await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    await expect(card.getByRole('link')).toHaveText([
+      'Home', 'Groups', 'Leadership', 'Videos', 'What we do', 'How we do it', 'Our story', 'App',
+    ]);
+    await expect(card.getByRole('link', { name: 'Leadership' })).toHaveAttribute('aria-current', 'page');
+    await expect.poll(async () => {
+      const box = await card.boundingBox();
+      return Boolean(box) && 390 - (box.x + box.width) < 24 && box.width > 200 && box.width < 300;
+    }).toBe(true);
+  });
+
+  test('the menu closes on the dim, Escape, scrolling and a link', async ({ page }) => {
+    await page.goto('/leadership', { waitUntil: 'domcontentloaded' });
+    const { toggle, card } = phone(page);
+    await toggle.tap();
+    await expect(card).toBeVisible();
+    await page.touchscreen.tap(30, 600);
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    await expect(card).toBeHidden();
+
+    await toggle.tap();
+    await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    await page.keyboard.press('Escape');
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    await expect(toggle).toBeFocused();
+
+    await toggle.tap();
     await scrollTo(page, 300);
-    await expect(brand).toHaveAttribute('aria-expanded', 'false');
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+
     await scrollTo(page, 0);
-    await brand.tap();
-    await expect(brand).toHaveAttribute('aria-expanded', 'true');
-    await nav.getByRole('link', { name: 'Groups' }).tap();
-    await expect(page).toHaveURL(/\/groups\/?$/);
-    await expect(navOf(page).brand).toHaveAttribute('aria-expanded', 'false');
+    await toggle.tap();
+    await card.getByRole('link', { name: 'Groups' }).tap();
+    await expect(page).toHaveURL(/\/groups$/);
+    await expect(phone(page).toggle).toHaveAttribute('aria-expanded', 'false');
   });
 });
 

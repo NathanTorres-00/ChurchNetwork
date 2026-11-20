@@ -27,7 +27,7 @@ const NAV = {
 for (const [path, links] of Object.entries(NAV)) {
   test(`${path} has the site nav with its links in order`, async ({ page }) => {
     await page.goto(path);
-    await expect(page.locator('.site-header .site-nav a')).toHaveText(links);
+    await expect(page.locator('.site-header .site-nav_links a')).toHaveText(links);
   });
 
   test(`${path} has the site footer: tagline, columns and wordmark`, async ({ page }) => {
