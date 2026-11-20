@@ -2,6 +2,7 @@
 import type { HTMLAttributes } from "astro/types";
 import type { ImageMetadata } from "astro";
 import { Image } from "astro:assets";
+import Img from "@/components/media/Img.astro";
 
 interface Props extends HTMLAttributes<"figure"> {
   /** Set to `false` to omit the component. */
@@ -13,7 +14,7 @@ interface Props extends HTMLAttributes<"figure"> {
   /** Who they are, after the name. */
   attribution: string;
   /** Photo behind the quote. */
-  photo?: ImageMetadata;
+  photo?: ImageMetadata | string;
   /** Describes the photo for screen readers. */
   photoAlt?: string;
   /** `overlay`: the words over the photo (Groups). `side`: the photo beside the words (Home's testimony). */
@@ -36,7 +37,9 @@ const {
 {
   render && quote && variant === "overlay" && (
     <figure class:list={["frame group-story_wrap", className]} {...rest}>
-      {photo && (
+      {typeof photo === "string" ? (
+        <Img class="group-story_photo" src={photo} alt={photoAlt} />
+      ) : photo && (
         <Image
           class="group-story_photo"
           src={photo}
@@ -64,14 +67,16 @@ const {
     <div class:list={["group-story_wrap side", className]} {...rest}>
       {photo && (
         <div class="frame group-story_frame">
-          <Image
+          {typeof photo === "string" ? (
+            <Img class="group-story_photo" src={photo} alt={photoAlt} />
+          ) : <Image
             class="group-story_photo"
             src={photo}
             alt={photoAlt}
             widths={[500, 1000, photo.width]}
             sizes="(max-width: 860px) 100vw, 450px"
             loading="lazy"
-          />
+          />}
         </div>
       )}
       <blockquote class="group-story_quote">

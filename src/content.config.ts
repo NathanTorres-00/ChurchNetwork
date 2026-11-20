@@ -39,7 +39,7 @@ const groupStories = defineCollection({
       quote: z.string(),
       name: z.string().optional(),
       attribution: z.string(),
-      photo: image().optional(),
+      photo: z.union([z.string().startsWith("/assets/"), image()]).optional(),
       photoAlt: z.string().optional(),
     }),
 });

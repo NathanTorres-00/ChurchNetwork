@@ -14,6 +14,10 @@ test('the Groups page has its sections in order and no errors', async ({ page })
   await expect(page.locator('.group-card_wrap').nth(1).locator('.group-card_item')).toHaveCount(3);
   await expect(page.getByText('Already a part of a group?')).toBeVisible();
   await expect(page.locator('#story blockquote')).toContainText('closest thing to family');
+  const storyPhoto = page.getByRole('img', { name: 'A house church group gathered in a living room' });
+  await expect(storyPhoto).toHaveAttribute('src', '/assets/network-photos/globe/house-church-living-room.webp');
+  await storyPhoto.scrollIntoViewIfNeeded();
+  await expect.poll(() => storyPhoto.evaluate(img => img.naturalWidth)).toBeGreaterThan(0);
   await expect(page.locator('#team .team-member_wrap')).toHaveCount(4);   // four leaders (main 5f3b046)
 
   // the hero's Start a group and both kinds of group start on the Jesus Way page in the Jesus Disciple App
